@@ -18,7 +18,7 @@ dependencies {
     implementation("org.apache.commons:commons-lang3:3.13.0")
     implementation("commons-codec:commons-codec:1.16.0")
     implementation("commons-cli:commons-cli:1.6.0")
-    implementation("commons-io:commons-io:2.15.0")
+    implementation("commons-io:commons-io:2.15.1")
     implementation("com.rfksystems:blake2b:2.0.0")
     implementation("at.favre.lib:bkdf:0.6.0")
     implementation("com.lambdaworks:scrypt:1.4.0")
