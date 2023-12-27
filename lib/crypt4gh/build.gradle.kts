@@ -15,7 +15,7 @@ repositories {
 dependencies {
     implementation("org.slf4j:slf4j-api:2.0.9")
     implementation("org.slf4j:slf4j-simple:2.0.9")
-    implementation("org.apache.commons:commons-lang3:3.13.0")
+    implementation("org.apache.commons:commons-lang3:3.14.0")
     implementation("commons-codec:commons-codec:1.16.0")
     implementation("commons-cli:commons-cli:1.6.0")
     implementation("commons-io:commons-io:2.15.0")
