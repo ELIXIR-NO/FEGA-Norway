@@ -30,6 +30,6 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.bouncycastle:bcprov-jdk15to18:1.77")
     testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.77")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.4")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
 }
