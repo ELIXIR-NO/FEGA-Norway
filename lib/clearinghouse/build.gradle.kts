@@ -25,7 +25,7 @@ dependencies {
     implementation("com.auth0:jwks-rsa:0.22.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
     implementation("org.slf4j:slf4j-jdk14:2.0.11")
-    implementation("io.jsonwebtoken:jjwt-api:0.12.3")
+    implementation("io.jsonwebtoken:jjwt-api:0.12.5")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.bouncycastle:bcprov-jdk15to18:1.77")
