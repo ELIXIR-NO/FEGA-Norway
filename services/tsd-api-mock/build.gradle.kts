@@ -10,7 +10,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.12.3")
     implementation("org.apache.commons:commons-lang3:3.14.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
 }
 
 tasks.test {
