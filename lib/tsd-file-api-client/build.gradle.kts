@@ -18,7 +18,7 @@ dependencies {
 
     implementation("org.apache.commons:commons-lang3:3.9")
     implementation("commons-io:commons-io:2.15.1")
-    implementation("com.auth0:java-jwt:3.10.3")
+    implementation("com.auth0:java-jwt:4.4.0")
     implementation("com.google.code.gson:gson:2.8.9")
     api("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.slf4j:slf4j-jdk14:1.7.28")
