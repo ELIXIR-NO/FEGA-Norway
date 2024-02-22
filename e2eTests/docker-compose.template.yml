@@ -1,0 +1,361 @@
+version: '3.3'
+
+services:
+
+  # TSD
+
+  tsd-api-mock:
+    image: tsd-api-mock:latest
+    build: ../services/tsd-api-mock
+    environment:
+      - CERT_PASSWORD=<<TSD_API_MOCK_CERT_PASSWORD>>
+    volumes:
+      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/ssl/CA.cert
+      - <<DEV_CERTS_DIR>>/server.p12:/etc/ega/ssl/server.cert
+      - <<LOCAL_VOLUME_MAPPING_DIR>>/tsd:/tsd/p11/data/durable/apps/ega/
+    user: "65534:65534"
+
+  sda-db:
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5d3c488b4c7b488de18d6401a2471f247c83a5e5-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=sda
+      - PGDATA=/var/lib/postgresql/data
+      - POSTGRES_PASSWORD=passw0rd
+      - POSTGRES_SERVER_CERT=/etc/ega/pg.cert
+      - POSTGRES_SERVER_KEY=/etc/ega/pg.key
+      - POSTGRES_SERVER_CACERT=/etc/ega/CA.cert
+      - POSTGRES_VERIFY_PEER=verify-ca
+      - DB_LEGA_IN_PASSWORD=<<SDA_DB_LEGA_IN_PASSWORD>>
+      - DB_LEGA_OUT_PASSWORD=<<SDA_DB_LEGA_OUT_PASSWORD>>
+    volumes:
+      - <<DEV_CERTS_DIR>>/server.pem:/etc/ega/pg.cert
+      - <<DEV_CERTS_DIR>>/server-key.pem:/etc/ega/pg.key
+      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/CA.cert
+      - <<LOCAL_VOLUME_MAPPING_DIR>>/db:/ega
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "lega_out" ]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+
+  sda-mq:
+    image: ghcr.io/uio-bmi/localega-broker:latest
+    ports:
+      - "5671:5671"
+      - "15671:15671"
+    environment:
+      - SSL_VERIFY=verify_peer
+      - SSL_FAIL_IF_NO_PEER_CERT=false
+      - SSL_DEPTH=2
+      - VIRTUAL_HOST=<<LOCAL_EGA_BROKER_VIRTUAL_HOST>>
+      - USER_NAME=<<LOCAL_EGA_BROKER_USER_NAME>>
+      - PASSWORD_HASH=<<LOCAL_EGA_BROKER_PASSWORD_HASH>>
+    volumes:
+      - <<DEV_CERTS_DIR>>/server.pem:/etc/rabbitmq/ssl.cert
+      - <<DEV_CERTS_DIR>>/server-key.pem:/etc/rabbitmq/ssl.key
+      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/rabbitmq/CA.cert
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "5671" ]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+
+  # PROXY
+
+  tsd-proxy:
+    image: tsd-proxy:latest
+    build: ../services/localega-tsd-proxy
+    depends_on:
+      - tsd-api-mock
+      - sda-mq
+      - cega-mq
+      - postgres
+    ports:
+      - "10443:8080"
+    environment:
+      - ROOT_CERT_PASSWORD=<<PROXY_ROOT_CERT_PASSWORD>>
+      - TSD_ROOT_CERT_PASSWORD=<<PROXY_TSD_ROOT_CERT_PASSWORD>>
+      - SERVER_CERT_PASSWORD=<<PROXY_SERVER_CERT_PASSWORD>>
+      - CLIENT_ID=<<PROXY_CLIENT_ID>>
+      - CLIENT_SECRET=<<PROXY_CLIENT_SECRET>>
+      - BROKER_HOST=<<PROXY_BROKER_HOST>>
+      - BROKER_PORT=<<PROXY_BROKER_PORT>>
+      - BROKER_USERNAME=<<PROXY_BROKER_USERNAME>>
+      - BROKER_PASSWORD=<<PROXY_BROKER_PASSWORD>>
+      - BROKER_VHOST=<<PROXY_BROKER_VHOST>>
+      - BROKER_VALIDATE=<<PROXY_BROKER_VALIDATE>>
+      - EXCHANGE=<<PROXY_EXCHANGE>>
+      - CEGA_AUTH_URL=<<PROXY_CEGA_AUTH_URL>>
+      - CEGA_USERNAME=<<PROXY_CEGA_USERNAME>>
+      - CEGA_PASSWORD=<<PROXY_CEGA_PASSWORD>>
+      - TSD_HOST=<<PROXY_TSD_HOST>>
+      - TSD_ACCESS_KEY=<<PROXY_TSD_ACCESS_KEY>>
+      - POSTGRES_PASSWORD=<<PROXY_POSTGRES_PASSWORD>>
+    volumes:
+      - <<DEV_CERTS_DIR>>/rootCA.p12:/etc/ega/ssl/CA.cert
+      - <<DEV_CERTS_DIR>>/server.p12:/etc/ega/ssl/server.cert
+      - <<DEV_CERTS_DIR>>/jwt.pub.pem:/etc/ega/jwt/passport.pem
+      - <<DEV_CERTS_DIR>>/jwt.pub.pem:/etc/ega/jwt/visa.pem
+
+  interceptor:
+    image: mq-interceptor:latest
+    build: ../services/mq-interceptor
+    depends_on:
+      - cega-mq
+      - sda-mq
+      - postgres
+    environment:
+      - POSTGRES_CONNECTION=<<INTERCEPTOR_POSTGRES_CONNECTION>>
+      - CEGA_MQ_CONNECTION=<<INTERCEPTOR_CEGA_MQ_CONNECTION>>
+      - CEGA_MQ_EXCHANGE=localega.v1
+      - CEGA_MQ_QUEUE=v1.files
+      - LEGA_MQ_CONNECTION=<<INTERCEPTOR_MQ_CONNECTION>>
+      - LEGA_MQ_EXCHANGE=sda
+
+  postgres:
+    image: postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=<<POSTGRES_PASSWORD>>
+    volumes:
+      - <<DEV_SCRIPTS_DIR>>/init-mappings-db.sh:/docker-entrypoint-initdb.d/init-mappings-db.sh
+
+  # SDA
+
+  ingest:
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
+    depends_on:
+      - sda-mq
+      - sda-db
+    environment:
+      - ARCHIVE_TYPE=posix
+      - ARCHIVE_LOCATION=/ega/archive
+      - BROKER_HOST=<<BROKER_HOST>>
+      - BROKER_PORT=5671
+      - BROKER_USER=<<PRIVATE_BROKER_USER>>
+      - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
+      - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
+      - BROKER_QUEUE=ingest
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGKEY=archived
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
+      - C4GH_FILEPATH=/etc/ega/ega.sec
+      - DB_HOST=<<DB_HOST>>
+      - DB_PORT=5432
+      - DB_USER=<<DB_LEGA_IN_USER>>
+      - DB_PASSWORD=<<DB_LEGA_IN_PASSWORD>>
+      - DB_DATABASE=lega
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/etc/ega/client.cert
+      - DB_CLIENTKEY=/etc/ega/client-key.cert
+      - INBOX_TYPE=posix
+      - INBOX_LOCATION=/ega/inbox
+      - LOG_LEVEL=debug
+    volumes:
+      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/CA.cert
+      - <<DEV_CERTS_DIR>>/client.pem:/etc/ega/client.cert
+      - <<DEV_CERTS_DIR>>/client-key.pem:/etc/ega/client-key.cert
+      - <<DEV_CERTS_DIR>>/ega.sec.pem:/etc/ega/ega.sec
+      - <<LOCAL_VOLUME_MAPPING_DIR>>/tsd:/ega/inbox
+      - <<LOCAL_VOLUME_MAPPING_DIR>>/vault:/ega/archive
+    command: "sda-ingest"
+
+  verify:
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
+    depends_on:
+      - sda-mq
+      - sda-db
+    environment:
+      - ARCHIVE_TYPE=posix
+      - ARCHIVE_LOCATION=/ega/archive
+      - BROKER_HOST=<<MQ_HOST>>
+      - BROKER_PORT=5671
+      - BROKER_USER=<<PRIVATE_BROKER_USER>>
+      - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
+      - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
+      - BROKER_QUEUE=archived
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGKEY=verified
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - C4GH_PASSPHRASE=<<KEY_PASSWORD>>
+      - C4GH_FILEPATH=/etc/ega/ega.sec
+      - DB_HOST=<<DB_HOST>>
+      - DB_PORT=5432
+      - DB_USER=<<DB_LEGA_IN_USER>>
+      - DB_PASSWORD=<<DB_LEGA_IN_PASSWORD>>
+      - DB_DATABASE=lega
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/etc/ega/client.cert
+      - DB_CLIENTKEY=/etc/ega/client-key.cert
+      - INBOX_LOCATION=/ega/inbox
+      - LOG_LEVEL=debug
+    volumes:
+      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/CA.cert
+      - <<DEV_CERTS_DIR>>/client.pem:/etc/ega/client.cert
+      - <<DEV_CERTS_DIR>>/client-key.pem:/etc/ega/client-key.cert
+      - <<DEV_CERTS_DIR>>/ega.sec.pem:/etc/ega/ega.sec
+      - <<LOCAL_VOLUME_MAPPING_DIR>>/vault:/ega/archive
+      - <<LOCAL_VOLUME_MAPPING_DIR>>/tsd:/ega/inbox
+    command: "sda-verify"
+
+  finalize:
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
+    depends_on:
+      - sda-mq
+      - sda-db
+    environment:
+      - BROKER_HOST=<<MQ_HOST>>
+      - BROKER_PORT=5671
+      - BROKER_USER=<<PRIVATE_BROKER_USER>>
+      - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
+      - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
+      - BROKER_QUEUE=accessionIDs
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGKEY=completed
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - DB_HOST=<<DB_HOST>>
+      - DB_PORT=5432
+      - DB_USER=<<DB_LEGA_IN_USER>>
+      - DB_PASSWORD=<<DB_LEGA_IN_PASSWORD>>
+      - DB_DATABASE=lega
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/etc/ega/client.cert
+      - DB_CLIENTKEY=/etc/ega/client-key.cert
+      - LOG_LEVEL=debug
+    command: "sda-finalize"
+    volumes:
+      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/CA.cert
+      - <<DEV_CERTS_DIR>>/client.pem:/etc/ega/client.cert
+      - <<DEV_CERTS_DIR>>/client-key.pem:/etc/ega/client-key.cert
+
+  mapper:
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
+    depends_on:
+      - sda-mq
+      - sda-db
+    environment:
+      - BROKER_HOST=<<MQ_HOST>>
+      - BROKER_PORT=5671
+      - BROKER_USER=<<PRIVATE_BROKER_USER>>
+      - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
+      - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
+      - BROKER_QUEUE=mappings
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - DB_HOST=<<DB_HOST>>
+      - DB_PORT=5432
+      - DB_USER=<<DB_LEGA_OUT_USER>>
+      - DB_PASSWORD=<<DB_LEGA_OUT_PASSWORD>>
+      - DB_DATABASE=lega
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/etc/ega/client.cert
+      - DB_CLIENTKEY=/etc/ega/client-key.cert
+      - LOG_LEVEL=debug
+    command: "sda-mapper"
+    volumes:
+      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/CA.cert
+      - <<DEV_CERTS_DIR>>/client.pem:/etc/ega/client.cert
+      - <<DEV_CERTS_DIR>>/client-key.pem:/etc/ega/client-key.cert
+
+  # Out
+
+  doa:
+    image: neicnordic/sda-doa:release-v1.6.0
+    depends_on:
+      - sda-mq
+      - sda-db
+    ports:
+      - "80:8080"
+    environment:
+      - SSL_MODE=require
+      - SSL_ENABLED=false
+      - ARCHIVE_PATH=<<ARCHIVE_PATH>>
+      - DB_INSTANCE=<<DB_HOST>>
+      - POSTGRES_DB=<<DB_DATABASE_NAME>>
+      - POSTGRES_PASSWORD=<<DB_LEGA_OUT_PASSWORD>>
+      - OUTBOX_ENABLED=false
+    volumes:
+      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/ssl/CA.cert
+      - <<DEV_CERTS_DIR>>/client.pem:/etc/ega/ssl/client.cert
+      - <<DEV_CERTS_DIR>>/client-key.der:/etc/ega/ssl/client.key
+      - <<DEV_CERTS_DIR>>/jwt.pub.pem:/etc/ega/jwt/passport.pem
+      - <<DEV_CERTS_DIR>>/jwt.pub.pem:/etc/ega/jwt/visa.pem
+      - <<DEV_CERTS_DIR>>/ega.sec.pem:/etc/ega/crypt4gh/key.pem
+      - <<DEV_CERTS_DIR>>/ega.sec.pass:/etc/ega/crypt4gh/key.pass
+      - <<LOCAL_VOLUME_MAPPING_DIR>>/vault:/ega/archive
+    user: "65534:65534"
+
+  # CEGA
+
+  cega-mq:
+    image: rabbitmq:3.8.16-management-alpine
+    environment:
+      - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/conf/cega
+      - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/conf/cega.plugins
+    ports:
+      - "5672:5671"
+      - "15672:15672"
+      - "25672:15672"
+    volumes:
+      - <<DEV_CERTS_DIR>>/server.pem:/etc/rabbitmq/ssl/mq.pem
+      - <<DEV_CERTS_DIR>>/server-key.pem:/etc/rabbitmq/ssl/mq-key.pem
+      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/rabbitmq/ssl/ca.pem
+      - <<DEV_SCRIPTS_DIR>>/cega-confs/cega.conf:/etc/rabbitmq/conf/cega.conf
+      - <<DEV_SCRIPTS_DIR>>/cega-confs/cega.json:/etc/rabbitmq/conf/cega.json
+      - <<DEV_SCRIPTS_DIR>>/cega-confs/cega.plugins:/etc/rabbitmq/conf/cega.plugins
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bash",
+          "-c",
+          "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms"
+        ]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+
+  cega-auth:
+    container_name: cega-auth
+    image: egarchive/lega-base:release.v0.2.0
+    volumes:
+      - <<DEV_SCRIPTS_DIR>>/cega-users:/cega
+    command:
+      [
+        "python",
+        "/cega/cega-mock.py",
+        "0.0.0.0",
+        "8443",
+        "/cega/users.json"
+      ]
+    environment:
+      - LEGA_INSTANCES=dummy
+      - CEGA_USERS_PASSWORD=dummy
+      - CEGA_USERS_USER=dummy
+    ports:
+      - "8443:8443"
+

@@ -44,3 +44,6 @@ bin/
 
 ### Temporary Directories
 tmp/
+
+### Any temporary backup files
+*.bak
