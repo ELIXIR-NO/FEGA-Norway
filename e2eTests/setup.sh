@@ -136,17 +136,6 @@ function apply_configs() {
 
 }
 
-
-# Function to check if the current node
-# is part of a Docker Swarm.
-function is_swarm_active() {
-  if [ "$(docker info --format '{{.Swarm.LocalNodeState}}')" = "active" ]; then
-    return 0 # Swarm is active
-  else
-    return 1 # Swarm is not active
-  fi
-}
-
 # Generates the required certificates for
 # the services deployed in the swarm.
 function generate_certs() {
@@ -250,14 +239,6 @@ function init() {
     echo "Dependency check failed. Exiting."
     exit 1
   fi
-  # Initialize the Docker swarm and make
-  # the current node the manager.
-  if is_swarm_active; then
-    echo "This node is already part of a Docker Swarm ✅. Skipping..."
-  else
-    echo "Initializing Docker Swarm..."
-    docker swarm init
-  fi
   # Create and own the temporary dirs
   mkdir -p $TMP_CERT_DIR $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db
   # chown 65534:65534 $WORKING_DIR/vault $WORKING_DIR/tsd
@@ -267,15 +248,6 @@ function init() {
 function clean() {
   rm -rf $WORKING_DIR
   rm -rf docker-compose.ym*
-  echo "Deleted temporary files directory ✅"
-  # Remove Docker secrets
-  for file in "${FILES[@]}"; do
-    if docker secret ls | grep -q "$file"; then
-      docker secret rm "$file"
-    fi
-  done
-  echo "Removed ${#FILES[@]} secrets from docker ✅"
-  docker swarm leave --force
   echo "Cleanup completed 💯"
 }
 
