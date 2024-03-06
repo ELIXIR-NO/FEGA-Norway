@@ -40,8 +40,8 @@ export DB_LEGA_IN_PASSWORD=in_passw0rd
 export DB_LEGA_OUT_USER=lega_out
 export DB_LEGA_OUT_PASSWORD=0ut_passw0rd
 
-export PRIVATE_BROKER_VHOST=test # Also used by SDA
-export PRIVATE_BROKER_USER=admin # Also used by SDA
+export PRIVATE_BROKER_VHOST=test     # Also used by SDA
+export PRIVATE_BROKER_USER=admin     # Also used by SDA
 export PRIVATE_BROKER_PASSWORD=guest # Also used by SDA
 export PRIVATE_BROKER_HASH=4tHURqDiZzypw0NTvoHhpn8/MMgONWonWxgRZ4NXgR8nZRBz
 
@@ -64,12 +64,12 @@ function apply_configs() {
 
   # Check if the source template file exists
   if [ -f "docker-compose.template.yml" ]; then
-      # Copy the content of docker-compose.template.yml to docker-compose.yml
-      cp docker-compose.template.yml ./docker-compose.yml
-      rm -rf docker-compose.yml.bak > /dev/null 2>&1
-      echo "docker-compose.yml has been successfully created from the template."
+    # Copy the content of docker-compose.template.yml to docker-compose.yml
+    cp docker-compose.template.yml ./docker-compose.yml
+    rm -rf docker-compose.yml.bak >/dev/null 2>&1
+    echo "docker-compose.yml has been successfully created from the template."
   else
-      echo "Error: docker-compose.template.yml does not exist."
+    echo "Error: docker-compose.template.yml does not exist."
   fi
 
   local f=docker-compose.yml
@@ -271,38 +271,56 @@ function exists() {
 }
 
 function escape_special_chars() {
-    echo "$1" | sed -e 's/[]\/$*.^[]/\\&/g'
+  echo "$1" | sed -e 's/[]\/$*.^[]/\\&/g'
 }
 
 # Find and replace all the strings matching target
 # in a specified file.
 function frepl() {
-    local search=$(escape_special_chars "$1")
-    local replace=$(escape_special_chars "$2")
-    sed -i.bak "s/$search/$replace/g" "$3"
+  local search=$(escape_special_chars "$1")
+  local replace=$(escape_special_chars "$2")
+  sed -i.bak "s/$search/$replace/g" "$3"
 }
 
 # Pre-condition function to check
 # for required dependencies
 function check_dependencies() {
-  local missing_deps=0
-  # Define an array of dependencies
-  local deps=("mkcert" "openssl" "docker" "crypt4gh")
-  echo "Checking for required dependencies..."
-  for dep in "${deps[@]}"; do
-    if ! exists "$dep"; then
-      echo "Error: '$dep' is not installed." >&2
-      missing_deps=$((missing_deps + 1))
-    fi
-  done
-  if [ $missing_deps -ne 0 ]; then
-    echo "Please install the missing dependencies before proceeding." >&2
-    return 1 # Return a non-zero status to indicate failure
+
+  # Function to install mkcert
+  install_mkcert() {
+    echo "Installing mkcert..."
+    sudo apt update
+    sudo apt install -y libnss3-tools
+    wget -q https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64 -O /usr/local/bin/mkcert
+    sudo chmod +x /usr/local/bin/mkcert
+    mkcert -install
+    echo "mkcert installed successfully."
+  }
+
+  # Function to install crypt4gh
+  install_crypt4gh() {
+    echo "Installing crypt4gh..."
+    # This example uses pip for installation. Adjust as necessary for your environment.
+    sudo apt update
+    sudo apt install -y python3-pip
+    pip3 install crypt4gh
+    echo "crypt4gh installed successfully."
+  }
+
+  # Check if mkcert is installed
+  if ! command -v mkcert &>/dev/null; then
+    install_mkcert
   else
-    echo "All required dependencies are installed."
+    echo "mkcert is already installed."
+  fi
+
+  # Check if crypt4gh is installed
+  if ! command -v crypt4gh &>/dev/null; then
+    install_crypt4gh
+  else
+    echo "crypt4gh is already installed."
   fi
 }
-
 
 # Entry --
 

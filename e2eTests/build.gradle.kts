@@ -14,9 +14,9 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("com.rabbitmq:amqp-client:5.20.0")
-    testImplementation("com.konghq:unirest-java:3.14.5")
+    testImplementation("com.konghq:unirest-java:3.14.5") // FIXME ?
     testImplementation("org.postgresql:postgresql:42.7.2")
-    testImplementation("com.auth0:java-jwt:4.4.0")
+    testImplementation("com.auth0:java-jwt:4.4.0") // FIXME: io.jsonwebtoken
     testImplementation("commons-io:commons-io:2.15.1")
     testImplementation(project(":lib:crypt4gh"))
     testImplementation("org.slf4j:slf4j-api:2.0.12")
