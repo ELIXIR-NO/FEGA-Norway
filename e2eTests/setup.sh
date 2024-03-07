@@ -1,10 +1,11 @@
 #!/bin/bash
+
+export E2E_DIR="$(pwd)"
 export WORKING_DIR="./tmp"
 export TMP_CERT_DIR="$WORKING_DIR/certs"
 export DEV_SCRIPTS_DIR="./dev" # development
 export LOCAL_VOLUME_MAPPING_DIR="$WORKING_DIR"
 
-export CAROOT="$(mkcert -CAROOT)"
 export TSD_API_MOCK_CERT_PASSWORD=server_cert_passw0rd
 export CLIENT_CERT_PASSWORD=client_cert_passw0rd
 export ROOT_CERT_PASSWORD=r00t_cert_passw0rd
@@ -58,7 +59,8 @@ export DB_OUT_CONNECTION=postgres://lega_out:0ut_passw0rd@db:5432/lega?applicati
 export POSTGRES_PASSWORD=p0stgres_passw0rd
 export POSTGRES_CONNECTION=postgres://postgres:p0stgres_passw0rd@postgres:5432/postgres?sslmode=disable
 
-export FILES=("localhost+5.pem" "localhost+5-key.pem" "localhost+5-client.pem" "localhost+5-client-key.pem" "rootCA.pem" "rootCA.p12" "localhost+5.p12" "localhost+5-client.p12" "localhost+5-client-key.der" "rootCA-key.pem" "docker-stack.yml" "jwt.pub.pem" "jwt.priv.pem" "ega.pub.pem" "ega.sec.pass" "ega.sec.pem" "server.pem" "server-key.pem" "server.p12" "client.pem" "client-key.pem" "client-key.der" "client.p12")
+# Define local bin directory
+LOCAL_BIN="$E2E_DIR/bin"
 
 function apply_configs() {
 
@@ -137,7 +139,7 @@ function apply_configs() {
 }
 
 # Generates the required certificates for
-# the services deployed in the swarm.
+# the containers deployed in docker.
 function generate_certs() {
 
   # Step 0: Navigate to the temporary directory.
@@ -145,18 +147,21 @@ function generate_certs() {
   # in the host machine.
   cd $TMP_CERT_DIR || exit 1
 
+  mkcert="$LOCAL_BIN/mkcert"
+  crypt4gh="$LOCAL_BIN/crypt4gh"
+
   # Step 1: Generate and install the root
   # certificate authority (CA) using mkcert
-  mkcert -install
-  echo "CAROOT is $CAROOT"
+  $mkcert -install
+  echo "CAROOT is $($mkcert -CAROOT)"
 
   # Step 2: Generate SSL/TLS certificates for
   # localhost and other services
-  mkcert localhost db vault mq tsd proxy
+  $mkcert localhost db vault mq tsd proxy
 
   # Step 3: Generate the client certificates for
   # localhost and other services
-  mkcert -client localhost db vault mq tsd proxy
+  $mkcert -client localhost db vault mq tsd proxy
 
   # Step 4: Export SSL/TLS certificates and
   # private keys to PKCS#12 format
@@ -188,20 +193,14 @@ function generate_certs() {
 
   # Step 7: Create Docker secrets for JWT private
   # key, JWT public key, and other secrets
-  docker secret create jwt.priv.pem jwt.priv.pem
   openssl rsa -pubout -in jwt.priv.pem -out jwt.pub.pem
-  docker secret create jwt.pub.pem jwt.pub.pem
   printf "%s" "${KEY_PASSWORD}" >ega.sec.pass
-  docker secret create ega.sec.pass ega.sec.pass
-  crypt4gh generate -n ega -p ${KEY_PASSWORD}
-  docker secret create ega.sec.pem ega.sec.pem
+  $crypt4gh generate -n ega -p ${KEY_PASSWORD}
 
   # Step 8,9: Copy root CA certificate and private key
-  cp "$CAROOT/rootCA.pem" rootCA.pem
-  docker secret create rootCA.pem rootCA.pem
-  cp "$CAROOT/rootCA-key.pem" rootCA-key.pem
+  cp "$($mkcert -CAROOT)/rootCA.pem" rootCA.pem
+  cp "$($mkcert -CAROOT)/rootCA-key.pem" rootCA-key.pem
   chmod 600 rootCA-key.pem
-  docker secret create rootCA-key.pem rootCA-key.pem
 
   # Step 10: Export root CA certificate to PKCS#12 format
   openssl pkcs12 -export \
@@ -209,24 +208,16 @@ function generate_certs() {
     -in rootCA.pem \
     -inkey rootCA-key.pem \
     -passout pass:${ROOT_CERT_PASSWORD}
-  docker secret create rootCA.p12 rootCA.p12
 
   # Step 11: Copy and create Docker secrets
   # for server and client certificates
   cp localhost+5.pem server.pem
-  docker secret create server.pem server.pem
   cp localhost+5-key.pem server-key.pem
-  docker secret create server-key.pem server-key.pem
   cp localhost+5.p12 server.p12
-  docker secret create server.p12 server.p12
   cp localhost+5-client.pem client.pem
-  docker secret create client.pem client.pem
   cp localhost+5-client-key.pem client-key.pem
-  docker secret create client-key.pem client-key.pem
   cp localhost+5-client-key.der client-key.der
-  docker secret create client-key.der client-key.der
   cp localhost+5-client.p12 client.p12
-  docker secret create client.p12 client.p12
 
   cd ../
 
@@ -235,6 +226,7 @@ function generate_certs() {
 # Invokers --
 
 function init() {
+  mkdir -p "$LOCAL_BIN"
   if ! check_dependencies; then
     echo "Dependency check failed. Exiting."
     exit 1
@@ -282,50 +274,73 @@ function frepl() {
   sed -i.bak "s/$search/$replace/g" "$3"
 }
 
+# Function to install mkcert
+function install_mkcert() {
+  echo "Installing mkcert locally..."
+  # Detect the operating system
+  OS="$(uname -s)"
+  case "${OS}" in
+  Linux*) BIN='linux-amd64' ;;
+  Darwin*) BIN='darwin-amd64' ;;
+  *)
+    echo "Unsupported OS: ${OS}" >&2
+    return 1
+    ;;
+  esac
+  echo "OS is $OS"
+  # Construct the download URL based on detected OS
+  URL="https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-${BIN}"
+  # Download and install mkcert
+  curl -sL "${URL}" -o "$LOCAL_BIN/mkcert"
+  chmod +x "$LOCAL_BIN/mkcert"
+  echo "mkcert installed successfully in $LOCAL_BIN."
+}
+
+# Function to install crypt4gh
+function install_crypt4gh() {
+  echo "Installing crypt4gh locally..."
+  curl -fsSL https://raw.githubusercontent.com/neicnordic/crypt4gh/master/install.sh | sh -s -- -b "$LOCAL_BIN"
+  chmod +x "$LOCAL_BIN/crypt4gh"
+  echo "crypt4gh installed successfully for the current user."
+}
+
 # Pre-condition function to check
 # for required dependencies
 function check_dependencies() {
 
-  # Function to install mkcert
-  install_mkcert() {
-    echo "Installing mkcert..."
-    sudo apt update
-    sudo apt install -y libnss3-tools
-    wget -q https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64 -O /usr/local/bin/mkcert
-    sudo chmod +x /usr/local/bin/mkcert
-    mkcert -install
-    echo "mkcert installed successfully."
-  }
-
-  # Function to install crypt4gh
-  install_crypt4gh() {
-    echo "Installing crypt4gh..."
-    # This example uses pip for installation. Adjust as necessary for your environment.
-    sudo apt update
-    sudo apt install -y python3-pip
-    pip3 install crypt4gh
-    echo "crypt4gh installed successfully."
-  }
-
-  # Check if mkcert is installed
-  if ! command -v mkcert &>/dev/null; then
+  # Check if mkcert is installed locally
+  if [ ! -f "$LOCAL_BIN/mkcert" ]; then
     install_mkcert
   else
     echo "mkcert is already installed."
   fi
 
-  # Check if crypt4gh is installed
-  if ! command -v crypt4gh &>/dev/null; then
+  # Check if crypt4gh is installed locally
+  if [ ! -f "$LOCAL_BIN/crypt4gh" ]; then
     install_crypt4gh
   else
     echo "crypt4gh is already installed."
   fi
+
+  # Verify installations
+  if [ -f "$LOCAL_BIN/mkcert" ]; then
+    echo "Verification: mkcert is correctly installed."
+  else
+    echo "Verification failed: mkcert is not installed correctly."
+  fi
+
+  if [ -f "$LOCAL_BIN/crypt4gh" ]; then
+    echo "Verification: crypt4gh is correctly installed."
+  else
+    echo "Verification failed: crypt4gh is not installed correctly."
+  fi
+
 }
 
 # Entry --
-
+usage="[init|generate_certs|clean]"
 if [ $# -ne 1 ]; then
-  echo "Usage: $0 [init|generate_certs|start|stop|clean]"
+  echo "Usage: $0 $usage"
   exit 1
 fi
 
@@ -341,17 +356,11 @@ case "$1" in
 "apply_configs")
   apply_configs
   ;;
-"start")
-  start
-  ;;
-"stop")
-  stop
-  ;;
 "clean")
   clean
   ;;
 *)
-  echo "Invalid action. Usage: $0 [init|generate_certs|start|stop|clean]"
+  echo "Invalid action. Usage: $0 $usage"
   exit 1
   ;;
 
