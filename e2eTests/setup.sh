@@ -6,7 +6,7 @@ export TMP_CERT_DIR="$WORKING_DIR/certs"
 export DEV_SCRIPTS_DIR="./dev" # development
 export LOCAL_VOLUME_MAPPING_DIR="$WORKING_DIR"
 
-export TSD_API_MOCK_CERT_PASSWORD=server_cert_passw0rd
+export SERVER_CERT_PASSWORD=server_cert_passw0rd
 export CLIENT_CERT_PASSWORD=client_cert_passw0rd
 export ROOT_CERT_PASSWORD=r00t_cert_passw0rd
 export KEY_PASSWORD=key_passw0rd # Also used by SDA
@@ -16,8 +16,8 @@ export CEGA_USERNAME=dummy
 export CEGA_PASSWORD=dummy
 export CEGA_MQ_CONNECTION=amqps://test:test@cegamq:5671/lega?cacertfile=/etc/ega/ssl/CA.cert
 
-export EGA_BOX_USERNAME=dummy
-export EGA_BOX_PASSWORD=dummy
+export EGA_BOX_USERNAME=dummy # Used by IngestionTest.java
+export EGA_BOX_PASSWORD=dummy # Used by IngestionTest.java
 
 export BROKER_HOST=cegamq
 export BROKER_PORT=5671
@@ -37,7 +37,7 @@ export DB_HOST=db
 export DB_DATABASE_NAME=lega
 
 export DB_LEGA_IN_USER=lega_in
-export DB_LEGA_IN_PASSWORD=in_passw0rd
+export DB_LEGA_IN_PASSWORD=in_passw0rd # Also used by IngestionTest.java
 export DB_LEGA_OUT_USER=lega_out
 export DB_LEGA_OUT_PASSWORD=0ut_passw0rd
 
@@ -75,6 +75,8 @@ function apply_configs() {
   fi
 
   local f=docker-compose.yml
+
+  frepl "<<POSTGRES_PASSWORD>>" "$POSTGRES_PASSWORD" $f
 
   # tsd-api-mock
   frepl "<<TSD_API_MOCK_CERT_PASSWORD>>" "$TSD_API_MOCK_CERT_PASSWORD" $f
@@ -219,7 +221,8 @@ function generate_certs() {
   cp localhost+5-client-key.der client-key.der
   cp localhost+5-client.p12 client.p12
 
-  cd ../
+  chmod 777 *
+  cd ../../
 
 }
 
@@ -241,16 +244,6 @@ function clean() {
   rm -rf $WORKING_DIR
   rm -rf docker-compose.ym*
   echo "Cleanup completed 💯"
-}
-
-function start() {
-  echo "Starting the LEGA stack 🚀"
-  docker-compose up -d
-}
-
-function stop() {
-  echo "Stopping the LEGA stack 🛑"
-  docker-compose down
 }
 
 # Utility functions --
@@ -339,29 +332,25 @@ function check_dependencies() {
 
 # Entry --
 usage="[init|generate_certs|clean]"
-if [ $# -ne 1 ]; then
-  echo "Usage: $0 $usage"
-  exit 1
+if [ $# -ge 1 ]; then
+  # Parse the action argument and perform
+  # the corresponding action
+  case "$1" in
+  "init")
+    init
+    ;;
+  "generate_certs")
+    generate_certs
+    ;;
+  "apply_configs")
+    apply_configs
+    ;;
+  "clean")
+    clean
+    ;;
+  *)
+    echo "Invalid action. Usage: $0 $usage"
+    exit 1
+    ;;
+  esac
 fi
-
-# Parse the action argument and perform
-# the corresponding action
-case "$1" in
-"init")
-  init
-  ;;
-"generate_certs")
-  generate_certs
-  ;;
-"apply_configs")
-  apply_configs
-  ;;
-"clean")
-  clean
-  ;;
-*)
-  echo "Invalid action. Usage: $0 $usage"
-  exit 1
-  ;;
-
-esac
