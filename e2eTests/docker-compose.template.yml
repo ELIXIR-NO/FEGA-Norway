@@ -109,7 +109,7 @@ services:
     environment:
       - POSTGRES_CONNECTION=<<INTERCEPTOR_POSTGRES_CONNECTION>>
       - CEGA_MQ_CONNECTION=<<INTERCEPTOR_CEGA_MQ_CONNECTION>>
-      - CEGA_MQ_EXCHANGE=localega.v1
+      - CEGA_MQ_EXCHANGE=localega
       - CEGA_MQ_QUEUE=v1.files
       - LEGA_MQ_CONNECTION=<<INTERCEPTOR_MQ_CONNECTION>>
       - LEGA_MQ_EXCHANGE=sda
@@ -191,7 +191,7 @@ services:
       - BROKER_CACERT=/etc/ega/CA.cert
       - BROKER_CLIENTCERT=/etc/ega/client.cert
       - BROKER_CLIENTKEY=/etc/ega/client-key.cert
-      - C4GH_PASSPHRASE=<<KEY_PASSWORD>>
+      - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
       - C4GH_FILEPATH=/etc/ega/ega.sec
       - DB_HOST=<<DB_HOST>>
       - DB_PORT=5432
