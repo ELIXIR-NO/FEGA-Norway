@@ -188,7 +188,7 @@ public class IngestionTest {
 
         String message = String.format("{\"type\":\"ingest\",\"user\":\"%s\",\"filepath\":\"/p11-dummy@elixir-europe.org/files/%s\"}", System.getenv("EGA_BOX_USERNAME"), encFile.getName());
         log.info(message);
-        channel.basicPublish("localega.v1",
+        channel.basicPublish("localega",
                 "files",
                 properties,
                 message.getBytes());
@@ -217,7 +217,7 @@ public class IngestionTest {
 
         String message = String.format("{\"type\":\"accession\",\"user\":\"%s\",\"filepath\":\"/p11-dummy@elixir-europe.org/files/%s\",\"accession_id\":\"%s\", \"decrypted_checksums\": [ { \"type\":\"sha256\", \"value\": \"%s\" },{\"type\":\"md5\", \"value\": \"%s\"} ] }", System.getenv("EGA_BOX_USERNAME"), encFile.getName(), randomFileAccessionID, rawSHA256Checksum, rawMD5Checksum);
         log.info(message);
-        channel.basicPublish("localega.v1",
+        channel.basicPublish("localega",
                 "files",
                 properties,
                 message.getBytes());
@@ -277,7 +277,7 @@ public class IngestionTest {
                 .build();
         String message = String.format("{\"type\":\"mapping\",\"accession_ids\":[\"%s\"],\"dataset_id\":\"%s\"}", stableId, datasetId);
         log.info(message);
-        channel.basicPublish("localega.v1",
+        channel.basicPublish("localega",
                 "files",
                 properties,
                 message.getBytes());
@@ -306,7 +306,7 @@ public class IngestionTest {
                 .build();
         String message = String.format("{\"type\":\"release\",\"dataset_id\":\"%s\"}", datasetId);
         log.info(message);
-        channel.basicPublish("localega.v1",
+        channel.basicPublish("localega",
                 "files",
                 properties,
                 message.getBytes());
