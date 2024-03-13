@@ -8,12 +8,14 @@ services:
     image: tsd-api-mock:latest
     build: ../services/tsd-api-mock
     environment:
-      - CERT_PASSWORD=<<TSD_API_MOCK_CERT_PASSWORD>>
+      - CERT_PASSWORD=<<SERVER_CERT_PASSWORD>>
     volumes:
       - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/ssl/CA.cert
       - <<DEV_CERTS_DIR>>/server.p12:/etc/ega/ssl/server.cert
       - <<LOCAL_VOLUME_MAPPING_DIR>>/tsd:/tsd/p11/data/durable/apps/ega/
     user: "65534:65534"
+    networks:
+      - lega_network
 
   sda-db:
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5d3c488b4c7b488de18d6401a2471f247c83a5e5-postgres
@@ -30,15 +32,17 @@ services:
       - DB_LEGA_IN_PASSWORD=<<SDA_DB_LEGA_IN_PASSWORD>>
       - DB_LEGA_OUT_PASSWORD=<<SDA_DB_LEGA_OUT_PASSWORD>>
     volumes:
-      - <<DEV_CERTS_DIR>>/server.pem:/etc/ega/pg.cert
-      - <<DEV_CERTS_DIR>>/server-key.pem:/etc/ega/pg.key
-      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/CA.cert
+      - <<DEV_CERTS_DIR>>/server.pem:/etc/ega/pg.pem
+      - <<DEV_CERTS_DIR>>/server-key.pem:/etc/ega/pg.pem
+      - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/CA.pem
       - <<LOCAL_VOLUME_MAPPING_DIR>>/db:/ega
     healthcheck:
       test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "lega_out" ]
       interval: 5s
       timeout: 20s
       retries: 3
+    networks:
+      - lega_network
 
   sda-mq:
     image: ghcr.io/uio-bmi/localega-broker:latest
@@ -61,6 +65,8 @@ services:
       interval: 5s
       timeout: 20s
       retries: 3
+    networks:
+      - lega_network
 
   # PROXY
 
@@ -98,6 +104,8 @@ services:
       - <<DEV_CERTS_DIR>>/server.p12:/etc/ega/ssl/server.cert
       - <<DEV_CERTS_DIR>>/jwt.pub.pem:/etc/ega/jwt/passport.pem
       - <<DEV_CERTS_DIR>>/jwt.pub.pem:/etc/ega/jwt/visa.pem
+    networks:
+      - lega_network
 
   interceptor:
     image: mq-interceptor:latest
@@ -113,6 +121,8 @@ services:
       - CEGA_MQ_QUEUE=v1.files
       - LEGA_MQ_CONNECTION=<<INTERCEPTOR_MQ_CONNECTION>>
       - LEGA_MQ_EXCHANGE=sda
+    networks:
+      - lega_network
 
   postgres:
     image: postgres
@@ -122,6 +132,8 @@ services:
       - POSTGRES_PASSWORD=<<POSTGRES_PASSWORD>>
     volumes:
       - <<DEV_SCRIPTS_DIR>>/init-mappings-db.sh:/docker-entrypoint-initdb.d/init-mappings-db.sh
+    networks:
+      - lega_network
 
   # SDA
 
@@ -168,6 +180,10 @@ services:
       - <<LOCAL_VOLUME_MAPPING_DIR>>/tsd:/ega/inbox
       - <<LOCAL_VOLUME_MAPPING_DIR>>/vault:/ega/archive
     command: "sda-ingest"
+    user: "65534:65534"
+    networks:
+      - lega_network
+
 
   verify:
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
@@ -211,6 +227,9 @@ services:
       - <<LOCAL_VOLUME_MAPPING_DIR>>/vault:/ega/archive
       - <<LOCAL_VOLUME_MAPPING_DIR>>/tsd:/ega/inbox
     command: "sda-verify"
+    user: "65534:65534"
+    networks:
+      - lega_network
 
   finalize:
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
@@ -246,6 +265,9 @@ services:
       - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/CA.cert
       - <<DEV_CERTS_DIR>>/client.pem:/etc/ega/client.cert
       - <<DEV_CERTS_DIR>>/client-key.pem:/etc/ega/client-key.cert
+    user: "65534:65534"
+    networks:
+      - lega_network
 
   mapper:
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
@@ -280,6 +302,9 @@ services:
       - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/CA.cert
       - <<DEV_CERTS_DIR>>/client.pem:/etc/ega/client.cert
       - <<DEV_CERTS_DIR>>/client-key.pem:/etc/ega/client-key.cert
+    user: "65534:65534"
+    networks:
+      - lega_network
 
   # Out
 
@@ -308,6 +333,8 @@ services:
       - <<DEV_CERTS_DIR>>/ega.sec.pass:/etc/ega/crypt4gh/key.pass
       - <<LOCAL_VOLUME_MAPPING_DIR>>/vault:/ega/archive
     user: "65534:65534"
+    networks:
+      - lega_network
 
   # CEGA
 
@@ -320,13 +347,16 @@ services:
       - "5672:5671"
       - "15672:15672"
       - "25672:15672"
+    entrypoint: ["/usr/local/bin/rmq.sh"]
+    user: "100:101"
     volumes:
       - <<DEV_CERTS_DIR>>/server.pem:/etc/rabbitmq/ssl/mq.pem
       - <<DEV_CERTS_DIR>>/server-key.pem:/etc/rabbitmq/ssl/mq-key.pem
       - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/rabbitmq/ssl/ca.pem
-      - <<DEV_SCRIPTS_DIR>>/cega-confs/cega.conf:/etc/rabbitmq/conf/cega.conf
+      - <<DEV_SCRIPTS_DIR>>/cega-confs/cega:/etc/rabbitmq/conf/cega
       - <<DEV_SCRIPTS_DIR>>/cega-confs/cega.json:/etc/rabbitmq/conf/cega.json
       - <<DEV_SCRIPTS_DIR>>/cega-confs/cega.plugins:/etc/rabbitmq/conf/cega.plugins
+      - <<DEV_SCRIPTS_DIR>>/rmq.sh:/usr/local/bin/rmq.sh
     healthcheck:
       test:
         [
@@ -338,9 +368,10 @@ services:
       interval: 5s
       timeout: 20s
       retries: 3
+    networks:
+      - lega_network
 
   cega-auth:
-    container_name: cega-auth
     image: egarchive/lega-base:release.v0.2.0
     volumes:
       - <<DEV_SCRIPTS_DIR>>/cega-users:/cega
@@ -358,4 +389,11 @@ services:
       - CEGA_USERS_USER=dummy
     ports:
       - "8443:8443"
+    networks:
+      - lega_network
+
+networks:
+  lega_network:
+    driver: bridge
+
 

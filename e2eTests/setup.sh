@@ -79,7 +79,7 @@ function apply_configs() {
   frepl "<<POSTGRES_PASSWORD>>" "$POSTGRES_PASSWORD" $f
 
   # tsd-api-mock
-  frepl "<<TSD_API_MOCK_CERT_PASSWORD>>" "$TSD_API_MOCK_CERT_PASSWORD" $f
+  frepl "<<SERVER_CERT_PASSWORD>>" "$SERVER_CERT_PASSWORD" $f
   frepl "<<DEV_CERTS_DIR>>" "$TMP_CERT_DIR" $f
   frepl "<<DEV_SCRIPTS_DIR>>" "$DEV_SCRIPTS_DIR" $f
   frepl "<<LOCAL_VOLUME_MAPPING_DIR>>" "$WORKING_DIR" $f
@@ -170,7 +170,7 @@ function generate_certs() {
   openssl pkcs12 -export \
     -out localhost+5.p12 \
     -in localhost+5.pem \
-    -inkey localhost+5-key.pem -passout pass:"${TSD_API_MOCK_CERT_PASSWORD}"
+    -inkey localhost+5-key.pem -passout pass:"${SERVER_CERT_PASSWORD}"
   openssl pkcs12 -export \
     -out localhost+5-client.p12 \
     -in localhost+5-client.pem \
@@ -221,7 +221,7 @@ function generate_certs() {
   cp localhost+5-client-key.der client-key.der
   cp localhost+5-client.p12 client.p12
 
-  chmod 777 *
+  chmod 740 *
   cd ../../
 
 }
@@ -237,7 +237,9 @@ function init() {
   # Create and own the temporary dirs
   mkdir -p $TMP_CERT_DIR $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db
   # chown 65534:65534 $WORKING_DIR/vault $WORKING_DIR/tsd
-  chmod 777 $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db
+  # chown 65534:65534 $DEV_SCRIPTS_DIR/init-mappings-db.sh
+#  chmod 777 $DEV_SCRIPTS_DIR/init-mappings-db.sh
+  chmod -R 777 $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db $DEV_SCRIPTS_DIR/cega-confs/* $DEV_SCRIPTS_DIR/cega-users/*
 }
 
 function clean() {
@@ -265,6 +267,7 @@ function frepl() {
   local search=$(escape_special_chars "$1")
   local replace=$(escape_special_chars "$2")
   sed -i.bak "s/$search/$replace/g" "$3"
+  rm -rf "$3.bak"
 }
 
 # Function to install mkcert
