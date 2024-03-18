@@ -1,9 +1,18 @@
 #!/bin/bash
 
-export E2E_DIR="$(pwd)"
-export WORKING_DIR="./tmp"
+# Find the absolute path of this script directory (self)
+E2E_DIR="$(dirname -- "${BASH_SOURCE[0]}")" # Relative
+E2E_DIR="$(cd -- "$E2E_DIR" && pwd)" # Absolute
+if [[ -z "$E2E_DIR" ]] ; then
+  # error; for some reason, the path is not accessible
+  exit 1 # fail
+fi
+
+export E2E_DIR
+export DEV_SCRIPTS_DIR="$E2E_DIR/dev" # development
+export LOCAL_BIN="$E2E_DIR/bin"
+export WORKING_DIR="$E2E_DIR/tmp"
 export TMP_CERT_DIR="$WORKING_DIR/certs"
-export DEV_SCRIPTS_DIR="./dev" # development
 export LOCAL_VOLUME_MAPPING_DIR="$WORKING_DIR"
 
 export SERVER_CERT_PASSWORD=server_cert_passw0rd
@@ -14,26 +23,26 @@ export KEY_PASSWORD=key_passw0rd # Also used by SDA
 export CEGA_AUTH_URL=http://cega-auth:8443/lega/v1/legas/users/
 export CEGA_USERNAME=dummy
 export CEGA_PASSWORD=dummy
-export CEGA_MQ_CONNECTION=amqps://test:test@cegamq:5671/lega?cacertfile=/etc/ega/ssl/CA.cert
+export CEGA_MQ_CONNECTION=amqps://test:test@cega-mq:5671/lega?cacertfile=/etc/ega/ssl/CA.cert
 
 export EGA_BOX_USERNAME=dummy # Used by IngestionTest.java
 export EGA_BOX_PASSWORD=dummy # Used by IngestionTest.java
 
-export BROKER_HOST=cegamq
+export BROKER_HOST=cega-mq
 export BROKER_PORT=5671
 export BROKER_USERNAME=test
 export BROKER_PASSWORD=test
 export BROKER_VHOST=lega
 export BROKER_VALIDATE=false
 
-export EXCHANGE=localega.v1
+export EXCHANGE=localega
 
 export TSD_ROOT_CERT_PASSWORD=r00t_cert_passw0rd
-export TSD_HOST=tsd:8080
+export TSD_HOST=tsd-api-mock:8080
 export TSD_PROJECT=p11
 export TSD_ACCESS_KEY=s0me_key
 
-export DB_HOST=db
+export DB_HOST=sda-db
 export DB_DATABASE_NAME=lega
 
 export DB_LEGA_IN_USER=lega_in
@@ -52,15 +61,12 @@ export PUBLIC_BROKER_HASH=4tHURqDiZzypw0NTvoHhpn8/MMgONWonWxgRZ4NXgR8nZRBz
 
 export ARCHIVE_PATH=/ega/archive/
 
-export MQ_HOST=mq
-export MQ_CONNECTION=amqps://admin:guest@mq:5671/test
-export DB_IN_CONNECTION=postgres://lega_in:in_passw0rd@db:5432/lega?application_name=LocalEGA
-export DB_OUT_CONNECTION=postgres://lega_out:0ut_passw0rd@db:5432/lega?application_name=LocalEGA
+export MQ_HOST=sda-mq
+export MQ_CONNECTION=amqps://admin:guest@sda-mq:5671/test
+export DB_IN_CONNECTION=postgres://lega_in:in_passw0rd@sda-db:5432/lega?application_name=LocalEGA
+export DB_OUT_CONNECTION=postgres://lega_out:0ut_passw0rd@sda-db:5432/lega?application_name=LocalEGA
 export POSTGRES_PASSWORD=p0stgres_passw0rd
 export POSTGRES_CONNECTION=postgres://postgres:p0stgres_passw0rd@postgres:5432/postgres?sslmode=disable
-
-# Define local bin directory
-LOCAL_BIN="$E2E_DIR/bin"
 
 function apply_configs() {
 
@@ -221,7 +227,6 @@ function generate_certs() {
   cp localhost+5-client-key.der client-key.der
   cp localhost+5-client.p12 client.p12
 
-  chmod 740 *
   cd ../../
 
 }
@@ -234,17 +239,13 @@ function init() {
     echo "Dependency check failed. Exiting."
     exit 1
   fi
-  # Create and own the temporary dirs
   mkdir -p $TMP_CERT_DIR $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db
-  # chown 65534:65534 $WORKING_DIR/vault $WORKING_DIR/tsd
-  # chown 65534:65534 $DEV_SCRIPTS_DIR/init-mappings-db.sh
-#  chmod 777 $DEV_SCRIPTS_DIR/init-mappings-db.sh
-  chmod -R 777 $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db $DEV_SCRIPTS_DIR/cega-confs/* $DEV_SCRIPTS_DIR/cega-users/*
+  chmod -R 777 $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db
 }
 
 function clean() {
   rm -rf $WORKING_DIR
-  rm -rf docker-compose.ym*
+  rm -rf $E2E_DIR/docker-compose.ym*
   echo "Cleanup completed 💯"
 }
 
@@ -300,37 +301,31 @@ function install_crypt4gh() {
   echo "crypt4gh installed successfully for the current user."
 }
 
-# Pre-condition function to check
-# for required dependencies
+# Pre-condition function to check for required dependencies
 function check_dependencies() {
-
   # Check if mkcert is installed locally
   if [ ! -f "$LOCAL_BIN/mkcert" ]; then
     install_mkcert
   else
     echo "mkcert is already installed."
   fi
-
   # Check if crypt4gh is installed locally
   if [ ! -f "$LOCAL_BIN/crypt4gh" ]; then
     install_crypt4gh
   else
     echo "crypt4gh is already installed."
   fi
-
   # Verify installations
   if [ -f "$LOCAL_BIN/mkcert" ]; then
     echo "Verification: mkcert is correctly installed."
   else
     echo "Verification failed: mkcert is not installed correctly."
   fi
-
   if [ -f "$LOCAL_BIN/crypt4gh" ]; then
     echo "Verification: crypt4gh is correctly installed."
   else
     echo "Verification failed: crypt4gh is not installed correctly."
   fi
-
 }
 
 # Entry --
