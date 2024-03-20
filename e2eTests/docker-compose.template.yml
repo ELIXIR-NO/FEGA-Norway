@@ -4,7 +4,7 @@ services:
 
   # TSD
 
-  tsd-api-mock:
+  tsd:
     image: tsd-api-mock:latest
     build: ../services/tsd-api-mock
     environment:
@@ -14,32 +14,34 @@ services:
       - <<DEV_CERTS_DIR>>/server.p12:/etc/ega/ssl/server.cert
       - <<LOCAL_VOLUME_MAPPING_DIR>>/tsd:/tsd/p11/data/durable/apps/ega/
 
-  sda-db:
-    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5d3c488b4c7b488de18d6401a2471f247c83a5e5-postgres
+  db:
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026-postgres
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_DB=sda
       - PGDATA=/var/lib/postgresql/data
       - POSTGRES_PASSWORD=passw0rd
-      - POSTGRES_SERVER_CERT=/etc/ega/pg.cert
-      - POSTGRES_SERVER_KEY=/etc/ega/pg.key
-      - POSTGRES_SERVER_CACERT=/etc/ega/CA.cert
+      - POSTGRES_SERVER_CERT=/etc/ega/pg.pem
+      - POSTGRES_SERVER_KEY=/etc/ega/pg-server.pem
+      - POSTGRES_SERVER_CACERT=/etc/ega/CA.pem
       - POSTGRES_VERIFY_PEER=verify-ca
       - DB_LEGA_IN_PASSWORD=<<SDA_DB_LEGA_IN_PASSWORD>>
       - DB_LEGA_OUT_PASSWORD=<<SDA_DB_LEGA_OUT_PASSWORD>>
     volumes:
       - <<DEV_CERTS_DIR>>/server.pem:/etc/ega/pg.pem
-      - <<DEV_CERTS_DIR>>/server-key.pem:/etc/ega/pg.pem
+      - <<DEV_CERTS_DIR>>/server-key.pem:/etc/ega/pg-server.pem
       - <<DEV_CERTS_DIR>>/rootCA.pem:/etc/ega/CA.pem
       - <<LOCAL_VOLUME_MAPPING_DIR>>/db:/ega
+      - <<DEV_SCRIPTS_DIR>>/sda-pg-db-entrypoint.sh:/sda-pg-db-entrypoint.sh
+    entrypoint: [ "/sda-pg-db-entrypoint.sh", "/usr/local/bin/entrypoint.sh", "postgres" ]
     healthcheck:
       test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "lega_out" ]
       interval: 5s
       timeout: 20s
       retries: 3
 
-  sda-mq:
+  mq:
     image: ghcr.io/uio-bmi/localega-broker:latest
     ports:
       - "5671:5671"
@@ -63,13 +65,13 @@ services:
 
   # PROXY
 
-  tsd-proxy:
+  proxy:
     image: tsd-proxy:latest
     build: ../services/localega-tsd-proxy
     depends_on:
-      - tsd-api-mock
-      - sda-mq
-      - cega-mq
+      - tsd
+      - mq
+      - cegamq
       - postgres
     ports:
       - "10443:8080"
@@ -102,8 +104,8 @@ services:
     image: mq-interceptor:latest
     build: ../services/mq-interceptor
     depends_on:
-      - cega-mq
-      - sda-mq
+      - cegamq
+      - mq
       - postgres
     environment:
       - POSTGRES_CONNECTION=<<INTERCEPTOR_POSTGRES_CONNECTION>>
@@ -125,10 +127,10 @@ services:
   # SDA
 
   ingest:
-    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
-      - sda-mq
-      - sda-db
+      - mq
+      - db
     environment:
       - ARCHIVE_TYPE=posix
       - ARCHIVE_LOCATION=/ega/archive
@@ -169,10 +171,10 @@ services:
     command: "sda-ingest"
 
   verify:
-    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
-      - sda-mq
-      - sda-db
+      - mq
+      - db
     environment:
       - ARCHIVE_TYPE=posix
       - ARCHIVE_LOCATION=/ega/archive
@@ -212,10 +214,10 @@ services:
     command: "sda-verify"
 
   finalize:
-    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
-      - sda-mq
-      - sda-db
+      - mq
+      - db
     environment:
       - BROKER_HOST=<<MQ_HOST>>
       - BROKER_PORT=5671
@@ -247,10 +249,10 @@ services:
     command: "sda-finalize"
 
   mapper:
-    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5e2d2d0b6a17cffad965cfda7950db178666ebd2
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
-      - sda-mq
-      - sda-db
+      - mq
+      - db
     environment:
       - BROKER_HOST=<<MQ_HOST>>
       - BROKER_PORT=5671
@@ -285,8 +287,8 @@ services:
   doa:
     image: neicnordic/sda-doa:release-v1.6.0
     depends_on:
-      - sda-mq
-      - sda-db
+      - mq
+      - db
     ports:
       - "80:8080"
     environment:
@@ -310,8 +312,8 @@ services:
 
   # CEGA
 
-  cega-mq:
-    image: rabbitmq:3.8.16-management-alpine
+  cegamq:
+    image: rabbitmq:3.12.13-management-alpine
     environment:
       - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/conf/cega
       - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/conf/cega.plugins
@@ -339,8 +341,7 @@ services:
       retries: 3
     command: sh -c "chmod -R 0644 /etc/rabbitmq/conf/* && chown -R 100:101 /etc/rabbitmq/conf/* && rabbitmq-server"
 
-  cega-auth:
-    container_name: cega-auth
+  cegaauth:
     image: egarchive/lega-base:release.v0.2.0
     volumes:
       - <<DEV_SCRIPTS_DIR>>/cega-users:/cega
@@ -358,3 +359,4 @@ services:
       - CEGA_USERS_USER=dummy
     ports:
       - "8443:8443"
+

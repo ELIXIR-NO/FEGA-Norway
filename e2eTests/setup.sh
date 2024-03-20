@@ -20,15 +20,15 @@ export CLIENT_CERT_PASSWORD=client_cert_passw0rd
 export ROOT_CERT_PASSWORD=r00t_cert_passw0rd
 export KEY_PASSWORD=key_passw0rd # Also used by SDA
 
-export CEGA_AUTH_URL=http://cega-auth:8443/lega/v1/legas/users/
+export CEGA_AUTH_URL=http://cegaauth:8443/lega/v1/legas/users/
 export CEGA_USERNAME=dummy
 export CEGA_PASSWORD=dummy
-export CEGA_MQ_CONNECTION=amqps://test:test@cega-mq:5671/lega?cacertfile=/etc/ega/ssl/CA.cert
+export CEGA_MQ_CONNECTION=amqps://test:test@cegamq:5671/lega?cacertfile=/etc/ega/ssl/CA.cert
 
 export EGA_BOX_USERNAME=dummy # Used by IngestionTest.java
 export EGA_BOX_PASSWORD=dummy # Used by IngestionTest.java
 
-export BROKER_HOST=cega-mq
+export BROKER_HOST=cegamq
 export BROKER_PORT=5671
 export BROKER_USERNAME=test
 export BROKER_PASSWORD=test
@@ -38,11 +38,11 @@ export BROKER_VALIDATE=false
 export EXCHANGE=localega
 
 export TSD_ROOT_CERT_PASSWORD=r00t_cert_passw0rd
-export TSD_HOST=tsd-api-mock:8080
+export TSD_HOST=tsd:8080
 export TSD_PROJECT=p11
 export TSD_ACCESS_KEY=s0me_key
 
-export DB_HOST=sda-db
+export DB_HOST=db
 export DB_DATABASE_NAME=lega
 
 export DB_LEGA_IN_USER=lega_in
@@ -61,10 +61,10 @@ export PUBLIC_BROKER_HASH=4tHURqDiZzypw0NTvoHhpn8/MMgONWonWxgRZ4NXgR8nZRBz
 
 export ARCHIVE_PATH=/ega/archive/
 
-export MQ_HOST=sda-mq
-export MQ_CONNECTION=amqps://admin:guest@sda-mq:5671/test
-export DB_IN_CONNECTION=postgres://lega_in:in_passw0rd@sda-db:5432/lega?application_name=LocalEGA
-export DB_OUT_CONNECTION=postgres://lega_out:0ut_passw0rd@sda-db:5432/lega?application_name=LocalEGA
+export MQ_HOST=mq
+export MQ_CONNECTION=amqps://admin:guest@mq:5671/test
+export DB_IN_CONNECTION=postgres://lega_in:in_passw0rd@db:5432/lega?application_name=LocalEGA
+export DB_OUT_CONNECTION=postgres://lega_out:0ut_passw0rd@db:5432/lega?application_name=LocalEGA
 export POSTGRES_PASSWORD=p0stgres_passw0rd
 export POSTGRES_CONNECTION=postgres://postgres:p0stgres_passw0rd@postgres:5432/postgres?sslmode=disable
 
@@ -84,13 +84,13 @@ function apply_configs() {
 
   frepl "<<POSTGRES_PASSWORD>>" "$POSTGRES_PASSWORD" $f
 
-  # tsd-api-mock
+  # tsd
   frepl "<<SERVER_CERT_PASSWORD>>" "$SERVER_CERT_PASSWORD" $f
   frepl "<<DEV_CERTS_DIR>>" "$TMP_CERT_DIR" $f
   frepl "<<DEV_SCRIPTS_DIR>>" "$DEV_SCRIPTS_DIR" $f
   frepl "<<LOCAL_VOLUME_MAPPING_DIR>>" "$WORKING_DIR" $f
 
-  # sda-db
+  # db
   frepl "<<SDA_DB_LEGA_IN_PASSWORD>>" "$DB_LEGA_IN_PASSWORD" $f
   frepl "<<SDA_DB_LEGA_OUT_PASSWORD>>" "$DB_LEGA_OUT_PASSWORD" $f
   frepl "<<SDA_DB_POSTGRES_PASSWORD>>" "passw0rd" $f # FIXME
@@ -199,7 +199,6 @@ function generate_certs() {
     -in jwt.priv.pem \
     -out jwt.pub.pem
 
-  # Step 7: Create Docker secrets for JWT private
   # key, JWT public key, and other secrets
   openssl rsa -pubout -in jwt.priv.pem -out jwt.pub.pem
   printf "%s" "${KEY_PASSWORD}" >ega.sec.pass
