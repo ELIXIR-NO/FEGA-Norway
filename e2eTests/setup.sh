@@ -228,6 +228,31 @@ function generate_certs() {
 
   cd ../../
 
+cat << EOF
+----------------------------------------------------------------------------------------------
+
+IMPORTANT NOTE FOR DEVELOPER ⚠️
+
+Currently there's an issue with certificate ownership. SDA images require some certificates
+to be user `nobody` and `nogroup` uid:gid mappings. TO overcome this limitation you must do this:-
+
+1. Navigate to e2eTests subdirectory
+2. Run "sudo chown -R 65534:65534 ./tmp/certs/*"
+3. Then, "docker-compose down"
+4. Finally, "docker-compose up -d"
+
+Note: you only have to do this once.
+
+Entrypoint scripts are not a feasible solution as SDA (ingest,verify,finalize,mapper) components
+are based on distro-less images (no shell access).
+
+We overcome this problem in some containers with alternative approaches. To see navigate to:
+
+1. docker-compose.template.yml > services.cegamq.command
+2. docker-compose.template.yml > services.db.volumes and services.db.entrypoint
+
+----------------------------------------------------------------------------------------------
+EOF
 }
 
 # Invokers --
