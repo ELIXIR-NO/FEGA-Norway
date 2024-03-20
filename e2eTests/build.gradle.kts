@@ -48,7 +48,7 @@ tasks.register<Exec>("generate-certs") {
 }
 
 tasks.register<Exec>("apply-configs") {
-    dependsOn("generate-certs")
+    //dependsOn("generate-certs")
     commandLine("sh", "-c", "./setup.sh apply_configs")
 }
 
