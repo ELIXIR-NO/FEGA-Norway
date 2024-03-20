@@ -225,6 +225,52 @@ function generate_certs() {
   cp localhost+5-client-key.der client-key.der
   cp localhost+5-client.p12 client.p12
 
+  chmod 0600 *
+
+  # tsd
+  mkdir -p tsd &&
+    cp rootCA.pem tsd/rootCA.pem &&
+    cp server.p12 tsd/server.p12
+
+  # db
+  mkdir -p db &&
+    cp server.pem db/server.pem &&
+    cp rootCA.pem db/rootCA.pem
+
+  # mq
+  mkdir -p mq &&
+    cp server.pem mq/server.pem &&
+    cp server-key.pem mq/server-key.pem &&
+    cp rootCA.pem mq/rootCA.pem
+
+  # proxy
+  mkdir -p proxy &&
+    cp rootCA.p12 proxy/rootCA.p12 &&
+    cp server.p12 proxy/server.p12 &&
+    cp jwt.pub.pem proxy/jwt.pub.pem
+
+  # ingest,verify,finalize,mapper
+  mkdir -p sda &&
+    cp rootCA.pem sda/rootCA.pem &&
+    cp client.pem sda/client.pem &&
+    cp client-key.pem sda/client-key.pem &&
+    cp ega.sec.pem sda/ega.sec.pem
+
+  # doa
+  mkdir -p doa &&
+    cp rootCA.pem doa/rootCA.pem &&
+    cp client.pem doa/client.pem &&
+    cp client-key.der doa/client-key.der &&
+    cp jwt.pub.pem doa/jwt.pub.pem &&
+    cp ega.sec.pem doa/ega.sec.pem &&
+    cp ega.sec.pass doa/ega.sec.pass
+
+  # cegamq
+  mkdir -p cegamq &&
+    cp server.pem cegamq/server.pem &&
+    cp server-key.pem cegamq/server-key.pem &&
+    cp rootCA.pem cegamq/rootCA.pem
+
   cd ../../
 
 }
