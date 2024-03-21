@@ -284,6 +284,8 @@ function init() {
     exit 1
   fi
   mkdir -p $TMP_CERT_DIR $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db
+  mkdir -p $TMP_CERT_DIR/tsd $TMP_CERT_DIR/db $TMP_CERT_DIR/mq $TMP_CERT_DIR/proxy $TMP_CERT_DIR/sda $TMP_CERT_DIR/doa $TMP_CERT_DIR/cegamq
+  chmod -R 777 $TMP_CERT_DIR/*
   chmod -R 777 $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db
 }
 
