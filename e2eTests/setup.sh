@@ -225,8 +225,6 @@ function generate_certs() {
   cp localhost+5-client-key.der client-key.der
   cp localhost+5-client.p12 client.p12
 
-  chmod 0600 *
-
   # tsd
   mkdir -p tsd &&
     cp rootCA.pem tsd/rootCA.pem &&
