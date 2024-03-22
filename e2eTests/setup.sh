@@ -9,11 +9,13 @@ if [[ -z "$E2E_DIR" ]] ; then
 fi
 
 export E2E_DIR
-export DEV_SCRIPTS_DIR="$E2E_DIR/dev" # development
+export CONFS_DIR="$E2E_DIR/confs"
 export LOCAL_BIN="$E2E_DIR/bin"
-export WORKING_DIR="$E2E_DIR/tmp"
-export TMP_CERT_DIR="$WORKING_DIR/certs"
-export LOCAL_VOLUME_MAPPING_DIR="$WORKING_DIR"
+export TMP_DIR="$E2E_DIR/tmp"
+
+export TMP_CERTS_DIR="$TMP_DIR/certs"
+export TMP_VOLUMES_DIR="$TMP_DIR/volumes"
+export TMP_CONFS_DIR="$TMP_DIR/confs"
 
 export SERVER_CERT_PASSWORD=server_cert_passw0rd
 export CLIENT_CERT_PASSWORD=client_cert_passw0rd
@@ -62,7 +64,7 @@ export PUBLIC_BROKER_HASH=4tHURqDiZzypw0NTvoHhpn8/MMgONWonWxgRZ4NXgR8nZRBz
 export ARCHIVE_PATH=/ega/archive/
 
 export MQ_HOST=mq
-export MQ_CONNECTION=amqps://admin:guest@mq:5671/test
+export MQ_CONNECTION=amqp://admin:guest@mq:5672/test
 export DB_IN_CONNECTION=postgres://lega_in:in_passw0rd@db:5432/lega?application_name=LocalEGA
 export DB_OUT_CONNECTION=postgres://lega_out:0ut_passw0rd@db:5432/lega?application_name=LocalEGA
 export POSTGRES_PASSWORD=p0stgres_passw0rd
@@ -82,23 +84,27 @@ function apply_configs() {
 
   local f=docker-compose.yml
 
+  frepl "<<CONFS_DIR>>" "$CONFS_DIR" $f
+  frepl "<<TMP_CERTS_DIR>>" "$TMP_CERTS_DIR" $f
+  frepl "<<TMP_VOLUMES_DIR>>" "$TMP_VOLUMES_DIR" $f
+  frepl "<<TMP_CONFS_DIR>>" "$TMP_CONFS_DIR" $f
+
   frepl "<<POSTGRES_PASSWORD>>" "$POSTGRES_PASSWORD" $f
 
   # tsd
   frepl "<<SERVER_CERT_PASSWORD>>" "$SERVER_CERT_PASSWORD" $f
-  frepl "<<DEV_CERTS_DIR>>" "$TMP_CERT_DIR" $f
-  frepl "<<DEV_SCRIPTS_DIR>>" "$DEV_SCRIPTS_DIR" $f
-  frepl "<<LOCAL_VOLUME_MAPPING_DIR>>" "$WORKING_DIR" $f
 
   # db
   frepl "<<SDA_DB_LEGA_IN_PASSWORD>>" "$DB_LEGA_IN_PASSWORD" $f
   frepl "<<SDA_DB_LEGA_OUT_PASSWORD>>" "$DB_LEGA_OUT_PASSWORD" $f
   frepl "<<SDA_DB_POSTGRES_PASSWORD>>" "passw0rd" $f # FIXME
 
-  # rabbitmq
-  frepl "<<LOCAL_EGA_BROKER_VIRTUAL_HOST>>" "$PRIVATE_BROKER_VHOST" $f
-  frepl "<<LOCAL_EGA_BROKER_USER_NAME>>" "$PRIVATE_BROKER_USER" $f
-  frepl "<<LOCAL_EGA_BROKER_PASSWORD_HASH>>" "$PRIVATE_BROKER_HASH" $f
+  # mq
+  cp -R "$CONFS_DIR"/mq/* "$TMP_CONFS_DIR"/mq
+  local definitions_json_file="$TMP_CONFS_DIR"/mq/definitions.json
+  frepl "<<USER_NAME>>" "$PRIVATE_BROKER_USER" $definitions_json_file
+  frepl "<<PASSWORD_HASH>>" "$PRIVATE_BROKER_HASH" $definitions_json_file
+  frepl "<<VIRTUAL_HOST>>" "$PRIVATE_BROKER_VHOST" $definitions_json_file
 
   # proxy
   frepl "<<PROXY_ROOT_CERT_PASSWORD>>" "$ROOT_CERT_PASSWORD" $f
@@ -153,7 +159,7 @@ function generate_certs() {
   # Step 0: Navigate to the temporary directory.
   # This is where we'll store all the certificates
   # in the host machine.
-  cd $TMP_CERT_DIR || exit 1
+  cd $TMP_CERTS_DIR || exit 1
 
   mkcert="$LOCAL_BIN/mkcert"
   crypt4gh="$LOCAL_BIN/crypt4gh"
@@ -281,14 +287,21 @@ function init() {
     echo "Dependency check failed. Exiting."
     exit 1
   fi
-  mkdir -p $TMP_CERT_DIR $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db
-  mkdir -p $TMP_CERT_DIR/tsd $TMP_CERT_DIR/db $TMP_CERT_DIR/mq $TMP_CERT_DIR/proxy $TMP_CERT_DIR/sda $TMP_CERT_DIR/doa $TMP_CERT_DIR/cegamq
-  chmod -R 777 $TMP_CERT_DIR/*
-  chmod -R 777 $WORKING_DIR/tsd $WORKING_DIR/vault $WORKING_DIR/db
+  mkdir -p $TMP_VOLUMES_DIR/tsd $TMP_VOLUMES_DIR/vault $TMP_VOLUMES_DIR/db
+  mkdir -p $TMP_CONFS_DIR/mq
+  mkdir -p $TMP_CERTS_DIR \
+   $TMP_CERTS_DIR/tsd \
+   $TMP_CERTS_DIR/db \
+   $TMP_CERTS_DIR/mq \
+   $TMP_CERTS_DIR/proxy \
+   $TMP_CERTS_DIR/sda \
+   $TMP_CERTS_DIR/doa \
+   $TMP_CERTS_DIR/cegamq
+  chmod -R 777 $TMP_DIR/*
 }
 
 function clean() {
-  rm -rf $WORKING_DIR
+  rm -rf $TMP_DIR
   rm -rf $E2E_DIR/docker-compose.ym*
   echo "Cleanup completed 💯"
 }

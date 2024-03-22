@@ -10,9 +10,9 @@ services:
     environment:
       - CERT_PASSWORD=<<SERVER_CERT_PASSWORD>>
     volumes:
-      - <<DEV_CERTS_DIR>>/tsd/rootCA.pem:/etc/ega/ssl/CA.cert
-      - <<DEV_CERTS_DIR>>/tsd/server.p12:/etc/ega/ssl/server.cert
-      - <<LOCAL_VOLUME_MAPPING_DIR>>/tsd:/tsd/p11/data/durable/apps/ega/
+      - <<TMP_CERTS_DIR>>/tsd/rootCA.pem:/etc/ega/ssl/CA.cert
+      - <<TMP_CERTS_DIR>>/tsd/server.p12:/etc/ega/ssl/server.cert
+      - <<TMP_VOLUMES_DIR>>/tsd:/tsd/p11/data/durable/apps/ega/
 
   db:
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026-postgres
@@ -29,11 +29,11 @@ services:
       - DB_LEGA_IN_PASSWORD=<<SDA_DB_LEGA_IN_PASSWORD>>
       - DB_LEGA_OUT_PASSWORD=<<SDA_DB_LEGA_OUT_PASSWORD>>
     volumes:
-      - <<DEV_CERTS_DIR>>/db/server.pem:/etc/ega/pg.pem
-      - <<DEV_CERTS_DIR>>/db/server-key.pem:/etc/ega/pg-server.pem
-      - <<DEV_CERTS_DIR>>/db/rootCA.pem:/etc/ega/CA.pem
-      - <<LOCAL_VOLUME_MAPPING_DIR>>/db:/ega
-      - <<DEV_SCRIPTS_DIR>>/sda-pg-db-entrypoint.sh:/sda-pg-db-entrypoint.sh
+      - <<TMP_CERTS_DIR>>/db/server.pem:/etc/ega/pg.pem
+      - <<TMP_CERTS_DIR>>/db/server-key.pem:/etc/ega/pg-server.pem
+      - <<TMP_CERTS_DIR>>/db/rootCA.pem:/etc/ega/CA.pem
+      - <<TMP_VOLUMES_DIR>>/db:/ega
+      - <<CONFS_DIR>>/sda-pg-db-entrypoint.sh:/sda-pg-db-entrypoint.sh
     entrypoint: [ "/sda-pg-db-entrypoint.sh", "/usr/local/bin/entrypoint.sh", "postgres" ]
     healthcheck:
       test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "lega_out" ]
@@ -42,23 +42,15 @@ services:
       retries: 3
 
   mq:
-    image: ghcr.io/uio-bmi/localega-broker:latest
-    ports:
-      - "5671:5671"
-      - "15671:15671"
-    environment:
-      - SSL_VERIFY=verify_peer
-      - SSL_FAIL_IF_NO_PEER_CERT=false
-      - SSL_DEPTH=2
-      - VIRTUAL_HOST=<<LOCAL_EGA_BROKER_VIRTUAL_HOST>>
-      - USER_NAME=<<LOCAL_EGA_BROKER_USER_NAME>>
-      - PASSWORD_HASH=<<LOCAL_EGA_BROKER_PASSWORD_HASH>>
+    image: rabbitmq:3.12.13-management-alpine
     volumes:
-      - <<DEV_CERTS_DIR>>/mq/server.pem:/etc/rabbitmq/ssl.cert
-      - <<DEV_CERTS_DIR>>/mq/server-key.pem:/etc/rabbitmq/ssl.key
-      - <<DEV_CERTS_DIR>>/mq/rootCA.pem:/etc/rabbitmq/CA.cert
+      - <<TMP_CONFS_DIR>>/mq:/etc/rabbitmq
+      - <<TMP_CERTS_DIR>>/mq/server.pem:/etc/rabbitmq/ssl.cert
+      - <<TMP_CERTS_DIR>>/mq/server-key.pem:/etc/rabbitmq/ssl.key
+      - <<TMP_CERTS_DIR>>/mq/rootCA.pem:/etc/rabbitmq/CA.cert
+    command: sh -c "rabbitmq-plugins enable --offline rabbitmq_federation rabbitmq_federation_management rabbitmq_shovel rabbitmq_shovel_management && rabbitmq-server"
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "5671" ]
+      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
       interval: 5s
       timeout: 20s
       retries: 3
@@ -95,10 +87,10 @@ services:
       - TSD_ACCESS_KEY=<<PROXY_TSD_ACCESS_KEY>>
       - POSTGRES_PASSWORD=<<PROXY_POSTGRES_PASSWORD>>
     volumes:
-      - <<DEV_CERTS_DIR>>/proxy/rootCA.p12:/etc/ega/ssl/CA.cert
-      - <<DEV_CERTS_DIR>>/proxy/server.p12:/etc/ega/ssl/server.cert
-      - <<DEV_CERTS_DIR>>/proxy/jwt.pub.pem:/etc/ega/jwt/passport.pem
-      - <<DEV_CERTS_DIR>>/proxy/jwt.pub.pem:/etc/ega/jwt/visa.pem
+      - <<TMP_CERTS_DIR>>/proxy/rootCA.p12:/etc/ega/ssl/CA.cert
+      - <<TMP_CERTS_DIR>>/proxy/server.p12:/etc/ega/ssl/server.cert
+      - <<TMP_CERTS_DIR>>/proxy/jwt.pub.pem:/etc/ega/jwt/passport.pem
+      - <<TMP_CERTS_DIR>>/proxy/jwt.pub.pem:/etc/ega/jwt/visa.pem
 
   interceptor:
     image: mq-interceptor:latest
@@ -122,7 +114,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=<<POSTGRES_PASSWORD>>
     volumes:
-      - <<DEV_SCRIPTS_DIR>>/init-mappings-db.sh:/docker-entrypoint-initdb.d/init-mappings-db.sh
+      - <<CONFS_DIR>>/init-mappings-db.sh:/docker-entrypoint-initdb.d/init-mappings-db.sh
 
   # SDA
 
@@ -162,12 +154,12 @@ services:
       - INBOX_LOCATION=/ega/inbox
       - LOG_LEVEL=debug
     volumes:
-      - <<DEV_CERTS_DIR>>/sda/rootCA.pem:/etc/ega/CA.cert
-      - <<DEV_CERTS_DIR>>/sda/client.pem:/etc/ega/client.cert
-      - <<DEV_CERTS_DIR>>/sda/client-key.pem:/etc/ega/client-key.cert
-      - <<DEV_CERTS_DIR>>/sda/ega.sec.pem:/etc/ega/ega.sec
-      - <<LOCAL_VOLUME_MAPPING_DIR>>/tsd:/ega/inbox
-      - <<LOCAL_VOLUME_MAPPING_DIR>>/vault:/ega/archive
+      - <<TMP_CERTS_DIR>>/sda/rootCA.pem:/etc/ega/CA.cert
+      - <<TMP_CERTS_DIR>>/sda/client.pem:/etc/ega/client.cert
+      - <<TMP_CERTS_DIR>>/sda/client-key.pem:/etc/ega/client-key.cert
+      - <<TMP_CERTS_DIR>>/sda/ega.sec.pem:/etc/ega/ega.sec
+      - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
+      - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
     command: "sda-ingest"
 
   verify:
@@ -205,12 +197,12 @@ services:
       - INBOX_LOCATION=/ega/inbox
       - LOG_LEVEL=debug
     volumes:
-      - <<DEV_CERTS_DIR>>/sda/rootCA.pem:/etc/ega/CA.cert
-      - <<DEV_CERTS_DIR>>/sda/client.pem:/etc/ega/client.cert
-      - <<DEV_CERTS_DIR>>/sda/client-key.pem:/etc/ega/client-key.cert
-      - <<DEV_CERTS_DIR>>/sda/ega.sec.pem:/etc/ega/ega.sec
-      - <<LOCAL_VOLUME_MAPPING_DIR>>/vault:/ega/archive
-      - <<LOCAL_VOLUME_MAPPING_DIR>>/tsd:/ega/inbox
+      - <<TMP_CERTS_DIR>>/sda/rootCA.pem:/etc/ega/CA.cert
+      - <<TMP_CERTS_DIR>>/sda/client.pem:/etc/ega/client.cert
+      - <<TMP_CERTS_DIR>>/sda/client-key.pem:/etc/ega/client-key.cert
+      - <<TMP_CERTS_DIR>>/sda/ega.sec.pem:/etc/ega/ega.sec
+      - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
+      - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
     command: "sda-verify"
 
   finalize:
@@ -243,9 +235,9 @@ services:
       - DB_CLIENTKEY=/etc/ega/client-key.cert
       - LOG_LEVEL=debug
     volumes:
-      - <<DEV_CERTS_DIR>>/sda/rootCA.pem:/etc/ega/CA.cert
-      - <<DEV_CERTS_DIR>>/sda/client.pem:/etc/ega/client.cert
-      - <<DEV_CERTS_DIR>>/sda/client-key.pem:/etc/ega/client-key.cert
+      - <<TMP_CERTS_DIR>>/sda/rootCA.pem:/etc/ega/CA.cert
+      - <<TMP_CERTS_DIR>>/sda/client.pem:/etc/ega/client.cert
+      - <<TMP_CERTS_DIR>>/sda/client-key.pem:/etc/ega/client-key.cert
     command: "sda-finalize"
 
   mapper:
@@ -277,9 +269,9 @@ services:
       - DB_CLIENTKEY=/etc/ega/client-key.cert
       - LOG_LEVEL=debug
     volumes:
-      - <<DEV_CERTS_DIR>>/sda/rootCA.pem:/etc/ega/CA.cert
-      - <<DEV_CERTS_DIR>>/sda/client.pem:/etc/ega/client.cert
-      - <<DEV_CERTS_DIR>>/sda/client-key.pem:/etc/ega/client-key.cert
+      - <<TMP_CERTS_DIR>>/sda/rootCA.pem:/etc/ega/CA.cert
+      - <<TMP_CERTS_DIR>>/sda/client.pem:/etc/ega/client.cert
+      - <<TMP_CERTS_DIR>>/sda/client-key.pem:/etc/ega/client-key.cert
     command: "sda-mapper"
 
   # Out
@@ -300,14 +292,14 @@ services:
       - POSTGRES_PASSWORD=<<DB_LEGA_OUT_PASSWORD>>
       - OUTBOX_ENABLED=false
     volumes:
-      - <<DEV_CERTS_DIR>>/doa/rootCA.pem:/etc/ega/ssl/CA.cert
-      - <<DEV_CERTS_DIR>>/doa/client.pem:/etc/ega/ssl/client.cert
-      - <<DEV_CERTS_DIR>>/doa/client-key.der:/etc/ega/ssl/client.key
-      - <<DEV_CERTS_DIR>>/doa/jwt.pub.pem:/etc/ega/jwt/passport.pem
-      - <<DEV_CERTS_DIR>>/doa/jwt.pub.pem:/etc/ega/jwt/visa.pem
-      - <<DEV_CERTS_DIR>>/doa/ega.sec.pem:/etc/ega/crypt4gh/key.pem
-      - <<DEV_CERTS_DIR>>/doa/ega.sec.pass:/etc/ega/crypt4gh/key.pass
-      - <<LOCAL_VOLUME_MAPPING_DIR>>/vault:/ega/archive
+      - <<TMP_CERTS_DIR>>/doa/rootCA.pem:/etc/ega/ssl/CA.cert
+      - <<TMP_CERTS_DIR>>/doa/client.pem:/etc/ega/ssl/client.cert
+      - <<TMP_CERTS_DIR>>/doa/client-key.der:/etc/ega/ssl/client.key
+      - <<TMP_CERTS_DIR>>/doa/jwt.pub.pem:/etc/ega/jwt/passport.pem
+      - <<TMP_CERTS_DIR>>/doa/jwt.pub.pem:/etc/ega/jwt/visa.pem
+      - <<TMP_CERTS_DIR>>/doa/ega.sec.pem:/etc/ega/crypt4gh/key.pem
+      - <<TMP_CERTS_DIR>>/doa/ega.sec.pass:/etc/ega/crypt4gh/key.pass
+      - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
     user: "65534:65534"
 
   # CEGA
@@ -322,12 +314,10 @@ services:
       - "15672:15672"
       - "25672:15672"
     volumes:
-      - <<DEV_CERTS_DIR>>/cegamq/server.pem:/etc/rabbitmq/ssl/mq.pem
-      - <<DEV_CERTS_DIR>>/cegamq/server-key.pem:/etc/rabbitmq/ssl/mq-key.pem
-      - <<DEV_CERTS_DIR>>/cegamq/rootCA.pem:/etc/rabbitmq/ssl/ca.pem
-      - <<DEV_SCRIPTS_DIR>>/cega-confs/cega:/etc/rabbitmq/conf/cega
-      - <<DEV_SCRIPTS_DIR>>/cega-confs/cega.json:/etc/rabbitmq/conf/cega.json
-      - <<DEV_SCRIPTS_DIR>>/cega-confs/cega.plugins:/etc/rabbitmq/conf/cega.plugins
+      - <<TMP_CERTS_DIR>>/cegamq/server.pem:/etc/rabbitmq/ssl/mq.pem
+      - <<TMP_CERTS_DIR>>/cegamq/server-key.pem:/etc/rabbitmq/ssl/mq-key.pem
+      - <<TMP_CERTS_DIR>>/cegamq/rootCA.pem:/etc/rabbitmq/ssl/ca.pem
+      - <<CONFS_DIR>>/cegamq/confs:/etc/rabbitmq/conf
     healthcheck:
       test:
         [
@@ -344,7 +334,7 @@ services:
   cegaauth:
     image: egarchive/lega-base:release.v0.2.0
     volumes:
-      - <<DEV_SCRIPTS_DIR>>/cega-users:/cega
+      - <<CONFS_DIR>>/cegamq/users:/cega
     command:
       [
         "python",
