@@ -5,6 +5,8 @@ services:
   # TSD
 
   tsd:
+    container_name: tsd
+    hostname: tsd
     image: tsd-api-mock:latest
     build: ../services/tsd-api-mock
     environment:
@@ -15,6 +17,8 @@ services:
       - <<TMP_VOLUMES_DIR>>/tsd:/tsd/p11/data/durable/apps/ega/
 
   db:
+    container_name: db
+    hostname: db
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026-postgres
     ports:
       - "5432:5432"
@@ -42,13 +46,14 @@ services:
       retries: 3
 
   mq:
-    image: rabbitmq:3.12.13-management-alpine
+    container_name: mq
+    hostname: mq
+    image: rabbitmq:latest
+    ports:
+      - "5672:5672"
     volumes:
       - <<TMP_CONFS_DIR>>/mq:/etc/rabbitmq
-      - <<TMP_CERTS_DIR>>/mq/server.pem:/etc/rabbitmq/ssl.cert
-      - <<TMP_CERTS_DIR>>/mq/server-key.pem:/etc/rabbitmq/ssl.key
-      - <<TMP_CERTS_DIR>>/mq/rootCA.pem:/etc/rabbitmq/CA.cert
-    command: sh -c "rabbitmq-plugins enable --offline rabbitmq_federation rabbitmq_federation_management rabbitmq_shovel rabbitmq_shovel_management && rabbitmq-server"
+    command: "rabbitmq-server"
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "5672" ]
       interval: 5s
@@ -58,6 +63,8 @@ services:
   # PROXY
 
   proxy:
+    container_name: proxy
+    hostname: proxy
     image: tsd-proxy:latest
     build: ../services/localega-tsd-proxy
     depends_on:
@@ -93,6 +100,8 @@ services:
       - <<TMP_CERTS_DIR>>/proxy/jwt.pub.pem:/etc/ega/jwt/visa.pem
 
   interceptor:
+    container_name: interceptor
+    hostname: interceptor
     image: mq-interceptor:latest
     build: ../services/mq-interceptor
     depends_on:
@@ -108,6 +117,8 @@ services:
       - LEGA_MQ_EXCHANGE=sda
 
   postgres:
+    container_name: postgres
+    hostname: postgres
     image: postgres
     ports:
       - "5433:5432"
@@ -119,6 +130,8 @@ services:
   # SDA
 
   ingest:
+    container_name: ingest
+    hostname: ingest
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
       - mq
@@ -163,6 +176,8 @@ services:
     command: "sda-ingest"
 
   verify:
+    container_name: verify
+    hostname: verify
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
       - mq
@@ -206,6 +221,8 @@ services:
     command: "sda-verify"
 
   finalize:
+    container_name: finalize
+    hostname: finalize
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
       - mq
@@ -241,6 +258,8 @@ services:
     command: "sda-finalize"
 
   mapper:
+    container_name: mapper
+    hostname: mapper
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
       - mq
@@ -277,6 +296,8 @@ services:
   # Out
 
   doa:
+    container_name: doa
+    hostname: doa
     image: neicnordic/sda-doa:release-v1.6.0
     depends_on:
       - mq
@@ -305,12 +326,14 @@ services:
   # CEGA
 
   cegamq:
+    container_name: cegamq
+    hostname: cegamq
     image: rabbitmq:3.12.13-management-alpine
     environment:
       - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/conf/cega
       - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/conf/cega.plugins
     ports:
-      - "5672:5671"
+      - "5671:5671"
       - "15672:15672"
       - "25672:15672"
     volumes:
@@ -332,6 +355,8 @@ services:
     command: sh -c "chmod -R 0644 /etc/rabbitmq/conf/* && chown -R 100:101 /etc/rabbitmq/conf/* && rabbitmq-server"
 
   cegaauth:
+    container_name: cegaauth
+    hostname: cegaauth
     image: egarchive/lega-base:release.v0.2.0
     volumes:
       - <<CONFS_DIR>>/cegamq/users:/cega
