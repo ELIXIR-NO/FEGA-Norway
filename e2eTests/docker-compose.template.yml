@@ -48,12 +48,15 @@ services:
   mq:
     container_name: mq
     hostname: mq
-    image: rabbitmq:latest
+    image: rabbitmq:3.12.13-management-alpine
     ports:
       - "5672:5672"
     volumes:
       - <<TMP_CONFS_DIR>>/mq:/etc/rabbitmq
-    command: "rabbitmq-server"
+      - <<TMP_CERTS_DIR>>/mq/server.pem:/etc/rabbitmq/ssl.cert
+      - <<TMP_CERTS_DIR>>/mq/server-key.pem:/etc/rabbitmq/ssl.key
+      - <<TMP_CERTS_DIR>>/mq/rootCA.pem:/etc/rabbitmq/CA.cert
+    command: sh -c "rabbitmq-plugins enable --offline rabbitmq_federation rabbitmq_federation_management rabbitmq_shovel rabbitmq_shovel_management && rabbitmq-server"
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "5672" ]
       interval: 5s

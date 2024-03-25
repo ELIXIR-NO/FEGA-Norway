@@ -64,7 +64,7 @@ export PUBLIC_BROKER_HASH=4tHURqDiZzypw0NTvoHhpn8/MMgONWonWxgRZ4NXgR8nZRBz
 export ARCHIVE_PATH=/ega/archive/
 
 export MQ_HOST=mq
-export MQ_CONNECTION=amqp://admin:guest@mq:5672/test
+export MQ_CONNECTION=amqps://admin:guest@mq:5671/test
 export DB_IN_CONNECTION=postgres://lega_in:in_passw0rd@db:5432/lega?application_name=LocalEGA
 export DB_OUT_CONNECTION=postgres://lega_out:0ut_passw0rd@db:5432/lega?application_name=LocalEGA
 export POSTGRES_PASSWORD=p0stgres_passw0rd
@@ -259,6 +259,8 @@ function generate_certs() {
     cp client.pem sda/client.pem &&
     cp client-key.pem sda/client-key.pem &&
     cp ega.sec.pem sda/ega.sec.pem
+
+  chmod -R 644 sda/*
 
   # doa
   mkdir -p doa &&
