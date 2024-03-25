@@ -1,4 +1,5 @@
 plugins {
+    id("java")
     id("springboot-conventions")
     id("jsonwebtoken")
 }
