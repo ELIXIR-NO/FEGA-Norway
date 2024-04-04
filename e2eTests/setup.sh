@@ -25,13 +25,13 @@ export KEY_PASSWORD=key_passw0rd # Also used by SDA
 export CEGA_AUTH_URL=http://cegaauth:8443/lega/v1/legas/users/
 export CEGA_USERNAME=dummy
 export CEGA_PASSWORD=dummy
-export CEGA_MQ_CONNECTION=amqps://test:test@cegamq:5671/lega?cacertfile=/etc/ega/ssl/CA.cert
+export CEGA_MQ_CONNECTION=amqps://test:test@cegamq:5672/lega?cacertfile=/etc/ega/ssl/CA.cert
 
 export EGA_BOX_USERNAME=dummy # Used by IngestionTest.java
 export EGA_BOX_PASSWORD=dummy # Used by IngestionTest.java
 
 export BROKER_HOST=cegamq
-export BROKER_PORT=5671
+export BROKER_PORT=5672
 export BROKER_USERNAME=test
 export BROKER_PASSWORD=test
 export BROKER_VHOST=lega
@@ -97,7 +97,7 @@ function apply_configs() {
   # db
   frepl "<<SDA_DB_LEGA_IN_PASSWORD>>" "$DB_LEGA_IN_PASSWORD" $f
   frepl "<<SDA_DB_LEGA_OUT_PASSWORD>>" "$DB_LEGA_OUT_PASSWORD" $f
-  frepl "<<SDA_DB_POSTGRES_PASSWORD>>" "passw0rd" $f # FIXME
+  frepl "<<SDA_DB_POSTGRES_PASSWORD>>" "$POSTGRES_PASSWORD" $f
 
   # mq
   cp -R "$CONFS_DIR"/mq/* "$TMP_CONFS_DIR"/mq
@@ -233,13 +233,14 @@ function generate_certs() {
 
   # tsd
   mkdir -p tsd &&
-    cp rootCA.pem tsd/rootCA.pem &&
-    cp server.p12 tsd/server.p12
+    cp rootCA.pem tsd/CA.cert &&
+    cp server.p12 tsd/server.cert
 
   # db
   mkdir -p db &&
-    cp server.pem db/server.pem &&
-    cp rootCA.pem db/rootCA.pem
+    cp server.pem db/pg.pem &&
+    cp server-key.pem db/pg-server.pem &&
+    cp rootCA.pem db/CA.pem
 
   # mq
   mkdir -p mq &&
@@ -249,33 +250,35 @@ function generate_certs() {
 
   # proxy
   mkdir -p proxy &&
-    cp rootCA.p12 proxy/rootCA.p12 &&
-    cp server.p12 proxy/server.p12 &&
-    cp jwt.pub.pem proxy/jwt.pub.pem
+    cp rootCA.p12 proxy/CA.cert &&
+    cp server.p12 proxy/server.cert &&
+    cp jwt.pub.pem proxy/passport.pem &&
+    cp jwt.pub.pem proxy/visa.pem
 
   # ingest,verify,finalize,mapper
   mkdir -p sda &&
-    cp rootCA.pem sda/rootCA.pem &&
-    cp client.pem sda/client.pem &&
-    cp client-key.pem sda/client-key.pem &&
-    cp ega.sec.pem sda/ega.sec.pem
+    cp rootCA.pem sda/CA.cert &&
+    cp client.pem sda/client.cert &&
+    cp client-key.pem sda/client-key.cert &&
+    cp ega.sec.pem sda/ega.sec
 
   chmod -R 644 sda/*
 
   # doa
   mkdir -p doa &&
-    cp rootCA.pem doa/rootCA.pem &&
-    cp client.pem doa/client.pem &&
-    cp client-key.der doa/client-key.der &&
-    cp jwt.pub.pem doa/jwt.pub.pem &&
-    cp ega.sec.pem doa/ega.sec.pem &&
-    cp ega.sec.pass doa/ega.sec.pass
+    cp rootCA.pem doa/CA.cert &&
+    cp client.pem doa/client.cert &&
+    cp client-key.der doa/client.key &&
+    cp jwt.pub.pem doa/passport.pem &&
+    cp jwt.pub.pem doa/visa.pem &&
+    cp ega.sec.pem doa/key.pem &&
+    cp ega.sec.pass doa/key.pass
 
   # cegamq
   mkdir -p cegamq &&
-    cp server.pem cegamq/server.pem &&
-    cp server-key.pem cegamq/server-key.pem &&
-    cp rootCA.pem cegamq/rootCA.pem
+    cp server.pem cegamq/mq.pem &&
+    cp server-key.pem cegamq/mq-key.pem &&
+    cp rootCA.pem cegamq/ca.pem
 
   cd ../../
 

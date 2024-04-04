@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -9,11 +10,13 @@ func main() {
 	// AMQP URL for connecting to RabbitMQ
 	// Format: amqp://user:password@host:port/vhost
 	// Default login for RabbitMQ is usually "guest:guest" on localhost
-	amqpURL := "amqp://admin:guest@mq:5672/test"
+	amqpURL := "amqps://admin:guest@172.23.0.3:5671/test"
 	fmt.Printf("Trying to connect to %s\n", amqpURL)
 
 	// Attempt to connect to RabbitMQ
-	conn, err := amqp.Dial(amqpURL)
+	conn, err := amqp.DialTLS(amqpURL, &tls.Config{
+		InsecureSkipVerify: true,
+	})
 	if err != nil {
 		fmt.Println("Failed to connect to RabbitMQ:", err)
 		return
