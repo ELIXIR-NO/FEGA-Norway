@@ -9,11 +9,7 @@ services:
     hostname: tsd
     image: tsd-api-mock:latest
     build: ../services/tsd-api-mock
-    environment:
-      - CERT_PASSWORD=<<SERVER_CERT_PASSWORD>>
     volumes:
-      - <<TMP_CERTS_DIR>>/tsd/CA.cert:/etc/ega/ssl/CA.cert
-      - <<TMP_CERTS_DIR>>/tsd/server.cert:/etc/ega/ssl/server.cert
       - <<TMP_VOLUMES_DIR>>/tsd:/tsd/p11/data/durable/apps/ega/
 
   db:
@@ -25,20 +21,15 @@ services:
     environment:
       - POSTGRES_DB=sda
       - PGDATA=/var/lib/postgresql/data
-      - POSTGRES_PASSWORD=passw0rd
-      - POSTGRES_SERVER_CERT=/etc/ega/pg.pem
-      - POSTGRES_SERVER_KEY=/etc/ega/pg-server.pem
-      - POSTGRES_SERVER_CACERT=/etc/ega/CA.pem
-      - POSTGRES_VERIFY_PEER=verify-ca
+      - POSTGRES_PASSWORD=rootpasswd
+      - POSTGRES_SERVER_CERT=
+      - POSTGRES_SERVER_KEY=
+      - POSTGRES_SERVER_CACERT=
+      - POSTGRES_VERIFY_PEER=
       - DB_LEGA_IN_PASSWORD=<<SDA_DB_LEGA_IN_PASSWORD>>
       - DB_LEGA_OUT_PASSWORD=<<SDA_DB_LEGA_OUT_PASSWORD>>
     volumes:
-      - <<TMP_CERTS_DIR>>/db/pg.pem:/etc/ega/pg.pem
-      - <<TMP_CERTS_DIR>>/db/pg-server.pem:/etc/ega/pg-server.pem
-      - <<TMP_CERTS_DIR>>/db/CA.pem:/etc/ega/CA.pem
       - <<TMP_VOLUMES_DIR>>/db:/ega
-      - <<CONFS_DIR>>/sda-pg-db-entrypoint.sh:/sda-pg-db-entrypoint.sh
-    entrypoint: [ "/sda-pg-db-entrypoint.sh", "/usr/local/bin/entrypoint.sh", "postgres" ]
     healthcheck:
       test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "lega_out" ]
       interval: 5s
@@ -50,12 +41,9 @@ services:
     hostname: mq
     image: rabbitmq:3.12.13-management-alpine
     ports:
-      - "5671:5671"
+      - "5672:5672"
     volumes:
       - <<TMP_CONFS_DIR>>/mq:/etc/rabbitmq
-      - <<TMP_CERTS_DIR>>/mq/ssl.cert:/etc/rabbitmq/ssl.cert
-      - <<TMP_CERTS_DIR>>/mq/ssl.key:/etc/rabbitmq/ssl.key
-      - <<TMP_CERTS_DIR>>/mq/CA.cert:/etc/rabbitmq/CA.cert
     command: sh -c "rabbitmq-plugins enable --offline rabbitmq_federation rabbitmq_federation_management rabbitmq_shovel rabbitmq_shovel_management && rabbitmq-server"
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "5671" ]
@@ -78,6 +66,7 @@ services:
     ports:
       - "10443:8080"
     environment:
+      - SSL_ENABLED=false
       - ROOT_CERT_PASSWORD=<<PROXY_ROOT_CERT_PASSWORD>>
       - TSD_ROOT_CERT_PASSWORD=<<PROXY_TSD_ROOT_CERT_PASSWORD>>
       - SERVER_CERT_PASSWORD=<<PROXY_SERVER_CERT_PASSWORD>>
@@ -129,8 +118,8 @@ services:
     environment:
       - POSTGRES_PASSWORD=<<POSTGRES_PASSWORD>>
     volumes:
-      - <<CONFS_DIR>>/postgres/entrypoint.sh:/entrypoint.sh
-      - <<CONFS_DIR>>/postgres/init-mappings-db.sh:/docker-entrypoint-initdb.d/init-mappings-db.sh
+      - <<TMP_CONFS_DIR>>/postgres/entrypoint.sh:/entrypoint.sh
+      - <<TMP_CONFS_DIR>>/postgres/init-mappings-db.sh:/docker-entrypoint-initdb.d/init-mappings-db.sh
 
   # SDA
 
@@ -153,26 +142,25 @@ services:
       - BROKER_EXCHANGE=sda
       - BROKER_ROUTINGKEY=archived
       - BROKER_ROUTINGERROR=error
-      - BROKER_SSL=true
-      - BROKER_VERIFYPEER=true
-      - BROKER_CACERT=/etc/ega/CA.cert
-      - BROKER_CLIENTCERT=/etc/ega/client.cert
-      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - BROKER_SSL=false
+      - BROKER_VERIFYPEER=false
+      - BROKER_CACERT=
+      - BROKER_CLIENTCERT=
+      - BROKER_CLIENTKEY=
       - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
-      - C4GH_FILEPATH=/etc/ega/ega.sec
+      - C4GH_FILEPATH=
       - DB_HOST=<<DB_HOST>>
       - DB_PORT=5432
       - DB_USER=<<DB_LEGA_IN_USER>>
       - DB_PASSWORD=<<DB_LEGA_IN_PASSWORD>>
       - DB_DATABASE=lega
-      - DB_SSLMODE=require
-      - DB_CLIENTCERT=/etc/ega/client.cert
-      - DB_CLIENTKEY=/etc/ega/client-key.cert
+      - DB_SSLMODE=disable
+      - DB_CLIENTCERT=
+      - DB_CLIENTKEY=
       - INBOX_TYPE=posix
       - INBOX_LOCATION=/ega/inbox
       - LOG_LEVEL=debug
     volumes:
-      - <<TMP_CERTS_DIR>>/sda:/etc/ega
       - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
       - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
     command: "sda-ingest"
@@ -196,25 +184,24 @@ services:
       - BROKER_EXCHANGE=sda
       - BROKER_ROUTINGKEY=verified
       - BROKER_ROUTINGERROR=error
-      - BROKER_SSL=true
-      - BROKER_VERIFYPEER=true
-      - BROKER_CACERT=/etc/ega/CA.cert
-      - BROKER_CLIENTCERT=/etc/ega/client.cert
-      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - BROKER_SSL=false
+      - BROKER_VERIFYPEER=false
+      - BROKER_CACERT=
+      - BROKER_CLIENTCERT=
+      - BROKER_CLIENTKEY=
       - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
-      - C4GH_FILEPATH=/etc/ega/ega.sec
+      - C4GH_FILEPATH=
       - DB_HOST=<<DB_HOST>>
       - DB_PORT=5432
       - DB_USER=<<DB_LEGA_IN_USER>>
       - DB_PASSWORD=<<DB_LEGA_IN_PASSWORD>>
       - DB_DATABASE=lega
-      - DB_SSLMODE=require
-      - DB_CLIENTCERT=/etc/ega/client.cert
-      - DB_CLIENTKEY=/etc/ega/client-key.cert
+      - DB_SSLMODE=disable
+      - DB_CLIENTCERT=
+      - DB_CLIENTKEY=
       - INBOX_LOCATION=/ega/inbox
       - LOG_LEVEL=debug
     volumes:
-      - <<TMP_CERTS_DIR>>/sda:/etc/ega
       - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
       - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
     command: "sda-verify"
@@ -236,22 +223,20 @@ services:
       - BROKER_EXCHANGE=sda
       - BROKER_ROUTINGKEY=completed
       - BROKER_ROUTINGERROR=error
-      - BROKER_SSL=true
-      - BROKER_VERIFYPEER=true
-      - BROKER_CACERT=/etc/ega/CA.cert
-      - BROKER_CLIENTCERT=/etc/ega/client.cert
-      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - BROKER_SSL=false
+      - BROKER_VERIFYPEER=false
+      - BROKER_CACERT=
+      - BROKER_CLIENTCERT=
+      - BROKER_CLIENTKEY=
       - DB_HOST=<<DB_HOST>>
       - DB_PORT=5432
       - DB_USER=<<DB_LEGA_IN_USER>>
       - DB_PASSWORD=<<DB_LEGA_IN_PASSWORD>>
       - DB_DATABASE=lega
-      - DB_SSLMODE=require
-      - DB_CLIENTCERT=/etc/ega/client.cert
-      - DB_CLIENTKEY=/etc/ega/client-key.cert
+      - DB_SSLMODE=disable
+      - DB_CLIENTCERT=
+      - DB_CLIENTKEY=
       - LOG_LEVEL=debug
-    volumes:
-      - <<TMP_CERTS_DIR>>/sda:/etc/ega
     command: "sda-finalize"
 
   mapper:
@@ -270,22 +255,20 @@ services:
       - BROKER_QUEUE=mappings
       - BROKER_EXCHANGE=sda
       - BROKER_ROUTINGERROR=error
-      - BROKER_SSL=true
-      - BROKER_VERIFYPEER=true
-      - BROKER_CACERT=/etc/ega/CA.cert
-      - BROKER_CLIENTCERT=/etc/ega/client.cert
-      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - BROKER_SSL=false
+      - BROKER_VERIFYPEER=false
+      - BROKER_CACERT=
+      - BROKER_CLIENTCERT=
+      - BROKER_CLIENTKEY=
       - DB_HOST=<<DB_HOST>>
       - DB_PORT=5432
       - DB_USER=<<DB_LEGA_OUT_USER>>
       - DB_PASSWORD=<<DB_LEGA_OUT_PASSWORD>>
       - DB_DATABASE=lega
-      - DB_SSLMODE=require
-      - DB_CLIENTCERT=/etc/ega/client.cert
-      - DB_CLIENTKEY=/etc/ega/client-key.cert
+      - DB_SSLMODE=disable
+      - DB_CLIENTCERT=
+      - DB_CLIENTKEY=
       - LOG_LEVEL=debug
-    volumes:
-      - <<TMP_CERTS_DIR>>/sda:/etc/ega
     command: "sda-mapper"
 
   # Out
@@ -300,7 +283,7 @@ services:
     ports:
       - "80:8080"
     environment:
-      - SSL_MODE=require
+      - SSL_MODE=disable # PG SSL MODE
       - SSL_ENABLED=false
       - ARCHIVE_PATH=<<ARCHIVE_PATH>>
       - DB_INSTANCE=<<DB_HOST>>
@@ -308,13 +291,6 @@ services:
       - POSTGRES_PASSWORD=<<DB_LEGA_OUT_PASSWORD>>
       - OUTBOX_ENABLED=false
     volumes:
-      - <<TMP_CERTS_DIR>>/doa/CA.cert:/etc/ega/ssl/CA.cert
-      - <<TMP_CERTS_DIR>>/doa/client.cert:/etc/ega/ssl/client.cert
-      - <<TMP_CERTS_DIR>>/doa/client.key:/etc/ega/ssl/client.key
-      - <<TMP_CERTS_DIR>>/doa/passport.pem:/etc/ega/jwt/passport.pem
-      - <<TMP_CERTS_DIR>>/doa/visa.pem:/etc/ega/jwt/visa.pem
-      - <<TMP_CERTS_DIR>>/doa/key.pem:/etc/ega/crypt4gh/key.pem
-      - <<TMP_CERTS_DIR>>/doa/key.pass:/etc/ega/crypt4gh/key.pass
       - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
     user: "65534:65534"
 
@@ -328,12 +304,11 @@ services:
       - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/conf/cega
       - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/conf/cega.plugins
     ports:
-      - "5672:5671"
+      - "5673:5672"
       - "15672:15672"
       - "25672:15672"
     volumes:
-      - <<TMP_CERTS_DIR>>/cegamq:/etc/rabbitmq/ssl
-      - <<CONFS_DIR>>/cegamq/confs:/etc/rabbitmq/conf
+      - <<TMP_CONFS_DIR>>/cegamq/confs:/etc/rabbitmq/conf
     healthcheck:
       test:
         [
@@ -352,7 +327,7 @@ services:
     hostname: cegaauth
     image: egarchive/lega-base:release.v0.2.0
     volumes:
-      - <<CONFS_DIR>>/cegamq/users:/cega
+      - <<TMP_CONFS_DIR>>/cegaauth/users:/cega
     command:
       [
         "python",

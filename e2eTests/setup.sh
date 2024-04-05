@@ -25,13 +25,13 @@ export KEY_PASSWORD=key_passw0rd # Also used by SDA
 export CEGA_AUTH_URL=http://cegaauth:8443/lega/v1/legas/users/
 export CEGA_USERNAME=dummy
 export CEGA_PASSWORD=dummy
-export CEGA_MQ_CONNECTION=amqps://test:test@cegamq:5672/lega?cacertfile=/etc/ega/ssl/CA.cert
+export CEGA_MQ_CONNECTION=amqp://test:test@cegamq:5673/lega?cacertfile=/etc/ega/ssl/CA.cert
 
 export EGA_BOX_USERNAME=dummy # Used by IngestionTest.java
 export EGA_BOX_PASSWORD=dummy # Used by IngestionTest.java
 
 export BROKER_HOST=cegamq
-export BROKER_PORT=5672
+export BROKER_PORT=5673
 export BROKER_USERNAME=test
 export BROKER_PASSWORD=test
 export BROKER_VHOST=lega
@@ -64,7 +64,7 @@ export PUBLIC_BROKER_HASH=4tHURqDiZzypw0NTvoHhpn8/MMgONWonWxgRZ4NXgR8nZRBz
 export ARCHIVE_PATH=/ega/archive/
 
 export MQ_HOST=mq
-export MQ_CONNECTION=amqps://admin:guest@mq:5671/test
+export MQ_CONNECTION=amqp://admin:guest@mq:5672/test
 export DB_IN_CONNECTION=postgres://lega_in:in_passw0rd@db:5432/lega?application_name=LocalEGA
 export DB_OUT_CONNECTION=postgres://lega_out:0ut_passw0rd@db:5432/lega?application_name=LocalEGA
 export POSTGRES_PASSWORD=p0stgres_passw0rd
@@ -84,12 +84,11 @@ function apply_configs() {
 
   local f=docker-compose.yml
 
+  # common configurations
   frepl "<<CONFS_DIR>>" "$CONFS_DIR" $f
   frepl "<<TMP_CERTS_DIR>>" "$TMP_CERTS_DIR" $f
   frepl "<<TMP_VOLUMES_DIR>>" "$TMP_VOLUMES_DIR" $f
   frepl "<<TMP_CONFS_DIR>>" "$TMP_CONFS_DIR" $f
-
-  frepl "<<POSTGRES_PASSWORD>>" "$POSTGRES_PASSWORD" $f
 
   # tsd
   frepl "<<SERVER_CERT_PASSWORD>>" "$SERVER_CERT_PASSWORD" $f
@@ -131,6 +130,10 @@ function apply_configs() {
   frepl "<<INTERCEPTOR_CEGA_MQ_CONNECTION>>" "$CEGA_MQ_CONNECTION" $f
   frepl "<<INTERCEPTOR_MQ_CONNECTION>>" "$MQ_CONNECTION" $f
 
+  # postgres
+  cp -R "$CONFS_DIR"/postgres/* "$TMP_CONFS_DIR"/postgres
+  frepl "<<POSTGRES_PASSWORD>>" "$POSTGRES_PASSWORD" $f
+
   # ingest, verify, finalize, mapper
   frepl "<<BROKER_HOST>>" "$MQ_HOST" $f
   frepl "<<PRIVATE_BROKER_USER>>" "$PRIVATE_BROKER_USER" $f
@@ -149,6 +152,10 @@ function apply_configs() {
   frepl "<<DB_HOST>>" "$DB_HOST" $f
   frepl "<<DB_DATABASE_NAME>>" "$DB_DATABASE_NAME" $f
   frepl "<<DB_LEGA_OUT_PASSWORD>>" "$DB_LEGA_OUT_PASSWORD" $f
+
+  # cegamq and cegaauth
+  cp -R "$CONFS_DIR"/cegamq/* "$TMP_CONFS_DIR"/cegamq
+  cp -R "$CONFS_DIR"/cegaauth/* "$TMP_CONFS_DIR"/cegaauth
 
 }
 
@@ -292,8 +299,13 @@ function init() {
     echo "Dependency check failed. Exiting."
     exit 1
   fi
-  mkdir -p $TMP_VOLUMES_DIR/tsd $TMP_VOLUMES_DIR/vault $TMP_VOLUMES_DIR/db
-  mkdir -p $TMP_CONFS_DIR/mq
+  mkdir -p $TMP_VOLUMES_DIR/tsd \
+    $TMP_VOLUMES_DIR/vault \
+    $TMP_VOLUMES_DIR/db
+  mkdir -p $TMP_CONFS_DIR/cegaauth \
+    $TMP_CONFS_DIR/cegamq \
+    $TMP_CONFS_DIR/mq \
+    $TMP_CONFS_DIR/postgres
   mkdir -p $TMP_CERTS_DIR \
    $TMP_CERTS_DIR/tsd \
    $TMP_CERTS_DIR/db \
