@@ -46,7 +46,7 @@ services:
       - <<TMP_CONFS_DIR>>/mq:/etc/rabbitmq
     command: sh -c "rabbitmq-plugins enable --offline rabbitmq_federation rabbitmq_federation_management rabbitmq_shovel rabbitmq_shovel_management && rabbitmq-server"
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "5671" ]
+      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
       interval: 5s
       timeout: 20s
       retries: 3
@@ -134,7 +134,7 @@ services:
       - ARCHIVE_TYPE=posix
       - ARCHIVE_LOCATION=/ega/archive
       - BROKER_HOST=<<BROKER_HOST>>
-      - BROKER_PORT=5671
+      - BROKER_PORT=5672
       - BROKER_USER=<<PRIVATE_BROKER_USER>>
       - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
       - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
@@ -176,7 +176,7 @@ services:
       - ARCHIVE_TYPE=posix
       - ARCHIVE_LOCATION=/ega/archive
       - BROKER_HOST=<<MQ_HOST>>
-      - BROKER_PORT=5671
+      - BROKER_PORT=5672
       - BROKER_USER=<<PRIVATE_BROKER_USER>>
       - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
       - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
@@ -215,7 +215,7 @@ services:
       - db
     environment:
       - BROKER_HOST=<<MQ_HOST>>
-      - BROKER_PORT=5671
+      - BROKER_PORT=5672
       - BROKER_USER=<<PRIVATE_BROKER_USER>>
       - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
       - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
@@ -248,7 +248,7 @@ services:
       - db
     environment:
       - BROKER_HOST=<<MQ_HOST>>
-      - BROKER_PORT=5671
+      - BROKER_PORT=5672
       - BROKER_USER=<<PRIVATE_BROKER_USER>>
       - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
       - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
