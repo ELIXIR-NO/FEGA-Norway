@@ -25,7 +25,7 @@ export KEY_PASSWORD=key_passw0rd # Also used by SDA
 export CEGA_AUTH_URL=http://cegaauth:8443/lega/v1/legas/users/
 export CEGA_USERNAME=dummy
 export CEGA_PASSWORD=dummy
-export CEGA_MQ_CONNECTION=amqp://test:test@cegamq:5673/lega?cacertfile=/etc/ega/ssl/CA.cert
+export CEGA_MQ_CONNECTION=amqp://test:test@cegamq:5673/lega
 
 export EGA_BOX_USERNAME=dummy # Used by IngestionTest.java
 export EGA_BOX_PASSWORD=dummy # Used by IngestionTest.java
