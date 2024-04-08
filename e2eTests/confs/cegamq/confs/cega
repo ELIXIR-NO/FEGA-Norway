@@ -3,3 +3,4 @@ management.listener.port = 15671
 default_vhost = lega
 disk_free_limit.absolute = 1GB
 log.default.level = debug
+heartbeat=60
