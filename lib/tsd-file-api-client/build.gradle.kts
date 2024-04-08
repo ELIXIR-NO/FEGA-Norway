@@ -17,7 +17,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.30")
 
     implementation("org.apache.commons:commons-lang3:3.14.0")
-    implementation("commons-io:commons-io:2.15.1")
+    implementation("commons-io:commons-io:2.16.0")
     implementation("com.auth0:java-jwt:4.4.0")
     implementation("com.google.code.gson:gson:2.8.9")
     api("com.squareup.okhttp3:okhttp:4.12.0")
