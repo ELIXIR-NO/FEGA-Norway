@@ -152,7 +152,7 @@ services:
       - BROKER_CLIENTCERT=
       - BROKER_CLIENTKEY=
       - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
-      - C4GH_FILEPATH=
+      - C4GH_FILEPATH=/etc/ega/ega.sec
       - DB_HOST=<<SDA_DB_HOST>>
       - DB_PORT=5432
       - DB_USER=<<SDA_DB_USERNAME>>
@@ -167,6 +167,7 @@ services:
     volumes:
       - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
       - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
+      - <<TMP_CERTS_DIR>>/sda/ega.sec:/etc/ega/ega.sec
     command: "sda-ingest"
 
   verify:
@@ -199,7 +200,7 @@ services:
       - BROKER_CLIENTCERT=
       - BROKER_CLIENTKEY=
       - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
-      - C4GH_FILEPATH=
+      - C4GH_FILEPATH=/etc/ega/ega.sec
       - DB_HOST=<<SDA_DB_HOST>>
       - DB_PORT=5432
       - DB_USER=<<SDA_DB_USERNAME>>
@@ -213,6 +214,7 @@ services:
     volumes:
       - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
       - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
+      - <<TMP_CERTS_DIR>>/sda/ega.sec:/etc/ega/ega.sec
     command: "sda-verify"
 
   finalize:
@@ -288,6 +290,10 @@ services:
       - DB_CLIENTCERT=
       - DB_CLIENTKEY=
       - LOG_LEVEL=debug
+      - INBOX_LOCATION=/ega/inbox
+    volumes:
+      - <<TMP_CERTS_DIR>>/sda/ega.sec:/etc/ega/ega.sec
+      - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
     command: "sda-mapper"
 
   # Out
@@ -311,6 +317,7 @@ services:
       - SSL_ENABLED=false
       - ARCHIVE_PATH=<<ARCHIVE_PATH>>
       - DB_INSTANCE=<<SDA_DB_HOST>>
+      - POSTGRES_USER=<<SDA_DB_USERNAME>>
       - POSTGRES_DB=<<SDA_DB_DATABASE_NAME>>
       - POSTGRES_PASSWORD=<<SDA_DB_PASSWORD>>
       - OUTBOX_ENABLED=false
