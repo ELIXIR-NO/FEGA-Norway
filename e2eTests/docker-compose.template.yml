@@ -21,13 +21,12 @@ services:
     environment:
       - POSTGRES_DB=sda
       - PGDATA=/var/lib/postgresql/data
-      - POSTGRES_PASSWORD=rootpasswd
+      - POSTGRES_USER=<<SDA_DB_USERNAME>>
+      - POSTGRES_PASSWORD=<<SDA_DB_PASSWORD>>
       - POSTGRES_SERVER_CERT=
       - POSTGRES_SERVER_KEY=
       - POSTGRES_SERVER_CACERT=
       - POSTGRES_VERIFY_PEER=
-      - DB_LEGA_IN_PASSWORD=<<SDA_DB_LEGA_IN_PASSWORD>>
-      - DB_LEGA_OUT_PASSWORD=<<SDA_DB_LEGA_OUT_PASSWORD>>
     volumes:
       - <<TMP_VOLUMES_DIR>>/db:/ega
     healthcheck:
@@ -128,6 +127,11 @@ services:
     hostname: ingest
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
       - mq
       - db
     environment:
@@ -149,11 +153,11 @@ services:
       - BROKER_CLIENTKEY=
       - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
       - C4GH_FILEPATH=
-      - DB_HOST=<<DB_HOST>>
+      - DB_HOST=<<SDA_DB_HOST>>
       - DB_PORT=5432
-      - DB_USER=<<DB_LEGA_IN_USER>>
-      - DB_PASSWORD=<<DB_LEGA_IN_PASSWORD>>
-      - DB_DATABASE=lega
+      - DB_USER=<<SDA_DB_USERNAME>>
+      - DB_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
       - DB_SSLMODE=disable
       - DB_CLIENTCERT=
       - DB_CLIENTKEY=
@@ -170,6 +174,11 @@ services:
     hostname: verify
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
       - mq
       - db
     environment:
@@ -191,11 +200,11 @@ services:
       - BROKER_CLIENTKEY=
       - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
       - C4GH_FILEPATH=
-      - DB_HOST=<<DB_HOST>>
+      - DB_HOST=<<SDA_DB_HOST>>
       - DB_PORT=5432
-      - DB_USER=<<DB_LEGA_IN_USER>>
-      - DB_PASSWORD=<<DB_LEGA_IN_PASSWORD>>
-      - DB_DATABASE=lega
+      - DB_USER=<<SDA_DB_USERNAME>>
+      - DB_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
       - DB_SSLMODE=disable
       - DB_CLIENTCERT=
       - DB_CLIENTKEY=
@@ -211,6 +220,11 @@ services:
     hostname: finalize
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
       - mq
       - db
     environment:
@@ -228,11 +242,11 @@ services:
       - BROKER_CACERT=
       - BROKER_CLIENTCERT=
       - BROKER_CLIENTKEY=
-      - DB_HOST=<<DB_HOST>>
+      - DB_HOST=<<SDA_DB_HOST>>
       - DB_PORT=5432
-      - DB_USER=<<DB_LEGA_IN_USER>>
-      - DB_PASSWORD=<<DB_LEGA_IN_PASSWORD>>
-      - DB_DATABASE=lega
+      - DB_USER=<<SDA_DB_USERNAME>>
+      - DB_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
       - DB_SSLMODE=disable
       - DB_CLIENTCERT=
       - DB_CLIENTKEY=
@@ -244,6 +258,11 @@ services:
     hostname: mapper
     image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
     depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
       - mq
       - db
     environment:
@@ -260,11 +279,11 @@ services:
       - BROKER_CACERT=
       - BROKER_CLIENTCERT=
       - BROKER_CLIENTKEY=
-      - DB_HOST=<<DB_HOST>>
+      - DB_HOST=<<SDA_DB_HOST>>
       - DB_PORT=5432
-      - DB_USER=<<DB_LEGA_OUT_USER>>
-      - DB_PASSWORD=<<DB_LEGA_OUT_PASSWORD>>
-      - DB_DATABASE=lega
+      - DB_USER=<<SDA_DB_USERNAME>>
+      - DB_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
       - DB_SSLMODE=disable
       - DB_CLIENTCERT=
       - DB_CLIENTKEY=
@@ -278,6 +297,11 @@ services:
     hostname: doa
     image: neicnordic/sda-doa:release-v1.6.0
     depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
       - mq
       - db
     ports:
@@ -286,9 +310,9 @@ services:
       - SSL_MODE=disable # PG SSL MODE
       - SSL_ENABLED=false
       - ARCHIVE_PATH=<<ARCHIVE_PATH>>
-      - DB_INSTANCE=<<DB_HOST>>
-      - POSTGRES_DB=<<DB_DATABASE_NAME>>
-      - POSTGRES_PASSWORD=<<DB_LEGA_OUT_PASSWORD>>
+      - DB_INSTANCE=<<SDA_DB_HOST>>
+      - POSTGRES_DB=<<SDA_DB_DATABASE_NAME>>
+      - POSTGRES_PASSWORD=<<SDA_DB_PASSWORD>>
       - OUTBOX_ENABLED=false
     volumes:
       - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
@@ -303,8 +327,9 @@ services:
     environment:
       - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/conf/cega
       - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/conf/cega.plugins
+      - RABBITMQ_NODE_PORT=5673
     ports:
-      - "5673:5672"
+      - "5673:5673"
       - "15672:15672"
       - "25672:15672"
     volumes:

@@ -43,18 +43,16 @@ export TSD_ROOT_CERT_PASSWORD=r00t_cert_passw0rd
 export TSD_HOST=tsd:8080
 export TSD_PROJECT=p11
 export TSD_ACCESS_KEY=s0me_key
+export TSD_ACCESS_KEY=s0me_key
 
-export DB_HOST=db
-export DB_DATABASE_NAME=lega
+export SDA_DB_HOST=db
+export SDA_DB_DATABASE_NAME=sda
+export SDA_DB_USERNAME=postgres
+export SDA_DB_PASSWORD=ro0tpasswd
 
-export DB_LEGA_IN_USER=lega_in
-export DB_LEGA_IN_PASSWORD=in_passw0rd # Also used by IngestionTest.java
-export DB_LEGA_OUT_USER=lega_out
-export DB_LEGA_OUT_PASSWORD=0ut_passw0rd
-
-export PRIVATE_BROKER_VHOST=test     # Also used by SDA
-export PRIVATE_BROKER_USER=admin     # Also used by SDA
-export PRIVATE_BROKER_PASSWORD=guest # Also used by SDA
+export PRIVATE_BROKER_VHOST=test
+export PRIVATE_BROKER_USER=admin
+export PRIVATE_BROKER_PASSWORD=guest
 export PRIVATE_BROKER_HASH=4tHURqDiZzypw0NTvoHhpn8/MMgONWonWxgRZ4NXgR8nZRBz
 
 export PUBLIC_BROKER_USER=admin
@@ -94,9 +92,8 @@ function apply_configs() {
   frepl "<<SERVER_CERT_PASSWORD>>" "$SERVER_CERT_PASSWORD" $f
 
   # db
-  frepl "<<SDA_DB_LEGA_IN_PASSWORD>>" "$DB_LEGA_IN_PASSWORD" $f
-  frepl "<<SDA_DB_LEGA_OUT_PASSWORD>>" "$DB_LEGA_OUT_PASSWORD" $f
-  frepl "<<SDA_DB_POSTGRES_PASSWORD>>" "$POSTGRES_PASSWORD" $f
+  frepl "<<SDA_DB_USERNAME>>" "$SDA_DB_USERNAME" $f
+  frepl "<<SDA_DB_PASSWORD>>" "$SDA_DB_PASSWORD" $f
 
   # mq
   cp -R "$CONFS_DIR"/mq/* "$TMP_CONFS_DIR"/mq
@@ -140,18 +137,17 @@ function apply_configs() {
   frepl "<<PRIVATE_BROKER_PASSWORD>>" "$PRIVATE_BROKER_PASSWORD" $f
   frepl "<<PRIVATE_BROKER_VHOST>>" "$PRIVATE_BROKER_VHOST" $f
   frepl "<<C4GH_PASSPHRASE>>" "$KEY_PASSWORD" $f
-  frepl "<<DB_HOST>>" "$DB_HOST" $f
-  frepl "<<DB_LEGA_IN_USER>>" "$DB_LEGA_IN_USER" $f
-  frepl "<<DB_LEGA_IN_PASSWORD>>" "$DB_LEGA_IN_PASSWORD" $f
+  frepl "<<SDA_DB_HOST>>" "$SDA_DB_HOST" $f
+  frepl "<<SDA_DB_USERNAME>>" "$SDA_DB_USERNAME" $f
+  frepl "<<SDA_DB_PASSWORD>>" "$SDA_DB_PASSWORD" $f
+  frepl "<<SDA_DB_DATABASE_NAME>>" "$SDA_DB_DATABASE_NAME" $f
   frepl "<<MQ_HOST>>" "$MQ_HOST" $f
-  frepl "<<DB_LEGA_OUT_USER>>" "$DB_LEGA_OUT_USER" $f
-  frepl "<<DB_LEGA_OUT_PASSWORD>>" "$DB_LEGA_OUT_PASSWORD" $f
 
   # doa
   frepl "<<ARCHIVE_PATH>>" "$ARCHIVE_PATH" $f
-  frepl "<<DB_HOST>>" "$DB_HOST" $f
-  frepl "<<DB_DATABASE_NAME>>" "$DB_DATABASE_NAME" $f
-  frepl "<<DB_LEGA_OUT_PASSWORD>>" "$DB_LEGA_OUT_PASSWORD" $f
+  frepl "<<SDA_DB_HOST>>" "$SDA_DB_HOST" $f
+  frepl "<<SDA_DB_DATABASE_NAME>>" "$SDA_DB_DATABASE_NAME" $f
+  frepl "<<SDA_DB_PASSWORD>>" "$SDA_DB_PASSWORD" $f
 
   # cegamq and cegaauth
   cp -R "$CONFS_DIR"/cegamq/* "$TMP_CONFS_DIR"/cegamq
