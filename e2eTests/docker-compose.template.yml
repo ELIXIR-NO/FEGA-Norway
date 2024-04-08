@@ -30,7 +30,7 @@ services:
     volumes:
       - <<TMP_VOLUMES_DIR>>/db:/ega
     healthcheck:
-      test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "lega_out" ]
+      test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "postgres" ]
       interval: 5s
       timeout: 20s
       retries: 3
