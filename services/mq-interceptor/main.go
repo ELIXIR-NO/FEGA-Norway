@@ -9,22 +9,56 @@ import (
 	_ "github.com/lib/pq"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
+	"net/url"
 	"os"
 	"sync"
+	"time"
 )
 
 var db *sql.DB
 var publishMutex sync.Mutex
 var cegaPublishChannel *amqp.Channel
 
+// dialRabbitMQ attempts to connect to RabbitMQ up to 10 times
+// with a delay between retries. It returns a connection
+// instance or an error.
+func dialRabbitMQ(connectionString string) (*amqp.Connection, error) {
+	var conn *amqp.Connection
+	var err error
+	var attempts = 10
+	// Parse the connection string as a URL.
+	u, err := url.Parse(connectionString)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Trying to dial host: %s [I will attempt to dial %d times with 2 seconds interval]", u.Hostname(), attempts)
+	log.Printf("Is TLS enabled? %t", os.Getenv("ENABLE_TLS") == "true")
+	for i := 0; i < attempts; i++ {
+		if os.Getenv("ENABLE_TLS") == "true" {
+			conn, err = amqp.DialTLS(connectionString, getTLSConfig())
+		} else {
+			conn, err = amqp.Dial(connectionString)
+		}
+		if err == nil {
+			log.Printf("Successfully connected to %s\n", connectionString)
+			return conn, nil
+		}
+		log.Printf("Attempt %d: Failed to connect to RabbitMQ: %s\n", i+1, err)
+		time.Sleep(2 * time.Second) // Wait before retrying
+	}
+	// After all attempts, return the last error
+	return nil, err
+}
+
 func main() {
+
 	var err error
 
 	db, err = sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION"))
 	failOnError(err, "Failed to connect to DB")
 
-	legaMQ, err := amqp.DialTLS(os.Getenv("LEGA_MQ_CONNECTION"), getTLSConfig())
-	failOnError(err, "Failed to connect to LEGA RabbitMQ")
+	legaMqConnString := os.Getenv("LEGA_MQ_CONNECTION")
+	legaMQ, err := dialRabbitMQ(legaMqConnString)
 	legaConsumeChannel, err := legaMQ.Channel()
 	failOnError(err, "Failed to create LEGA consume RabbitMQ channel")
 	legaPubishChannel, err := legaMQ.Channel()
@@ -35,7 +69,8 @@ func main() {
 		log.Fatal(err)
 	}()
 
-	cegaMQ, err := amqp.DialTLS(os.Getenv("CEGA_MQ_CONNECTION"), getTLSConfig())
+	cegaMqConnString := os.Getenv("CEGA_MQ_CONNECTION")
+	cegaMQ, err := dialRabbitMQ(cegaMqConnString)
 	failOnError(err, "Failed to connect to CEGA RabbitMQ")
 	cegaConsumeChannel, err := cegaMQ.Channel()
 	failOnError(err, "Failed to create CEGA consume RabbitMQ channel")

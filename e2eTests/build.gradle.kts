@@ -13,6 +13,13 @@ repositories {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("com.rabbitmq:amqp-client:5.20.0")
+    testImplementation("com.konghq:unirest-java:3.14.5") // FIXME ?
+    testImplementation("org.postgresql:postgresql:42.7.2")
+    testImplementation("com.auth0:java-jwt:4.4.0") // FIXME: io.jsonwebtoken
+    testImplementation("commons-io:commons-io:2.15.1")
+    testImplementation(project(":lib:crypt4gh"))
+    testImplementation("org.slf4j:slf4j-api:2.0.12")
 }
 
 tasks.test {
@@ -50,14 +57,18 @@ tasks.register<Exec>("start-docker-containers") {
     commandLine("docker-compose", "up", "-d")
 }
 
+tasks.register<Exec>("run-tests") {
+    dependsOn("start-docker-containers")
+}
+
 tasks.register<Exec>("stop-docker-containers") {
-    shouldRunAfter("test-e2e")
+    shouldRunAfter("run-tests")
     commandLine("docker-compose", "down")
 }
 
 // End setup scripts.
 
-tasks.register<Test>("test-e2e") {
+tasks.named<Test>("test") {
     group = "verification"
     useJUnitPlatform()
     dependsOn("start-docker-containers")
