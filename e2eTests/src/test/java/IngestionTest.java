@@ -52,6 +52,12 @@ public class IngestionTest {
   public static final String BEGIN_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----";
   public static final String END_PRIVATE_KEY = "-----END PRIVATE KEY-----";
 
+  private static final String DB_USERNAME = "postgres";
+  private static final String DB_PASSWORD = "ro0tpasswd";
+  private static final String EGA_BOX_USERNAME = "dummy";
+  private static final String EGA_BOX_PASSWORD = "dummy";
+  private static final String CEGA_MQ_CONN = "amqp://test:test@localhost:5673/lega?cacertfile=rootCA.pem";
+
   private final KeyUtils keyUtils = KeyUtils.getInstance();
 
   private File rawFile;
@@ -87,12 +93,18 @@ public class IngestionTest {
 
     log.info("Encrypting the file with Crypt4GH...");
     encFile = new File(rawFile.getName() + ".enc");
-    PublicKey localEGAInstancePublicKey =
-        keyUtils.readPublicKey(new File(getCertificateLocation("ega.pub.pem")));
+
+    PublicKey localEGAInstancePublicKey = keyUtils.readPublicKey(
+            new File(getCertificateLocation("ega.pub.pem"))
+    );
+
     try (FileOutputStream fileOutputStream = new FileOutputStream(encFile);
         Crypt4GHOutputStream crypt4GHOutputStream =
             new Crypt4GHOutputStream(
-                fileOutputStream, senderKeyPair.getPrivate(), localEGAInstancePublicKey)) {
+                    fileOutputStream,
+                    senderKeyPair.getPrivate(),
+                    localEGAInstancePublicKey)
+    ) {
       FileUtils.copyFile(rawFile, crypt4GHOutputStream);
     }
 
@@ -101,17 +113,18 @@ public class IngestionTest {
     log.info("Enc SHA256 checksum: " + encSHA256Checksum);
 
     try (UnirestInstance instance = Unirest.primaryInstance()) {
-      instance.config().verifySsl(false).hostnameVerifier(NoopHostnameVerifier.INSTANCE);
+      instance.config()
+              .verifySsl(false)
+              .hostnameVerifier(NoopHostnameVerifier.INSTANCE);
     }
+
   }
 
   @Test
   public void performEndToEndTest() {
     try {
       upload();
-      Thread.sleep(
-          5000); // Wait for triggers to be set up at CEGA - Not really needed if using local CEGA
-      // container
+      Thread.sleep(5000); // Wait for triggers to be set up at CEGA - Not really needed if using local CEGA container
       triggerIngestMessageFromCEGA();
       Thread.sleep(5000); // Wait for the LEGA ingest and verify services to complete and update DB
       triggerAccessionMessageFromCEGA();
@@ -138,12 +151,12 @@ public class IngestionTest {
     log.info("Visa JWT token: {}", token);
     String md5Hex = DigestUtils.md5Hex(Files.newInputStream(encFile.toPath()));
     log.info("Encrypted MD5 checksum: {}", md5Hex);
-    log.info("EGA_BOX_USERNAME: {}", System.getenv("EGA_BOX_USERNAME"));
+    log.info("EGA_BOX_USERNAME: {}", EGA_BOX_USERNAME);
     String uploadURL =
         String.format("https://localhost:10443/stream/%s?md5=%s", encFile.getName(), md5Hex);
     JsonNode jsonResponse =
         Unirest.patch(uploadURL)
-            .basicAuth(System.getenv("EGA_BOX_USERNAME"), System.getenv("EGA_BOX_PASSWORD"))
+            .basicAuth(EGA_BOX_USERNAME, EGA_BOX_PASSWORD)
             .header("Proxy-Authorization", "Bearer " + token)
             .body(FileUtils.readFileToByteArray(encFile))
             .asJson()
@@ -156,7 +169,7 @@ public class IngestionTest {
             encFile.getName(), uploadId, encSHA256Checksum, FileUtils.sizeOf(encFile));
     jsonResponse =
         Unirest.patch(finalizeURL)
-            .basicAuth(System.getenv("EGA_BOX_USERNAME"), System.getenv("EGA_BOX_PASSWORD"))
+            .basicAuth(EGA_BOX_USERNAME, EGA_BOX_PASSWORD)
             .header("Proxy-Authorization", "Bearer " + token)
             .asJson()
             .getBody();
@@ -170,10 +183,8 @@ public class IngestionTest {
           KeyManagementException,
           URISyntaxException {
     log.info("Publishing ingestion message to CentralEGA...");
-    // Hard coding url to mapped port from cega-mq container
-    String mqConnectionString = "amqps://test:test@localhost:5672/lega?cacertfile=rootCA.pem";
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setUri(mqConnectionString);
+    factory.setUri(CEGA_MQ_CONN);
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
     correlationId = UUID.randomUUID().toString();
@@ -190,7 +201,7 @@ public class IngestionTest {
     String message =
         String.format(
             "{\"type\":\"ingest\",\"user\":\"%s\",\"filepath\":\"/p11-dummy@elixir-europe.org/files/%s\"}",
-            System.getenv("EGA_BOX_USERNAME"), encFile.getName());
+            EGA_BOX_USERNAME, encFile.getName());
     log.info(message);
     channel.basicPublish("localega", "files", properties, message.getBytes());
 
@@ -205,10 +216,8 @@ public class IngestionTest {
           KeyManagementException,
           URISyntaxException {
     log.info("Publishing accession message on behalf of CEGA to CEGA RMQ...");
-    // Hard coding url to mapped port from cega-mq container
-    String mqConnectionString = "amqps://test:test@localhost:5672/lega?cacertfile=rootCA.pem";
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setUri(mqConnectionString);
+    factory.setUri(CEGA_MQ_CONN);
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
     AMQP.BasicProperties properties =
@@ -225,7 +234,7 @@ public class IngestionTest {
     String message =
         String.format(
             "{\"type\":\"accession\",\"user\":\"%s\",\"filepath\":\"/p11-dummy@elixir-europe.org/files/%s\",\"accession_id\":\"%s\", \"decrypted_checksums\": [ { \"type\":\"sha256\", \"value\": \"%s\" },{\"type\":\"md5\", \"value\": \"%s\"} ] }",
-            System.getenv("EGA_BOX_USERNAME"),
+            EGA_BOX_USERNAME,
             encFile.getName(),
             randomFileAccessionID,
             rawSHA256Checksum,
@@ -242,11 +251,11 @@ public class IngestionTest {
     log.info("Starting verification of state after finalize step...");
     String dbHost = "localhost";
     String port = "5432";
-    String db = "lega";
+    String db = "sda";
     String url = String.format("jdbc:postgresql://%s:%s/%s", dbHost, port, db);
     Properties props = new Properties();
-    props.setProperty("user", "lega_in");
-    props.setProperty("password", System.getenv("DB_LEGA_IN_PASSWORD"));
+    props.setProperty("user", DB_USERNAME);
+    props.setProperty("password", DB_PASSWORD);
     props.setProperty("ssl", "true");
     props.setProperty("application_name", "LocalEGA");
     props.setProperty("sslmode", "verify-ca");
@@ -254,8 +263,7 @@ public class IngestionTest {
     props.setProperty("sslcert", new File("localhost+5-client.pem").getAbsolutePath());
     props.setProperty("sslkey", new File("localhost+5-client-key.der").getAbsolutePath());
     java.sql.Connection conn = DriverManager.getConnection(url, props);
-    String sql =
-        "select archive_path,stable_id from local_ega.files where status = 'COMPLETED' AND inbox_path = ?";
+    String sql = "select archive_path,stable_id from local_ega.files where status = 'COMPLETED' AND inbox_path = ?";
     PreparedStatement statement = conn.prepareStatement(sql);
     statement.setString(1, "/p11-dummy@elixir-europe.org/files/" + encFile.getName());
     ResultSet resultSet = statement.executeQuery();
@@ -277,10 +285,8 @@ public class IngestionTest {
           TimeoutException {
     log.info("Mapping file to a dataset...");
     datasetId = "EGAD" + getRandomNumber(11);
-    // Hardcode url to mapped port from container to localhost
-    String mqConnectionString = "amqps://test:test@localhost:5672/lega?cacertfile=rootCA.pem";
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setUri(mqConnectionString);
+    factory.setUri(CEGA_MQ_CONN);
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
     AMQP.BasicProperties properties =
@@ -310,10 +316,8 @@ public class IngestionTest {
           IOException,
           TimeoutException {
     log.info("Releasing the dataset...");
-    // Hard code url to mapped port from container to localhost
-    String mqConnectionString = "amqps://test:test@localhost:5672/lega?cacertfile=rootCA.pem";
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setUri(mqConnectionString);
+    factory.setUri(CEGA_MQ_CONN);
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
     AMQP.BasicProperties properties =
@@ -485,4 +489,5 @@ public class IngestionTest {
     rawFile.delete();
     encFile.delete();
   }
+
 }
