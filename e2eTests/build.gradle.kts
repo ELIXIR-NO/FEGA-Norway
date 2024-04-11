@@ -54,7 +54,7 @@ tasks.register<Exec>("apply-configs") {
 
 tasks.register<Exec>("start-docker-containers") {
     dependsOn("apply-configs")
-    commandLine("docker-compose", "up", "-d")
+    commandLine("docker", "compose", "up", "-d")
 }
 
 tasks.register<Exec>("run-tests") {
@@ -63,7 +63,7 @@ tasks.register<Exec>("run-tests") {
 
 tasks.register<Exec>("stop-docker-containers") {
     shouldRunAfter("run-tests")
-    commandLine("docker-compose", "down")
+    commandLine("docker", "compose", "down")
 }
 
 // End setup scripts.
