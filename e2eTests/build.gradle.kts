@@ -37,8 +37,13 @@ tasks.register<Exec>("cleanup") {
     commandLine("sh", "-c", "./setup.sh clean")
 }
 
-tasks.register<Exec>("initialize") {
+tasks.register<Exec>("project-cleanup") {
     dependsOn("cleanup")
+    commandLine("../gradlew", "clean")
+}
+
+tasks.register<Exec>("initialize") {
+    dependsOn("project-cleanup")
     commandLine("sh", "-c", "./setup.sh init")
 }
 
@@ -52,8 +57,13 @@ tasks.register<Exec>("apply-configs") {
     commandLine("sh", "-c", "./setup.sh apply_configs")
 }
 
-tasks.register<Exec>("start-docker-containers") {
+tasks.register<Exec>("assemble-project") {
     dependsOn("apply-configs")
+    commandLine("../gradlew", "assemble")
+}
+
+tasks.register<Exec>("start-docker-containers") {
+    dependsOn("assemble-project")
     commandLine("docker", "compose", "up", "-d")
 }
 
