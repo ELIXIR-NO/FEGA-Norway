@@ -56,9 +56,24 @@ for port in 5432 5672 5433 80 5673 15672 25672; do lsof -ti:$port | xargs kill -
 docker rmi tsd-proxy:latest tsd-api-mock:latest mq-interceptor:latest --force
 ```
 
-##### If nothing works
+##### Docker Compose issues
 
-This is the last resort. This prunes the docker system and restarts the docker daemon.
+First, verify that `docker compose` is correctly installed. Ensure you have Compose V2.
+
+For migration guidance to Docker Compose, visit [migrate to docker compose](https://docs.docker.com/compose/migrate/).
+
+In some cases, particularly on older Ubuntu distributions, you might find that you have `docker-compose` (V2) installed but not the `docker compose` subcommand. To resolve this, you can create a symbolic link in the `cli-plugins` directory by executing the following commands:
+
+```bash
+mkdir -p ~/.docker/cli-plugins
+ln -sfn /usr/local/bin/docker-compose ~/.docker/cli-plugins/docker-compose
+```
+
+For further discussions and troubleshooting, refer to the GitHub issue at https://github.com/docker/compose/issues/8630.
+
+##### Maybe try cleaning everything?
+
+This prunes the docker system and restarts the docker daemon.
 
 ```bash
 docker stop $(docker ps -aq) && \
