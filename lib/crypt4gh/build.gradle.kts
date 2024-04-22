@@ -17,7 +17,7 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.12")
     implementation("org.apache.commons:commons-lang3:3.14.0")
     implementation("commons-codec:commons-codec:1.16.0")
-    implementation("commons-cli:commons-cli:1.6.0")
+    implementation("commons-cli:commons-cli:1.7.0")
     implementation("commons-io:commons-io:2.16.0")
     implementation("com.rfksystems:blake2b:2.0.0")
     implementation("at.favre.lib:bkdf:0.6.0")
