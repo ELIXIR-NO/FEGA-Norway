@@ -129,7 +129,10 @@ public class PublishMQAspect {
 
     FileDescriptor fileDescriptor = new FileDescriptor();
     fileDescriptor.setUser(request.getAttribute(EGA_USERNAME).toString());
-    fileDescriptor.setFilePath(request.getAttribute(FILE_NAME).toString());
+    String fileName = request.getAttribute(FILE_NAME).toString();
+    fileDescriptor.setFilePath(
+        String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
+            + fileName);
     fileDescriptor.setOperation(Operation.REMOVE.name().toLowerCase());
     publishMessage(fileDescriptor);
   }

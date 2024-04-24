@@ -78,10 +78,10 @@ public class AAIAspect {
     String jwtToken = optionalBearerAuth.get().replace("Bearer ", "");
     try {
       var tokenArray = jwtToken.split("[.]");
-      byte[] decodedHeader = Base64.getUrlDecoder().decode(tokenArray[0]);
-      String decodedHeaderString = new String(decodedHeader);
+      byte[] decodedPayload = Base64.getUrlDecoder().decode(tokenArray[1]);
+      String decodedPayloadString = new String(decodedPayload);
       Gson gson = new Gson();
-      JsonObject claims = gson.fromJson(decodedHeaderString, JsonObject.class);
+      JsonObject claims = gson.fromJson(decodedPayloadString, JsonObject.class);
       List<Visa> controlledAccessGrantsVisas = getVisas(jwtToken, claims.keySet());
       log.info(
           "Elixir user {} authenticated and provided following valid GA4GH Visas: {}",

@@ -7,12 +7,14 @@ on:
       - 'lib/**'
       - 'services/**'
       - 'buildSrc/**'
+      - 'cli/**'
   pull_request:
     branches: [ main ]
     paths:
       - 'lib/**'
       - 'services/**'
       - 'buildSrc/**'
+      - 'cli/**'
 
 jobs:
   build-and-test:
@@ -26,6 +28,14 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache-dependency-path: |
+            cli/lega-commander/go.sum
+            services/mq-interceptor/go.sum
 
       - name: Cache gradle packages
         uses: actions/cache@v4

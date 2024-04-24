@@ -19,13 +19,13 @@ public class FileDescriptor {
   private String operation;
 
   @SerializedName("filesize")
-  private long fileSize;
+  private Long fileSize;
 
   @SerializedName("oldpath")
   private String oldPath;
 
   @SerializedName("file_last_modified")
-  private long fileLastModified;
+  private Long fileLastModified;
 
   @SerializedName("content")
   private String content;
