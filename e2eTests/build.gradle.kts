@@ -11,8 +11,9 @@ repositories {
 }
 
 dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.rabbitmq:amqp-client:5.20.0")
     testImplementation("com.konghq:unirest-java:3.14.5") // FIXME ?
     testImplementation("org.postgresql:postgresql:42.7.2")
@@ -20,10 +21,6 @@ dependencies {
     testImplementation("commons-io:commons-io:2.15.1")
     testImplementation(project(":lib:crypt4gh"))
     testImplementation("org.slf4j:slf4j-api:2.0.12")
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
 
 // Start setup scripts.
@@ -37,8 +34,13 @@ tasks.register<Exec>("cleanup") {
     commandLine("sh", "-c", "./setup.sh clean")
 }
 
-tasks.register<Exec>("initialize") {
+tasks.register<Exec>("project-cleanup") {
     dependsOn("cleanup")
+    commandLine("../gradlew", "clean")
+}
+
+tasks.register<Exec>("initialize") {
+    dependsOn("project-cleanup")
     commandLine("sh", "-c", "./setup.sh init")
 }
 
@@ -52,25 +54,32 @@ tasks.register<Exec>("apply-configs") {
     commandLine("sh", "-c", "./setup.sh apply_configs")
 }
 
-tasks.register<Exec>("start-docker-containers") {
+tasks.register<Exec>("assemble-project") {
     dependsOn("apply-configs")
+    commandLine("../gradlew", "assemble")
+}
+
+tasks.register<Exec>("start-docker-containers") {
+    dependsOn("assemble-project")
     commandLine("docker", "compose", "up", "-d")
 }
 
-tasks.register<Exec>("run-tests") {
-    dependsOn("start-docker-containers")
-}
-
 tasks.register<Exec>("stop-docker-containers") {
-    shouldRunAfter("run-tests")
     commandLine("docker", "compose", "down")
 }
 
-// End setup scripts.
-
-tasks.named<Test>("test") {
-    group = "verification"
+tasks.test {
     useJUnitPlatform()
     dependsOn("start-docker-containers")
     finalizedBy("stop-docker-containers")
+    // Ensure this test runs only after all other
+    // test tasks are completed
+    mustRunAfter(
+        ":lib:crypt4gh:test",
+        ":lib:clearinghouse:test",
+        ":lib:tsd-file-api-client:test",
+        ":services:tsd-api-mock:test",
+        ":services:mq-interceptor:test",
+        ":services:localega-tsd-proxy:test"
+    )
 }
