@@ -494,7 +494,7 @@ public class IngestionTest {
             .replace(System.lineSeparator(), "")
             .replace(" ", "")
             .trim();
-    byte[] decodedKey = Base64.getUrlDecoder().decode(encodedKey);
+    byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
     return (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(decodedKey));
   }
 
@@ -511,7 +511,7 @@ public class IngestionTest {
             .replace(System.lineSeparator(), "")
             .replace(" ", "")
             .trim();
-    byte[] decodedKey = Base64.getUrlDecoder().decode(encodedKey);
+    byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
     return (RSAPrivateKey) keyFactory.generatePrivate(new PKCS8EncodedKeySpec(decodedKey));
   }
 
