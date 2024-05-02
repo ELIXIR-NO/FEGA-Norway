@@ -30,11 +30,8 @@ extraJavaModuleInfo {
     automaticModule("bcrypt-0.10.2.jar", "bcrypt")
     automaticModule("bkdf-0.6.0.jar", "bkdf")
     automaticModule("scrypt-1.4.0.jar", "scrypt")
-    // module("bcrypt-0.10.2.jar", "bcrypt", "0.10.2") {}
-
-    // module("scrypt-1.4.0.jar", "scrypt","1.4.0") {}
-    // module("bkdf-0.6.0.jar", "bkdf", "0.6.0") {}
 }
+
 tasks.test {
     useJUnitPlatform()
 }

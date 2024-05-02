@@ -20,6 +20,7 @@ dependencies {
     implementation("commons-io:commons-io:2.16.1")
     implementation("com.auth0:java-jwt:4.4.0")
     implementation("com.google.code.gson:gson:2.10.1")
+
     api("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.slf4j:slf4j-jdk14:2.0.13")
 

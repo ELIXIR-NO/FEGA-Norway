@@ -1,0 +1,376 @@
+name: fega-norway
+
+services:
+
+  # TSD
+
+  tsd:
+    container_name: tsd
+    hostname: tsd
+    image: tsd-api-mock:latest
+    build: ../services/tsd-api-mock
+    volumes:
+      - <<TMP_VOLUMES_DIR>>/tsd:/tsd/p11/data/durable/apps/ega/
+
+  db:
+    container_name: db
+    hostname: db
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=sda
+      - PGDATA=/var/lib/postgresql/data
+      - POSTGRES_USER=<<SDA_DB_USERNAME>>
+      - POSTGRES_PASSWORD=<<SDA_DB_PASSWORD>>
+      - POSTGRES_SERVER_CERT=
+      - POSTGRES_SERVER_KEY=
+      - POSTGRES_SERVER_CACERT=
+      - POSTGRES_VERIFY_PEER=
+    volumes:
+      - <<TMP_VOLUMES_DIR>>/db:/ega
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "postgres" ]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+
+  mq:
+    container_name: mq
+    hostname: mq
+    image: rabbitmq:3.12.13-management-alpine
+    ports:
+      - "5672:5672"
+    volumes:
+      - <<TMP_CONFS_DIR>>/mq:/etc/rabbitmq
+    command: sh -c "rabbitmq-plugins enable --offline rabbitmq_federation rabbitmq_federation_management rabbitmq_shovel rabbitmq_shovel_management && rabbitmq-server"
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+
+  # PROXY
+
+  proxy:
+    container_name: proxy
+    hostname: proxy
+    image: tsd-proxy:latest
+    build: ../services/localega-tsd-proxy
+    depends_on:
+      - tsd
+      - mq
+      - cegamq
+      - postgres
+    ports:
+      - "10443:8080"
+    environment:
+      - SSL_ENABLED=false
+      - ROOT_CERT_PASSWORD=<<PROXY_ROOT_CERT_PASSWORD>>
+      - TSD_ROOT_CERT_PASSWORD=<<PROXY_TSD_ROOT_CERT_PASSWORD>>
+      - SERVER_CERT_PASSWORD=<<PROXY_SERVER_CERT_PASSWORD>>
+      - CLIENT_ID=<<PROXY_CLIENT_ID>>
+      - CLIENT_SECRET=<<PROXY_CLIENT_SECRET>>
+      - BROKER_HOST=<<PROXY_BROKER_HOST>>
+      - BROKER_PORT=<<PROXY_BROKER_PORT>>
+      - BROKER_USERNAME=<<PROXY_BROKER_USERNAME>>
+      - BROKER_PASSWORD=<<PROXY_BROKER_PASSWORD>>
+      - BROKER_VHOST=<<PROXY_BROKER_VHOST>>
+      - BROKER_VALIDATE=<<PROXY_BROKER_VALIDATE>>
+      - EXCHANGE=<<PROXY_EXCHANGE>>
+      - CEGA_AUTH_URL=<<PROXY_CEGA_AUTH_URL>>
+      - CEGA_USERNAME=<<PROXY_CEGA_USERNAME>>
+      - CEGA_PASSWORD=<<PROXY_CEGA_PASSWORD>>
+      - TSD_HOST=<<PROXY_TSD_HOST>>
+      - TSD_ACCESS_KEY=<<PROXY_TSD_ACCESS_KEY>>
+      - POSTGRES_PASSWORD=<<PROXY_POSTGRES_PASSWORD>>
+    volumes:
+      - <<TMP_CERTS_DIR>>/proxy/CA.cert:/etc/ega/ssl/CA.cert
+      - <<TMP_CERTS_DIR>>/proxy/server.cert:/etc/ega/ssl/server.cert
+      - <<TMP_CERTS_DIR>>/proxy/passport.pem:/etc/ega/jwt/passport.pem
+      - <<TMP_CERTS_DIR>>/proxy/visa.pem:/etc/ega/jwt/visa.pem
+
+  interceptor:
+    container_name: interceptor
+    hostname: interceptor
+    image: mq-interceptor:latest
+    build: ../services/mq-interceptor
+    depends_on:
+      - cegamq
+      - mq
+      - postgres
+    environment:
+      - POSTGRES_CONNECTION=<<INTERCEPTOR_POSTGRES_CONNECTION>>
+      - CEGA_MQ_CONNECTION=<<INTERCEPTOR_CEGA_MQ_CONNECTION>>
+      - CEGA_MQ_EXCHANGE=localega
+      - CEGA_MQ_QUEUE=v1.files
+      - LEGA_MQ_CONNECTION=<<INTERCEPTOR_MQ_CONNECTION>>
+      - LEGA_MQ_EXCHANGE=sda
+
+  postgres:
+    container_name: postgres
+    hostname: postgres
+    image: postgres
+    entrypoint: ["/entrypoint.sh"]
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=<<POSTGRES_PASSWORD>>
+    volumes:
+      - <<TMP_CONFS_DIR>>/postgres/entrypoint.sh:/entrypoint.sh
+      - <<TMP_CONFS_DIR>>/postgres/init-mappings-db.sh:/docker-entrypoint-initdb.d/init-mappings-db.sh
+
+  # SDA
+
+  ingest:
+    container_name: ingest
+    hostname: ingest
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
+    depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+      - db
+    environment:
+      - ARCHIVE_TYPE=posix
+      - ARCHIVE_LOCATION=/ega/archive
+      - BROKER_HOST=<<BROKER_HOST>>
+      - BROKER_PORT=5672
+      - BROKER_USER=<<PRIVATE_BROKER_USER>>
+      - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
+      - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
+      - BROKER_QUEUE=ingest
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGKEY=archived
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=false
+      - BROKER_VERIFYPEER=false
+      - BROKER_CACERT=
+      - BROKER_CLIENTCERT=
+      - BROKER_CLIENTKEY=
+      - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
+      - C4GH_FILEPATH=/etc/ega/ega.sec
+      - DB_HOST=<<SDA_DB_HOST>>
+      - DB_PORT=5432
+      - DB_USER=<<SDA_DB_USERNAME>>
+      - DB_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
+      - DB_SSLMODE=disable
+      - DB_CLIENTCERT=
+      - DB_CLIENTKEY=
+      - INBOX_TYPE=posix
+      - INBOX_LOCATION=/ega/inbox
+      - LOG_LEVEL=debug
+    volumes:
+      - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
+      - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
+      - <<TMP_CERTS_DIR>>/sda/ega.sec:/etc/ega/ega.sec
+    command: "sda-ingest"
+
+  verify:
+    container_name: verify
+    hostname: verify
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
+    depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+      - db
+    environment:
+      - ARCHIVE_TYPE=posix
+      - ARCHIVE_LOCATION=/ega/archive
+      - BROKER_HOST=<<MQ_HOST>>
+      - BROKER_PORT=5672
+      - BROKER_USER=<<PRIVATE_BROKER_USER>>
+      - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
+      - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
+      - BROKER_QUEUE=archived
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGKEY=verified
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=false
+      - BROKER_VERIFYPEER=false
+      - BROKER_CACERT=
+      - BROKER_CLIENTCERT=
+      - BROKER_CLIENTKEY=
+      - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
+      - C4GH_FILEPATH=/etc/ega/ega.sec
+      - DB_HOST=<<SDA_DB_HOST>>
+      - DB_PORT=5432
+      - DB_USER=<<SDA_DB_USERNAME>>
+      - DB_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
+      - DB_SSLMODE=disable
+      - DB_CLIENTCERT=
+      - DB_CLIENTKEY=
+      - INBOX_LOCATION=/ega/inbox
+      - LOG_LEVEL=debug
+    volumes:
+      - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
+      - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
+      - <<TMP_CERTS_DIR>>/sda/ega.sec:/etc/ega/ega.sec
+    command: "sda-verify"
+
+  finalize:
+    container_name: finalize
+    hostname: finalize
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
+    depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+      - db
+    environment:
+      - BROKER_HOST=<<MQ_HOST>>
+      - BROKER_PORT=5672
+      - BROKER_USER=<<PRIVATE_BROKER_USER>>
+      - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
+      - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
+      - BROKER_QUEUE=accessionIDs
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGKEY=completed
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=false
+      - BROKER_VERIFYPEER=false
+      - BROKER_CACERT=
+      - BROKER_CLIENTCERT=
+      - BROKER_CLIENTKEY=
+      - DB_HOST=<<SDA_DB_HOST>>
+      - DB_PORT=5432
+      - DB_USER=<<SDA_DB_USERNAME>>
+      - DB_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
+      - DB_SSLMODE=disable
+      - DB_CLIENTCERT=
+      - DB_CLIENTKEY=
+      - LOG_LEVEL=debug
+    command: "sda-finalize"
+
+  mapper:
+    container_name: mapper
+    hostname: mapper
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
+    depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+      - db
+    environment:
+      - BROKER_HOST=<<MQ_HOST>>
+      - BROKER_PORT=5672
+      - BROKER_USER=<<PRIVATE_BROKER_USER>>
+      - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
+      - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
+      - BROKER_QUEUE=mappings
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=false
+      - BROKER_VERIFYPEER=false
+      - BROKER_CACERT=
+      - BROKER_CLIENTCERT=
+      - BROKER_CLIENTKEY=
+      - DB_HOST=<<SDA_DB_HOST>>
+      - DB_PORT=5432
+      - DB_USER=<<SDA_DB_USERNAME>>
+      - DB_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
+      - DB_SSLMODE=disable
+      - DB_CLIENTCERT=
+      - DB_CLIENTKEY=
+      - LOG_LEVEL=debug
+      - INBOX_LOCATION=/ega/inbox
+    volumes:
+      - <<TMP_CERTS_DIR>>/sda/ega.sec:/etc/ega/ega.sec
+      - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
+    command: "sda-mapper"
+
+  # Out
+
+  doa:
+    container_name: doa
+    hostname: doa
+    image: neicnordic/sda-doa:release-v1.6.0
+    depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+      - db
+    ports:
+      - "80:8080"
+    environment:
+      - SSL_MODE=disable # PG SSL MODE
+      - SSL_ENABLED=false
+      - ARCHIVE_PATH=<<ARCHIVE_PATH>>
+      - DB_INSTANCE=<<SDA_DB_HOST>>
+      - POSTGRES_USER=<<SDA_DB_USERNAME>>
+      - POSTGRES_DB=<<SDA_DB_DATABASE_NAME>>
+      - POSTGRES_PASSWORD=<<SDA_DB_PASSWORD>>
+      - OUTBOX_ENABLED=false
+    volumes:
+      - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
+    user: "65534:65534"
+
+  # CEGA
+
+  cegamq:
+    container_name: cegamq
+    hostname: cegamq
+    image: rabbitmq:3.12.13-management-alpine
+    environment:
+      - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/conf/cega
+      - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/conf/cega.plugins
+      - RABBITMQ_NODE_PORT=5673
+    ports:
+      - "5673:5673"
+      - "15672:15672"
+      - "25672:15672"
+    volumes:
+      - <<TMP_CONFS_DIR>>/cegamq/confs:/etc/rabbitmq/conf
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bash",
+          "-c",
+          "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms"
+        ]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+    command: sh -c "chmod -R 0644 /etc/rabbitmq/conf/* && chown -R 100:101 /etc/rabbitmq/conf/* && rabbitmq-server"
+
+  cegaauth:
+    container_name: cegaauth
+    hostname: cegaauth
+    image: egarchive/lega-base:release.v0.2.0
+    volumes:
+      - <<TMP_CONFS_DIR>>/cegaauth/users:/cega
+    command:
+      [
+        "python",
+        "/cega/cega-mock.py",
+        "0.0.0.0",
+        "8443",
+        "/cega/users.json"
+      ]
+    environment:
+      - LEGA_INSTANCES=dummy
+      - CEGA_USERS_PASSWORD=dummy
+      - CEGA_USERS_USER=dummy
+    ports:
+      - "8443:8443"

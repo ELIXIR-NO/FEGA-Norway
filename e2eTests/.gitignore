@@ -5,7 +5,10 @@ build/
 !**/src/test/**/build/
 
 ### IntelliJ IDEA ###
-.idea/
+.idea/modules.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/libraries/
 *.iws
 *.iml
 *.ipr
@@ -37,13 +40,3 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-
-### Configs ###
-.tool-versions
-
-
-### Temporary Directories
-tmp/
-
-### Any temporary backup files
-*.bak
