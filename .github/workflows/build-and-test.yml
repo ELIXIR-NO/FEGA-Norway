@@ -51,4 +51,5 @@ jobs:
         run: ./gradlew assemble
 
       - name: Run tests
-        run: ./gradlew test
+        run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test
+
