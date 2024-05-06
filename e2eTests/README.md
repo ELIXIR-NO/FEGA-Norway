@@ -10,14 +10,18 @@ of how this setup works.
 
 # Prerequisites
 
-1. [Install Golang](https://go.dev/doc/install)
+1. [Install `docker`](https://docs.docker.com/engine/install/ubuntu/).
+   - You must be able to run `docker` and `docker compose` without sudo
+2. Ensure `docker compose` (V2) is installed.
+3. [Install Golang](https://go.dev/doc/install)
    - `curl -OJL https://go.dev/dl/go1.22.2.linux-amd64.tar.gz`
    - `rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz`
    - `export PATH=$PATH:/usr/local/go/bin`
-2. [Install Java](https://www.java.com/en/download/help/download_options.html)
+4. [Install Java](https://www.java.com/en/download/help/download_options.html)
    - `sudo apt update`
    - `sudo apt install openjdk-21-jdk`
    - `echo "export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64/" >> ~/.bashrc`
+5. Make sure you have at least `8GiB` of free space on your machine.
  
 # How to run the setup?
 
@@ -36,13 +40,6 @@ of how this setup works.
 # Troubleshooting
 
 If the orchestration fail to start for some reason. We suggest trying the fixes below.
-
-<details>
-  <summary>I'm unable to execute `start-docker-containers`?</summary>
-
-1. Ensure `docker` is installed.
-2. Ensure `docker-compose` (V2) is installed.
-</details>
 
 <details>
   <summary>I have conflicting containers. How do I remove them?</summary>
@@ -88,6 +85,16 @@ ln -sfn /usr/local/bin/docker-compose ~/.docker/cli-plugins/docker-compose
 ```
 
 For migration guidance to Docker Compose, visit [migrate to docker compose](https://docs.docker.com/compose/migrate/). Also, for further discussions and troubleshooting, refer to the GitHub issue at https://github.com/docker/compose/issues/8630.
+</details>
+
+<details>
+  <summary>Docker fails to build mq-interceptor (dial tcp: lookup proxy.golang.org: i/o timeout) </summary>
+
+Do a docker daemon restart.
+
+```bash
+sudo systemctl restart docker
+```
 </details>
 
 <details>

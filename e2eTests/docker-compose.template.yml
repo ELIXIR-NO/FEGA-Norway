@@ -15,7 +15,7 @@ services:
   db:
     container_name: db
     hostname: db
-    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026-postgres
+    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47-postgres
     ports:
       - "5432:5432"
     environment:
@@ -125,7 +125,7 @@ services:
   ingest:
     container_name: ingest
     hostname: ingest
-    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
+    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47
     depends_on:
       db:
         condition: service_healthy
@@ -173,7 +173,7 @@ services:
   verify:
     container_name: verify
     hostname: verify
-    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
+    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47
     depends_on:
       db:
         condition: service_healthy
@@ -220,7 +220,7 @@ services:
   finalize:
     container_name: finalize
     hostname: finalize
-    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
+    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47
     depends_on:
       db:
         condition: service_healthy
@@ -258,7 +258,7 @@ services:
   mapper:
     container_name: mapper
     hostname: mapper
-    image: ghcr.io/neicnordic/sensitive-data-archive:sha-5334501063d8cdd62594fcc045914f501a7a4026
+    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47
     depends_on:
       db:
         condition: service_healthy

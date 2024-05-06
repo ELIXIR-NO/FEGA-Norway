@@ -34,13 +34,8 @@ tasks.register<Exec>("cleanup") {
     commandLine("sh", "-c", "./setup.sh clean")
 }
 
-tasks.register<Exec>("project-cleanup") {
-    dependsOn("cleanup")
-    commandLine("../gradlew", "clean")
-}
-
 tasks.register<Exec>("initialize") {
-    dependsOn("project-cleanup")
+    dependsOn("cleanup")
     commandLine("sh", "-c", "./setup.sh init")
 }
 
@@ -65,8 +60,8 @@ tasks.register<Exec>("stop-docker-containers") {
 
 tasks.test {
     useJUnitPlatform()
-    dependsOn("start-docker-containers")
-    finalizedBy("stop-docker-containers")
+//    dependsOn("start-docker-containers")
+//    finalizedBy("stop-docker-containers")
     // Ensure this test runs only after all other
     // test tasks are completed
     mustRunAfter(
