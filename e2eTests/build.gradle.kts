@@ -54,13 +54,8 @@ tasks.register<Exec>("apply-configs") {
     commandLine("sh", "-c", "./setup.sh apply_configs")
 }
 
-tasks.register<Exec>("assemble-project") {
-    dependsOn("apply-configs")
-    commandLine("../gradlew", "assemble")
-}
-
 tasks.register<Exec>("start-docker-containers") {
-    dependsOn("assemble-project")
+    dependsOn("apply-configs")
     commandLine("docker", "compose", "up", "-d")
 }
 

@@ -290,6 +290,7 @@ function generate_certs() {
 # Invokers --
 
 function init() {
+  cd .. && ./gradlew assemble && cd $E2E_DIR
   mkdir -p "$LOCAL_BIN"
   if ! check_dependencies; then
     echo "Dependency check failed. Exiting."
