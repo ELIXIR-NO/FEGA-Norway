@@ -12,7 +12,7 @@ of how this setup works.
 
 1. [Install `docker`](https://docs.docker.com/engine/install/ubuntu/).
    - You must be able to run `docker` and `docker compose` without sudo
-2. Ensure `docker compose` (V2) is installed.
+2. [Install `docker compose`](https://docs.docker.com/compose/install/) (usually it is bundled with Docker).
 3. [Install Golang](https://go.dev/doc/install)
    - `curl -OJL https://go.dev/dl/go1.22.2.linux-amd64.tar.gz`
    - `rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz`
