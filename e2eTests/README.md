@@ -10,7 +10,7 @@ of how this setup works.
 
 # Prerequisites
 
-1. [Install `docker`](https://docs.docker.com/engine/install/ubuntu/).
+1. [Install `docker`](https://docs.docker.com/engine/install).
    - You must be able to run `docker` and `docker compose` without sudo
 2. [Install `docker compose`](https://docs.docker.com/compose/install/) (usually it is bundled with Docker).
 3. [Install Golang](https://go.dev/doc/install)
