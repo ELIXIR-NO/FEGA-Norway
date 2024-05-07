@@ -20,7 +20,7 @@ of how this setup works.
 4. [Install Java](https://www.java.com/en/download/help/download_options.html)
    - `sudo apt update`
    - `sudo apt install openjdk-21-jdk`
-   - `echo "export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64/" >> ~/.bashrc`
+   - Also, ensure that the `JAVA_HOME` points to the correct version of JDK in your environment variables.
 5. Make sure you have at least `8GiB` of free space on your machine.
  
 # How to run the setup?
