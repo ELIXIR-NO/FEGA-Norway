@@ -290,7 +290,7 @@ function generate_certs() {
 # Invokers --
 
 function init() {
-  check_requirements
+  check_requirements || exit 0
   cd .. && ./gradlew assemble && cd $E2E_DIR
   mkdir -p "$LOCAL_BIN"
   if ! check_dependencies; then
