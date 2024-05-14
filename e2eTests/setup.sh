@@ -290,6 +290,7 @@ function generate_certs() {
 # Invokers --
 
 function init() {
+  check_requirements || exit 0
   cd .. && ./gradlew assemble && cd $E2E_DIR
   mkdir -p "$LOCAL_BIN"
   if ! check_dependencies; then
@@ -345,6 +346,64 @@ function frepl() {
   local replace=$(escape_special_chars "$2")
   sed -i.bak "s/$search/$replace/g" "$3"
   rm -rf "$3.bak"
+}
+
+function check_requirements() {
+
+    # Check if Docker is running
+    if ! docker info &> /dev/null; then
+        echo "Docker is not running"
+        return 1
+    fi
+
+    # Check if the current user can execute Docker commands without sudo
+    if ! docker ps &> /dev/null; then
+        echo "The current user cannot execute Docker commands without sudo"
+        return 1
+    fi
+
+    # Check if JAVA_HOME is configured
+    if [ -z "$JAVA_HOME" ]; then
+        echo "JAVA_HOME is not configured"
+        return 1
+    fi
+
+    # Check if Java is installed
+    if ! command -v java &> /dev/null; then
+        echo "Java is not installed"
+        return 1
+    fi
+
+    # Check if Go is installed
+    if ! command -v go &> /dev/null; then
+        echo "Go is not installed"
+        return 1
+    fi
+
+    # Check if Docker is installed
+    if ! command -v docker &> /dev/null; then
+        echo "Docker is not installed"
+        return 1
+    fi
+
+    # Check if Docker Compose is available
+    if ! docker compose version &> /dev/null; then
+        echo "Docker Compose is not available"
+        return 1
+    fi
+
+    # Check if ports are free
+    local ports=(5432 5672 5433 80 5673 5672 25672)
+    for port in "${ports[@]}"; do
+        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null; then
+            echo "Port $port is not free"
+            return 1
+        fi
+    done
+
+    echo "All requirements satisfied"
+    return 0
+
 }
 
 # Function to install mkcert
