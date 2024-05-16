@@ -47,11 +47,11 @@ jobs:
       - name: Commit and Push Changes
         if: steps.format.outputs.changes == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_ACTION_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME=${{ github.head_ref }}
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           git add -A
           git commit -m "Code formatting applied"
-          git push https://${{ secrets.GH_ACTION_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME
+          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME
