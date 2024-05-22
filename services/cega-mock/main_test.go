@@ -84,7 +84,6 @@ func TestUserHandler_Unauthorized(t *testing.T) {
 }
 
 func TestUserHandler_ValidUID(t *testing.T) {
-	// Setup
 	loadUsers()
 	instances = map[string]string{
 		"test_instance": "test_password",
