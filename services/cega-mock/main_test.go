@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 )
 
@@ -97,12 +96,4 @@ func TestUserHandler_ValidUID(t *testing.T) {
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
-}
-
-func TestMain(m *testing.M) {
-	os.Setenv("CEGA_USERS_USER", "test_instance")
-	os.Setenv("CEGA_USERS_PASSWORD", "test_password")
-	loadUsers()
-	code := m.Run()
-	os.Exit(code)
 }
