@@ -9,7 +9,6 @@ import (
 	"testing"
 )
 
-// TestLoadUsers tests the loadUsers function
 func TestLoadUsers(t *testing.T) {
 	loadUsers()
 	if len(users) == 0 {
@@ -20,7 +19,6 @@ func TestLoadUsers(t *testing.T) {
 	}
 }
 
-// Helper function to create a new request with authorization
 func newAuthorizedRequest(method, path, username, password string) *http.Request {
 	req, _ := http.NewRequest(method, path, nil)
 	auth := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
@@ -28,9 +26,7 @@ func newAuthorizedRequest(method, path, username, password string) *http.Request
 	return req
 }
 
-// TestUserHandler_ValidUsername tests the userHandler function with a valid username request
 func TestUserHandler_ValidUsername(t *testing.T) {
-	// Setup
 	loadUsers()
 	instances = map[string]string{
 		"test_instance": "test_password",
@@ -55,9 +51,7 @@ func TestUserHandler_ValidUsername(t *testing.T) {
 	}
 }
 
-// TestUserHandler_InvalidUser tests the userHandler function with an invalid user request
 func TestUserHandler_InvalidUser(t *testing.T) {
-	// Setup
 	loadUsers()
 	instances = map[string]string{
 		"test_instance": "test_password",
@@ -73,9 +67,7 @@ func TestUserHandler_InvalidUser(t *testing.T) {
 	}
 }
 
-// TestUserHandler_Unauthorized tests the userHandler function with an unauthorized request
 func TestUserHandler_Unauthorized(t *testing.T) {
-	// Setup
 	loadUsers()
 	instances = map[string]string{
 		"test_instance": "test_password",
@@ -91,7 +83,6 @@ func TestUserHandler_Unauthorized(t *testing.T) {
 	}
 }
 
-// TestUserHandler_ValidUID tests the userHandler function with a valid UID request
 func TestUserHandler_ValidUID(t *testing.T) {
 	// Setup
 	loadUsers()
@@ -109,7 +100,6 @@ func TestUserHandler_ValidUID(t *testing.T) {
 	}
 }
 
-// Main function to set environment variables and run tests
 func TestMain(m *testing.M) {
 	os.Setenv("CEGA_USERS_USER", "test_instance")
 	os.Setenv("CEGA_USERS_PASSWORD", "test_password")
