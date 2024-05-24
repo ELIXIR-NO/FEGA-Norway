@@ -92,6 +92,19 @@ updates:
     commit-message:
       prefix: "[MQ-Interceptor]"
 
+  ## CEGA-mock
+  - package-ecosystem: gomod
+    directory: "/services/cega-mock"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Oslo"
+    commit-message:
+      prefix: "[CEGA-mock]"
+
+  # CLI
+
   ## lega-commander
   - package-ecosystem: gomod
     directory: "/cli/lega-commander"
