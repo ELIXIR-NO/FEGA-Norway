@@ -144,7 +144,7 @@ func main() {
 		os.Getenv("CEGA_USERS_USER"): os.Getenv("CEGA_USERS_PASSWORD"),
 	}
 
-	http.HandleFunc("/lega/v1/legas/users/", userHandler)
+	http.HandleFunc("/username/", userHandler)
 
 	addr := host + ":" + port
 	log.Printf("Server running at %s", addr)

@@ -31,7 +31,7 @@ func TestUserHandler_ValidUsername(t *testing.T) {
 		"test_instance": "test_password",
 	}
 
-	req := newAuthorizedRequest("GET", "/lega/v1/legas/users/dummy?idType=username", "test_instance", "test_password")
+	req := newAuthorizedRequest("GET", "/username/dummy?idType=username", "test_instance", "test_password")
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(userHandler)
 	handler.ServeHTTP(rr, req)
@@ -56,7 +56,7 @@ func TestUserHandler_InvalidUser(t *testing.T) {
 		"test_instance": "test_password",
 	}
 
-	req := newAuthorizedRequest("GET", "/lega/v1/legas/users/invalid_user?idType=username", "test_instance", "test_password")
+	req := newAuthorizedRequest("GET", "/username/invalid_user?idType=username", "test_instance", "test_password")
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(userHandler)
 	handler.ServeHTTP(rr, req)
@@ -72,7 +72,7 @@ func TestUserHandler_Unauthorized(t *testing.T) {
 		"test_instance": "test_password",
 	}
 
-	req := newAuthorizedRequest("GET", "/lega/v1/legas/users/dummy?idType=username", "wrong_instance", "wrong_password")
+	req := newAuthorizedRequest("GET", "/username/dummy?idType=username", "wrong_instance", "wrong_password")
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(userHandler)
 	handler.ServeHTTP(rr, req)
@@ -88,7 +88,7 @@ func TestUserHandler_ValidUID(t *testing.T) {
 		"test_instance": "test_password",
 	}
 
-	req := newAuthorizedRequest("GET", "/lega/v1/legas/users/1?idType=uid", "test_instance", "test_password")
+	req := newAuthorizedRequest("GET", "/username/1?idType=uid", "test_instance", "test_password")
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(userHandler)
 	handler.ServeHTTP(rr, req)
