@@ -97,12 +97,12 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 	loadUsers()
 
 	pathParts := strings.Split(r.URL.Path, "/")
-	if len(pathParts) != 6 {
+	if len(pathParts) != 3 {
 		http.Error(w, "Invalid path", http.StatusBadRequest)
 		return
 	}
 
-	identifier := pathParts[5]
+	identifier := pathParts[2]
 	idType := r.URL.Query().Get("idType")
 	userInfo := fetchUserInfo(identifier, idType)
 	if userInfo == nil {
