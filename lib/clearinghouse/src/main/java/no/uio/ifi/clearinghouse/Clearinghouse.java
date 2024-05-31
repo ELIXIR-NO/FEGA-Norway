@@ -40,11 +40,9 @@ public enum Clearinghouse {
   private static final String GA_4_GH_VISA_V_1 = "ga4gh_visa_v1";
   private static final String USERINFO = "userinfo";
   private static final String AUTHORIZATION = "Authorization";
-    private static final String BEARER = "Bearer ";
+  private static final String BEARER = "Bearer ";
   private static final String KID = "kid";
   private final OkHttpClient client = new OkHttpClient();
-
-
 
   private final Gson gson = new Gson();
 
