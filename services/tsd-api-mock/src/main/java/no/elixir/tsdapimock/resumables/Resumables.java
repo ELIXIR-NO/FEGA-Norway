@@ -66,10 +66,8 @@ public class Resumables {
       byte[] content,
       ResumableUpload resumableUpload)
       throws IOException {
-    File uploadFolder = generateUploadFolder(
-            tsdElixirImport.formatted(project, userName),
-            resumableUpload.getId()
-    );
+    File uploadFolder =
+        generateUploadFolder(tsdElixirImport.formatted(project, userName), resumableUpload.getId());
 
     if ("end".equalsIgnoreCase(chunk)) {
       finalizeChunks(userName, uploadFolder, resumableUpload.getId(), project);
@@ -148,10 +146,8 @@ public class Resumables {
 
   private void mergeFiles(String userName, File dir, ResumableUpload resumable, String project)
       throws IOException {
-    File destinationFile = new File(
-            tsdElixirImport.formatted(project, userName),
-            resumable.getFileName()
-    );
+    File destinationFile =
+        new File(tsdElixirImport.formatted(project, userName), resumable.getFileName());
 
     try (OutputStream outputStream =
         Files.newOutputStream(

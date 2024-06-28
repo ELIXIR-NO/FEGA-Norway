@@ -143,8 +143,7 @@ public class FilesService {
     if (StringUtils.isEmpty(fileName)) {
       return new DeleteResumableDto("Stream processing failed");
     }
-    File uploadFolder =
-        resumables.generateUploadFolder(String.format(tsdFileImport, project), id);
+    File uploadFolder = resumables.generateUploadFolder(String.format(tsdFileImport, project), id);
     try {
       ResumableUpload resumableUpload = resumables.getResumableUpload(id);
       resumables.deleteFiles(uploadFolder, resumableUpload);
