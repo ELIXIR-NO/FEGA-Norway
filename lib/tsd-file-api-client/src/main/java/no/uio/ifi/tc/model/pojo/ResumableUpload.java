@@ -32,6 +32,6 @@ public class ResumableUpload extends TSDFileAPIResponse {
   @SerializedName("max_chunk")
   private BigInteger maxChunk;
 
-  @SerializedName("md5sum")
+  @SerializedName("md5Sum")
   private String md5Sum;
 }
