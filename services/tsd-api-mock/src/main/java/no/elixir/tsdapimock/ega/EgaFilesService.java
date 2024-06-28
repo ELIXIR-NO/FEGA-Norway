@@ -1,6 +1,7 @@
 package no.elixir.tsdapimock.ega;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import no.elixir.tsdapimock.exceptions.CredentialsMismatchException;
@@ -44,7 +45,7 @@ public class EgaFilesService {
     return new ResumableUploadsResponseDto(dtoList);
   }
 
-  public ResumableUploadsResponseDto handleResumableUpload(
+  public ResumableUploadDto handleResumableUpload(
       String project,
       String filename,
       String authorizationHeader,
@@ -66,6 +67,7 @@ public class EgaFilesService {
     if (StringUtils.isEmpty(id)) {
       resumableUpload = new ResumableUpload();
       resumableUpload.setFileName(filename);
+      resumableUpload.setMaxChunk(new BigInteger(chunk));
       resumablesRepository.save(resumableUpload);
     } else {
       resumableUpload =
@@ -81,10 +83,6 @@ public class EgaFilesService {
       throw new FileProcessingException(e.getMessage());
     }
 
-    ResumableUploadDto resumableUploadDto = Resumables.convertToDto(uploadedResumable);
-
-    ArrayList<ResumableUploadDto> dtoList = new ArrayList<>();
-    dtoList.add(resumableUploadDto);
-    return new ResumableUploadsResponseDto(dtoList);
+    return Resumables.convertToDto(uploadedResumable);
   }
 }

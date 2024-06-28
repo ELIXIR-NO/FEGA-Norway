@@ -11,4 +11,4 @@ public record ResumableUploadDto(
     @JsonProperty("previous_offset") BigInteger previousOffset,
     @JsonProperty("next_offset") BigInteger nextOffset,
     @JsonProperty("max_chunk") BigInteger maxChunk,
-    @JsonProperty("md5sum") String md5Sum) {}
+    @JsonProperty("md5Sum") String md5Sum) {}

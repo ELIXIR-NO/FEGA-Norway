@@ -44,7 +44,7 @@ public class EgaFilesController {
       @RequestHeader("Authorization") String authorizationHeader,
       @RequestParam("chunk") String chunk,
       @RequestParam(value = "id", required = false) String id,
-      @RequestBody byte[] content) {
+      @RequestBody(required = false) byte[] content) {
     try {
       var response =
           egaFilesService.handleResumableUpload(
