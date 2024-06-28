@@ -8,9 +8,18 @@ services:
     container_name: tsd
     hostname: tsd
     image: tsd-api-mock:latest
+    ports:
+      - "5006:5006" # This is the JDWP debug port. See command below.
     build: ../services/tsd-api-mock
     volumes:
-      - <<TMP_VOLUMES_DIR>>/tsd:/tsd/p11/data/durable/apps/ega/
+      - <<TMP_VOLUMES_DIR>>/tsd/:/tsd/p11/data/durable/apps/ega/
+      - <<TMP_CERTS_DIR>>/tsd/elixir_aai.pem:/etc/jwt/public_keys/elixir_aai.pem
+    command: # See services/tsd-api-mock/Dockerfile
+      - "java"
+      - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
+      - "-XX:+UseG1GC"
+      - "-jar"
+      - "app.jar"
 
   db:
     container_name: db
@@ -28,7 +37,7 @@ services:
       - POSTGRES_SERVER_CACERT=
       - POSTGRES_VERIFY_PEER=
     volumes:
-      - <<TMP_VOLUMES_DIR>>/db:/ega
+      - <<TMP_VOLUMES_DIR>>/db/:/ega
     healthcheck:
       test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "postgres" ]
       interval: 5s
@@ -41,6 +50,7 @@ services:
     image: rabbitmq:3.12.13-management-alpine
     ports:
       - "5672:5672"
+      - "15671:15671"
     volumes:
       - <<TMP_CONFS_DIR>>/mq:/etc/rabbitmq
     command: sh -c "rabbitmq-plugins enable --offline rabbitmq_federation rabbitmq_federation_management rabbitmq_shovel rabbitmq_shovel_management && rabbitmq-server"
@@ -62,10 +72,17 @@ services:
       - mq
       - cegamq
       - postgres
+    links:
+      - tsd
+      - mq
+      - cegamq
+      - postgres
     ports:
       - "10443:8080"
+      - "5005:5005" # This is the JDWP debug port. See command below.
     environment:
       - SSL_ENABLED=false
+      - DB_PORT=5432
       - ROOT_CERT_PASSWORD=<<PROXY_ROOT_CERT_PASSWORD>>
       - TSD_ROOT_CERT_PASSWORD=<<PROXY_TSD_ROOT_CERT_PASSWORD>>
       - SERVER_CERT_PASSWORD=<<PROXY_SERVER_CERT_PASSWORD>>
@@ -77,6 +94,7 @@ services:
       - BROKER_PASSWORD=<<PROXY_BROKER_PASSWORD>>
       - BROKER_VHOST=<<PROXY_BROKER_VHOST>>
       - BROKER_VALIDATE=<<PROXY_BROKER_VALIDATE>>
+      - BROKER_SSL_ENABLED=<<PROXY_BROKER_SSL_ENABLED>>
       - EXCHANGE=<<PROXY_EXCHANGE>>
       - CEGA_AUTH_URL=<<PROXY_CEGA_AUTH_URL>>
       - CEGA_USERNAME=<<PROXY_CEGA_USERNAME>>
@@ -89,6 +107,12 @@ services:
       - <<TMP_CERTS_DIR>>/proxy/server.cert:/etc/ega/ssl/server.cert
       - <<TMP_CERTS_DIR>>/proxy/passport.pem:/etc/ega/jwt/passport.pem
       - <<TMP_CERTS_DIR>>/proxy/visa.pem:/etc/ega/jwt/visa.pem
+    command: # See services/localega-tsd-proxy/Dockerfile
+      - "java"
+      - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+      - "-XX:+UseG1GC"
+      - "-jar"
+      - "app.jar"
 
   interceptor:
     container_name: interceptor
@@ -106,14 +130,13 @@ services:
       - CEGA_MQ_QUEUE=v1.files
       - LEGA_MQ_CONNECTION=<<INTERCEPTOR_MQ_CONNECTION>>
       - LEGA_MQ_EXCHANGE=sda
+      - LEGA_MQ_QUEUE=files
 
   postgres:
     container_name: postgres
     hostname: postgres
     image: postgres
     entrypoint: ["/entrypoint.sh"]
-    ports:
-      - "5433:5432"
     environment:
       - POSTGRES_PASSWORD=<<POSTGRES_PASSWORD>>
     volumes:
@@ -165,8 +188,8 @@ services:
       - INBOX_LOCATION=/ega/inbox
       - LOG_LEVEL=debug
     volumes:
-      - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
-      - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
+      - <<TMP_VOLUMES_DIR>>/tsd/:/ega/inbox
+      - <<TMP_VOLUMES_DIR>>/vault/:/ega/archive
       - <<TMP_CERTS_DIR>>/sda/ega.sec:/etc/ega/ega.sec
     command: "sda-ingest"
 
@@ -212,8 +235,8 @@ services:
       - INBOX_LOCATION=/ega/inbox
       - LOG_LEVEL=debug
     volumes:
-      - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
-      - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
+      - <<TMP_VOLUMES_DIR>>/vault/:/ega/archive
+      - <<TMP_VOLUMES_DIR>>/tsd/:/ega/inbox
       - <<TMP_CERTS_DIR>>/sda/ega.sec:/etc/ega/ega.sec
     command: "sda-verify"
 
@@ -293,8 +316,42 @@ services:
       - INBOX_LOCATION=/ega/inbox
     volumes:
       - <<TMP_CERTS_DIR>>/sda/ega.sec:/etc/ega/ega.sec
-      - <<TMP_VOLUMES_DIR>>/tsd:/ega/inbox
+      - <<TMP_VOLUMES_DIR>>/tsd/:/ega/inbox
     command: "sda-mapper"
+
+  intercept:
+    container_name: intercept
+    hostname: intercept
+    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47
+    depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    environment:
+      - BROKER_HOST=mq
+      - BROKER_PORT=5672
+      - BROKER_USER=admin
+      - BROKER_PASSWORD=guest
+      - BROKER_QUEUE=files
+      - BROKER_VHOST=test
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=ro0tpasswd
+      - DB_DATABASE=sda
+      - DB_SSLMODE=disable
+      - LOG_LEVEL=debug
+    links:
+      - mq
+      - db
+      - ingest
+      - verify
+      - finalize
+      - mapper
+    command: "sda-intercept"
+
+
 
   # Out
 
@@ -322,7 +379,7 @@ services:
       - POSTGRES_PASSWORD=<<SDA_DB_PASSWORD>>
       - OUTBOX_ENABLED=false
     volumes:
-      - <<TMP_VOLUMES_DIR>>/vault:/ega/archive
+      - <<TMP_VOLUMES_DIR>>/vault/:/ega/archive
     user: "65534:65534"
 
   # CEGA
