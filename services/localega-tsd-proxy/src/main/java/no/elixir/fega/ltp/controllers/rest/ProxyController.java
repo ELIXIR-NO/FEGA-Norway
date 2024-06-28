@@ -53,8 +53,9 @@ public class ProxyController {
       @RequestParam(value = "md5", required = false) String md5,
       @RequestParam(value = "sha256", required = false) String sha256)
       throws IOException {
-    Token token =
-        tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
+
+    String elixirAAIIdToken = getElixirAAIToken(bearerAuthorization);
+    Token token = tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, elixirAAIIdToken);
 
     byte[] chunkBytes = inputStream.readAllBytes();
 
