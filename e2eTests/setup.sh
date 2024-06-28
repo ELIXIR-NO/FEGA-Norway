@@ -22,13 +22,14 @@ export CLIENT_CERT_PASSWORD=client_cert_passw0rd
 export ROOT_CERT_PASSWORD=r00t_cert_passw0rd
 export KEY_PASSWORD=key_passw0rd # Also used by SDA
 
-export CEGA_AUTH_URL=http://cegaauth:8443/lega/v1/legas/users/
-export CEGA_USERNAME=dummy
-export CEGA_PASSWORD=dummy
+export CEGA_AUTH_URL=${CEGA_AUTH_URL:-"http://cegaauth:8443/lega/v1/legas/users/"}
+export CEGA_USERNAME=${CEGA_USERNAME:-dummy}
+export CEGA_PASSWORD=${CEGA_PASSWORD:-dummy}
+
 export CEGA_MQ_CONNECTION=amqp://test:test@cegamq:5673/lega
 
-export EGA_BOX_USERNAME=dummy # Used by IngestionTest.java
-export EGA_BOX_PASSWORD=dummy # Used by IngestionTest.java
+export EGA_BOX_USERNAME=${EGA_BOX_USERNAME:-dummy}
+export EGA_BOX_PASSWORD=${EGA_BOX_PASSWORD:-dummy}
 
 export BROKER_HOST=cegamq
 export BROKER_PORT=5673
@@ -36,6 +37,7 @@ export BROKER_USERNAME=test
 export BROKER_PASSWORD=test
 export BROKER_VHOST=lega
 export BROKER_VALIDATE=false
+export BROKER_SSL_ENABLED=false
 
 export EXCHANGE=localega
 
@@ -62,11 +64,13 @@ export PUBLIC_BROKER_HASH=4tHURqDiZzypw0NTvoHhpn8/MMgONWonWxgRZ4NXgR8nZRBz
 export ARCHIVE_PATH=/ega/archive/
 
 export MQ_HOST=mq
-export MQ_CONNECTION=amqp://admin:guest@mq:5672/test
-export DB_IN_CONNECTION=postgres://lega_in:in_passw0rd@db:5432/lega?application_name=LocalEGA
-export DB_OUT_CONNECTION=postgres://lega_out:0ut_passw0rd@db:5432/lega?application_name=LocalEGA
+export MQ_PORT=5672
+export MQ_CONNECTION="amqp://admin:guest@$MQ_HOST:$MQ_PORT/test"
+
+# postgres
+export POSTGRES_USERNAME=postgres
 export POSTGRES_PASSWORD=p0stgres_passw0rd
-export POSTGRES_CONNECTION=postgres://postgres:p0stgres_passw0rd@postgres:5432/postgres?sslmode=disable
+export POSTGRES_CONNECTION="postgres://$POSTGRES_USERNAME:$POSTGRES_PASSWORD@postgres:5432/postgres?sslmode=disable"
 
 function apply_configs() {
 
@@ -114,6 +118,7 @@ function apply_configs() {
   frepl "<<PROXY_BROKER_PASSWORD>>" "$BROKER_PASSWORD" $f
   frepl "<<PROXY_BROKER_VHOST>>" "$BROKER_VHOST" $f
   frepl "<<PROXY_BROKER_VALIDATE>>" "$BROKER_VALIDATE" $f
+  frepl "<<PROXY_BROKER_SSL_ENABLED>>" "$BROKER_SSL_ENABLED" $f
   frepl "<<PROXY_EXCHANGE>>" "$EXCHANGE" $f
   frepl "<<PROXY_CEGA_AUTH_URL>>" "$CEGA_AUTH_URL" $f
   frepl "<<PROXY_CEGA_USERNAME>>" "$CEGA_USERNAME" $f
@@ -237,7 +242,8 @@ function generate_certs() {
   # tsd
   mkdir -p tsd &&
     cp rootCA.pem tsd/CA.cert &&
-    cp server.p12 tsd/server.cert
+    cp server.p12 tsd/server.cert &&
+    cp jwt.pub.pem tsd/elixir_aai.pem
 
   # db
   mkdir -p db &&
@@ -318,7 +324,7 @@ function init() {
 function clean() {
   cd .. && ./gradlew clean && cd $E2E_DIR
   rm -rf $TMP_DIR
-  rm -rf $E2E_DIR/docker-compose.ym*
+  rm -rf $E2E_DIR/docker-compose.yml
   docker rmi tsd-api-mock:latest \
              tsd-proxy:latest \
              mq-interceptor:latest \
