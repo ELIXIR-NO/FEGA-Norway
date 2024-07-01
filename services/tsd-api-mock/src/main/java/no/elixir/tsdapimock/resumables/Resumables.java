@@ -19,8 +19,8 @@ public class Resumables {
 
   private final ResumablesRepository resumablesRepository;
 
-  @Value("${tsd.file.import}")
-  public String durableFileImport;
+  @Value("${tsd.elixir.import}")
+  public String tsdElixirImport;
 
   @Autowired
   public Resumables(ResumablesRepository resumablesRepository) {
@@ -67,20 +67,19 @@ public class Resumables {
       ResumableUpload resumableUpload)
       throws IOException {
     File uploadFolder =
-        generateUploadFolder(
-            durableFileImport.replace("{project}", project), resumableUpload.getId());
+        generateUploadFolder(tsdElixirImport.formatted(project, userName), resumableUpload.getId());
 
+    if ("end".equalsIgnoreCase(chunk)) {
+      finalizeChunks(userName, uploadFolder, resumableUpload.getId(), project);
+      return resumableUpload;
+    }
     if ("1".equals(chunk)) {
       File chunkFile = saveChunk(uploadFolder, filename, content);
-      resumableUpload = createResumableUpload(chunkFile, resumableUpload);
-    } else if ("end".equalsIgnoreCase(chunk)) {
-      finalizeChunks(userName, uploadFolder, resumableUpload.getId(), project);
-    } else {
-      File chunkFile = saveChunk(uploadFolder, chunk, filename, content);
-      resumableUpload = updateResumableUpload(resumableUpload, chunkFile);
+      return createResumableUpload(chunkFile, resumableUpload);
     }
 
-    return resumableUpload;
+    File chunkFile = saveChunk(uploadFolder, chunk, filename, content);
+    return updateResumableUpload(resumableUpload, chunkFile);
   }
 
   private ResumableUpload createResumableUpload(File chunkFile, ResumableUpload resumableUpload)
@@ -90,7 +89,7 @@ public class Resumables {
     resumableUpload.setNextOffset(BigInteger.valueOf(length));
     resumableUpload.setChunkSize(BigInteger.valueOf(length));
     resumableUpload.setMd5Sum(DigestUtils.md5DigestAsHex(Files.newInputStream(chunkFile.toPath())));
-    return resumableUpload;
+    return resumablesRepository.save(resumableUpload);
   }
 
   private ResumableUpload updateResumableUpload(ResumableUpload resumableUpload, File chunkFile)
@@ -100,7 +99,7 @@ public class Resumables {
     resumableUpload.setNextOffset(resumableUpload.getNextOffset().add(BigInteger.valueOf(length)));
     resumableUpload.setChunkSize(BigInteger.valueOf(length));
     resumableUpload.setMd5Sum(DigestUtils.md5DigestAsHex(Files.newInputStream(chunkFile.toPath())));
-    return resumableUpload;
+    return resumablesRepository.save(resumableUpload);
   }
 
   public File generateUploadFolder(String basePath, String uploadId) {
@@ -148,7 +147,7 @@ public class Resumables {
   private void mergeFiles(String userName, File dir, ResumableUpload resumable, String project)
       throws IOException {
     File destinationFile =
-        new File(durableFileImport.replace("{project}", project), resumable.getFileName());
+        new File(tsdElixirImport.formatted(project, userName), resumable.getFileName());
 
     try (OutputStream outputStream =
         Files.newOutputStream(

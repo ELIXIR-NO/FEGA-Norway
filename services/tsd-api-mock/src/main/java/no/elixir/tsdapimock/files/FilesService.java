@@ -3,6 +3,7 @@ package no.elixir.tsdapimock.files;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -31,7 +32,7 @@ public class FilesService {
   private final Resumables resumables;
 
   @Value("${tsd.file.import}")
-  public String durableFileImport;
+  public String tsdFileImport;
 
   @Autowired
   public FilesService(
@@ -50,7 +51,7 @@ public class FilesService {
       throw new CredentialsMismatchException("Stream processing failed");
     }
 
-    var path = Paths.get(String.format(durableFileImport, project), fileName);
+    var path = Paths.get(String.format(tsdFileImport, project), fileName);
     try {
       Files.copy(fileStream, path, StandardCopyOption.REPLACE_EXISTING);
       log.info(path.getParent().toString());
@@ -65,7 +66,7 @@ public class FilesService {
     if (!jwtService.verify(authorizationHeader)) {
       throw new CredentialsMismatchException("Invalid bearer authorization token");
     }
-    var path = Paths.get(String.format(durableFileImport, project), folderName);
+    var path = Paths.get(String.format(tsdFileImport, project), folderName);
     try {
       Files.createDirectories(path);
       log.info("created: " + path);
@@ -90,7 +91,7 @@ public class FilesService {
   }
 
   // TODO: validate this
-  public ResumableUploadsResponseDto handleResumableUpload(
+  public ResumableUploadDto handleResumableUpload(
       String project,
       String filename,
       String authorizationHeader,
@@ -111,6 +112,7 @@ public class FilesService {
     if (StringUtils.isEmpty(id)) {
       resumableUpload = new ResumableUpload();
       resumableUpload.setFileName(filename);
+      resumableUpload.setMaxChunk(new BigInteger(chunk));
       resumablesRepository.save(resumableUpload);
     } else {
       resumableUpload =
@@ -127,11 +129,7 @@ public class FilesService {
       throw new FileProcessingException(e.getMessage());
     }
 
-    ResumableUploadDto resumableUploadDto = Resumables.convertToDto(uploadedResumable);
-
-    ArrayList<ResumableUploadDto> dtoList = new ArrayList<>();
-    dtoList.add(resumableUploadDto);
-    return new ResumableUploadsResponseDto(dtoList);
+    return Resumables.convertToDto(uploadedResumable);
   }
 
   public DeleteResumableDto deleteResumableUpload(
@@ -145,8 +143,7 @@ public class FilesService {
     if (StringUtils.isEmpty(fileName)) {
       return new DeleteResumableDto("Stream processing failed");
     }
-    File uploadFolder =
-        resumables.generateUploadFolder(String.format(durableFileImport, project), id);
+    File uploadFolder = resumables.generateUploadFolder(String.format(tsdFileImport, project), id);
     try {
       ResumableUpload resumableUpload = resumables.getResumableUpload(id);
       resumables.deleteFiles(uploadFolder, resumableUpload);

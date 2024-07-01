@@ -2,10 +2,12 @@ package no.uio.ifi.tc;
 
 import com.auth0.jwt.JWT;
 import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -13,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import no.uio.ifi.tc.model.Environment;
 import no.uio.ifi.tc.model.pojo.*;
 import okhttp3.*;
-import okhttp3.OkHttpClient;
 import org.apache.commons.io.IOUtils;
 
 /** Main class of the library, encapsulating TSD File API client methods. */
@@ -226,10 +227,9 @@ public class TSDFileAPIClient {
     try (Response response = client.newCall(request).execute()) {
       chunkResponse.setStatusCode(response.code());
       chunkResponse.setStatusText(response.message());
-
-      if (response.isSuccessful() && response.body() != null) {
-        String responseBody = response.body().string();
-        chunkResponse = gson.fromJson(responseBody, Chunk.class);
+      String _body = Objects.requireNonNull(response.body()).string();
+      if (response.isSuccessful() && _body != null) {
+        chunkResponse = gson.fromJson(_body, Chunk.class);
       }
     } catch (JsonSyntaxException e) {
       log.error(e.getMessage(), e);
@@ -320,13 +320,12 @@ public class TSDFileAPIClient {
     Chunk chunkResponse = new Chunk();
 
     try (Response response = client.newCall(request).execute()) {
-      chunkResponse.setStatusCode(response.code());
-      chunkResponse.setStatusText(response.message());
-
       if (response.isSuccessful() && response.body() != null) {
         String responseBody = response.body().string();
         chunkResponse = gson.fromJson(responseBody, Chunk.class);
       }
+      chunkResponse.setStatusCode(response.code());
+      chunkResponse.setStatusText(response.message());
     } catch (JsonSyntaxException e) {
       log.error(e.getMessage(), e);
     }
@@ -417,7 +416,7 @@ public class TSDFileAPIClient {
         getURL(
             String.format("/auth/%s/token?type=", oidcProvider.toLowerCase())
                 + tokenType.toLowerCase());
-
+    log.info(url);
     OkHttpClient client = new OkHttpClient();
     MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     RequestBody body =
@@ -431,16 +430,20 @@ public class TSDFileAPIClient {
             .build();
 
     Token token = new Token();
+    Response response;
 
-    try (Response response = client.newCall(request).execute()) {
+    try {
+      response = client.newCall(request).execute();
       token.setStatusCode(response.code());
       token.setStatusText(response.message());
-
-      if (response.isSuccessful() && response.body() != null) {
-        String responseBody = response.body().string();
-        token = gson.fromJson(responseBody, Token.class);
+      ResponseBody responseBody = response.body();
+      if (response.isSuccessful() && responseBody != null) {
+        String bodyString = responseBody.string();
+        token.setToken(
+            JsonParser.parseString(bodyString).getAsJsonObject().get("token").getAsString());
       }
-    } catch (JsonSyntaxException e) {
+      response.close();
+    } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
 
@@ -597,7 +600,7 @@ public class TSDFileAPIClient {
 
       TSDFileAPIClient tsdFileAPIClient = new TSDFileAPIClient(httpClient);
 
-      tsdFileAPIClient.protocol = this.secure == null ? "https" : (this.secure ? "https" : "http");
+      tsdFileAPIClient.protocol = "http";
       tsdFileAPIClient.host = this.host == null ? DEFAULT_HOST : this.host;
       tsdFileAPIClient.environment =
           this.environment == null ? DEFAULT_ENVIRONMENT : this.environment;

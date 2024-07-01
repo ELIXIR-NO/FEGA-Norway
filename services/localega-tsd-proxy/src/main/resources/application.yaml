@@ -4,11 +4,16 @@ server.ssl:
   key-store: file:${SERVER_KEYSTORE_PATH:/etc/ega/ssl/server.cert}
   key-store-password: ${SERVER_CERT_PASSWORD}
 
-spring.datasource:
-  url: jdbc:postgresql://${DB_INSTANCE:postgres}:${DB_PORT:5432}/${POSTGRES_DB:postgres}?stringtype=unspecified
-  username: ${POSTGRES_USER:postgres}
-  password: ${POSTGRES_PASSWORD}
-  driver-class-name: org.postgresql.Driver
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_INSTANCE:postgres}:${DB_PORT:5432}/${POSTGRES_DB:postgres}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 spring.rabbitmq:
   host: ${BROKER_HOST:public-mq}
@@ -18,7 +23,7 @@ spring.rabbitmq:
   password: ${BROKER_PASSWORD:guest}
   ssl:
     validate-server-certificate: ${BROKER_VALIDATE:true}
-    enabled: true
+    enabled: ${BROKER_SSL_ENABLED:true}
     algorithm: TLSv1.2
 
 spring.main:

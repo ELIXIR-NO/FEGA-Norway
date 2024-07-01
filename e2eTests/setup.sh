@@ -37,6 +37,7 @@ export BROKER_USERNAME=test
 export BROKER_PASSWORD=test
 export BROKER_VHOST=lega
 export BROKER_VALIDATE=false
+export BROKER_SSL_ENABLED=false
 
 export EXCHANGE=localega
 
@@ -117,6 +118,7 @@ function apply_configs() {
   frepl "<<PROXY_BROKER_PASSWORD>>" "$BROKER_PASSWORD" $f
   frepl "<<PROXY_BROKER_VHOST>>" "$BROKER_VHOST" $f
   frepl "<<PROXY_BROKER_VALIDATE>>" "$BROKER_VALIDATE" $f
+  frepl "<<PROXY_BROKER_SSL_ENABLED>>" "$BROKER_SSL_ENABLED" $f
   frepl "<<PROXY_EXCHANGE>>" "$EXCHANGE" $f
   frepl "<<PROXY_CEGA_AUTH_URL>>" "$CEGA_AUTH_URL" $f
   frepl "<<PROXY_CEGA_USERNAME>>" "$CEGA_USERNAME" $f
@@ -322,7 +324,7 @@ function init() {
 function clean() {
   cd .. && ./gradlew clean && cd $E2E_DIR
   rm -rf $TMP_DIR
-  rm -rf $E2E_DIR/docker-compose.ym*
+  rm -rf $E2E_DIR/docker-compose.yml
   docker rmi tsd-api-mock:latest \
              tsd-proxy:latest \
              mq-interceptor:latest \
