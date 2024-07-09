@@ -62,7 +62,7 @@ abstract public class ExtraModuleInfoTransform implements TransformAction<ExtraM
 
     private static byte[] addModuleInfo(ModuleInfo moduleInfo) {
         ClassWriter classWriter = new ClassWriter(0);
-        classWriter.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
+        classWriter.visit(Opcodes.V21, Opcodes.ACC_MODULE, "module-info", null, null, null);
         ModuleVisitor moduleVisitor = classWriter.visitModule(moduleInfo.getModuleName(), Opcodes.ACC_OPEN, moduleInfo.getModuleVersion());
         for (String packageName : moduleInfo.getExports()) {
             moduleVisitor.visitExport(packageName.replace('.', '/'), 0);
