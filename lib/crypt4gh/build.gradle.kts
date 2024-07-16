@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("maven-publish")
     id("extra-java-module-info")
     id("io.freefair.lombok") version "8.6"
     id("formatting-conventions")
@@ -34,4 +35,22 @@ extraJavaModuleInfo {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+        }
+    }
+    repositories {
+        maven {
+            name = "fega-norway-clearinghouse"
+            url = uri("https://maven.pkg.github.com/ELIXIR-NO/FEGA-Norway")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 }
