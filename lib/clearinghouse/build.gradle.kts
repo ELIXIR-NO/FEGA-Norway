@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id ("java-library")
     id("maven-publish")
     id("io.freefair.lombok") version "8.6"
     id("formatting-conventions")
@@ -30,4 +31,22 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.bouncycastle:bcprov-jdk15to18:1.78.1")
     testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.78.1")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+        }
+    }
+    repositories {
+        maven {
+            name = "fega-norway-clearinghouse"
+            url = uri("https://maven.pkg.github.com/ELIXIR-NO/FEGA-Norway")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 }
