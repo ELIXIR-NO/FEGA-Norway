@@ -45,7 +45,7 @@ publishing {
     }
     repositories {
         maven {
-            name = "fega-norway-clearinghouse"
+            name = "fega-norway-crypt4gh"
             url = uri("https://maven.pkg.github.com/ELIXIR-NO/FEGA-Norway")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
