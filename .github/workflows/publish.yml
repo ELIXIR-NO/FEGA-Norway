@@ -24,7 +24,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish package
+      - name: Publish package crypt4gh
         run: ./gradlew :lib:crypt4gh:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
