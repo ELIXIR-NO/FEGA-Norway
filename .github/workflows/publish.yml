@@ -18,11 +18,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3.5.0
 
-      - name: Publish package clearinghouse
-        run: ./gradlew :lib:clearinghouse:publish
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Publish package clearinghouse
+#        run: ./gradlew :lib:clearinghouse:publish
+#        continue-on-error: true
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish package crypt4gh
         run: ./gradlew :lib:crypt4gh:publish
