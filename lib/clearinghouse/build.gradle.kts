@@ -1,6 +1,5 @@
 plugins {
     id("java")
-    id ("java-library")
     id("maven-publish")
     id("io.freefair.lombok") version "8.10"
     id("formatting-conventions")
