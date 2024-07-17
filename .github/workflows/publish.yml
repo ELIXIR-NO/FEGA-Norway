@@ -20,7 +20,7 @@ jobs:
 
       - name: Create tag
         id: tag
-        uses: anothrNick/github-tag-action@v1.7.0
+        uses: anothrNick/github-tag-action@v1.70.0
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           default_bump: patch
