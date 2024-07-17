@@ -34,6 +34,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Reset Git State
+        run: |
+          git fetch --all
+          git reset --hard origin/main
 
       - name: Create tag crypt4gh
         id: tag_crypt4gh
