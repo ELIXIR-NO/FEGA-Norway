@@ -34,7 +34,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
+      - name: Create tag crypt4gh
+        id: tag_crypt4gh
+        uses: anothrNick/github-tag-action@1.70.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: patch
+          INITIAL_VERSION: 3.0.0
+
       - name: Publish package crypt4gh
-        run: ./gradlew :lib:crypt4gh:publish
+        run: ./gradlew :lib:crypt4gh:publish -Pversion=${{ steps.tag_crypt4gh.outputs.new_tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
