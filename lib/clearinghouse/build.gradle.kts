@@ -21,7 +21,7 @@ java {
 
 dependencies {
     implementation("org.apache.commons:commons-collections4:4.4")
-    implementation("org.apache.commons:commons-lang3:3.14.0")
+    implementation("org.apache.commons:commons-lang3:3.15.0")
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("com.auth0:jwks-rsa:0.22.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
