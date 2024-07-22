@@ -16,7 +16,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.34")
     annotationProcessor("org.projectlombok:lombok:1.18.34")
 
-    implementation("org.apache.commons:commons-lang3:3.14.0")
+    implementation("org.apache.commons:commons-lang3:3.15.0")
     implementation("commons-io:commons-io:2.16.1")
     implementation("com.auth0:java-jwt:4.4.0")
     implementation("com.google.code.gson:gson:2.11.0")
