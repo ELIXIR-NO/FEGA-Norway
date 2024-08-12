@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("maven-publish")
-    id("io.freefair.lombok") version "8.6"
+    id("io.freefair.lombok") version "8.7.1"
     id("formatting-conventions")
     id("jsonwebtoken")
     id("okhttp")
