@@ -22,7 +22,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
 
     api("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("org.slf4j:slf4j-jdk14:2.0.13")
+    implementation("org.slf4j:slf4j-jdk14:2.0.16")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
