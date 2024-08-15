@@ -2,7 +2,7 @@ plugins {
     id("java")
     id("maven-publish")
     id("extra-java-module-info")
-    id("io.freefair.lombok") version "8.6"
+    id("io.freefair.lombok") version "8.7.1"
     id("formatting-conventions")
 }
 
@@ -14,16 +14,16 @@ repositories {
 }
 
 dependencies {
-    implementation("org.slf4j:slf4j-api:2.0.13")
-    implementation("org.slf4j:slf4j-simple:2.0.13")
-    implementation("org.apache.commons:commons-lang3:3.14.0")
-    implementation("commons-codec:commons-codec:1.17.0")
-    implementation("commons-cli:commons-cli:1.8.0")
+    implementation("org.slf4j:slf4j-api:2.0.16")
+    implementation("org.slf4j:slf4j-simple:2.0.16")
+    implementation("org.apache.commons:commons-lang3:3.16.0")
+    implementation("commons-codec:commons-codec:1.17.1")
+    implementation("commons-cli:commons-cli:1.9.0")
     implementation("commons-io:commons-io:2.16.1")
     implementation("com.rfksystems:blake2b:2.0.0")
     implementation("at.favre.lib:bkdf:0.6.0")
     implementation("com.lambdaworks:scrypt:1.4.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
