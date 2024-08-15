@@ -14,6 +14,10 @@ updates:
   # buildSrc
   - package-ecosystem: gradle
     directory: "/buildSrc"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -27,6 +31,10 @@ updates:
   ## clearinghouse
   - package-ecosystem: gradle
     directory: "/lib/clearinghouse"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -38,6 +46,10 @@ updates:
   ## crypt4gh
   - package-ecosystem: gradle
     directory: "/lib/crypt4gh"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -49,6 +61,10 @@ updates:
   ## tsd-file-api-client
   - package-ecosystem: gradle
     directory: "/lib/tsd-file-api-client"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -62,6 +78,10 @@ updates:
   ## tsd-api-mock
   - package-ecosystem: gradle
     directory: "/services/tsd-api-mock"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -73,6 +93,10 @@ updates:
   ## localega-tsd-proxy
   - package-ecosystem: gradle
     directory: "/services/localega-tsd-proxy"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -84,6 +108,10 @@ updates:
   ## MQ-Interceptor
   - package-ecosystem: gomod
     directory: "/services/mq-interceptor"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -95,6 +123,10 @@ updates:
   ## CEGA-mock
   - package-ecosystem: gomod
     directory: "/services/cega-mock"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -108,6 +140,10 @@ updates:
   ## lega-commander
   - package-ecosystem: gomod
     directory: "/cli/lega-commander"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "monday"
