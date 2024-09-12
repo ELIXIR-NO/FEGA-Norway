@@ -1,0 +1,64 @@
+name: Publish package to GitHub Packages
+on:
+  #  release:
+  #    types: [created]
+  push:
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.5.0
+
+      - name: Get current version for clearinghouse
+        id: version_clearinghouse
+        run: |
+          CLEARINGHOUSE_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' lib/clearinghouse/build.gradle.kts)
+          echo "CLEARINGHOUSE_VERSION=$CLEARINGHOUSE_VERSION" >> $GITHUB_ENV
+
+      - name: Get current version for crypt4gh
+        id: version_crypt4gh
+        run: |
+          CRYPT4GH_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' lib/clearinghouse/build.gradle.kts)
+          echo "CRYPT4GH_VERSION=$CRYPT4GH_VERSION" >> $GITHUB_ENV
+
+      - name: Bump patch version for clearinghouse
+        id: bump_clearinghouse_version
+        run: |
+          VERSION_PARTS=(${CLEARINGHOUSE_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          # Increment the patch version
+          PATCH=$((PATCH + 1))
+          NEW_CLEARINGHOUSE_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo  "NEW_CLEARINGHOUSE_VERSION=$NEW_CLEARINGHOUSE_VERSION" >> $GITHUB_ENV
+      - name: Release clearinghouse
+        run: |
+          ./gradlew :lib:clearinghouse:build
+          ./gradlew :lib:clearinghouse:publish
+
+
+      - name: Update version in clearinghouse's build.gradle.kts
+        if: success()
+        run: |
+          sed -i "s/version = \".*\"/version = \"NEW_CLEARINGHOUSE_VERSION\"/" lib/clearinghouse/build.gradle.kts
+
+      - name: Commit and push new versions
+        if: success()
+        run: |
+          git config --local user.name "GitHub Action"
+          git config --local user.email "action@github.com"
+          git add lib/clearinghouse/build.gradle.kts
+          git commit -m "Bump clearinghouse version to NEW_CLEARINGHOUSE_VERSION"
+          git push origin configuration-for-publish-clearinghouse
