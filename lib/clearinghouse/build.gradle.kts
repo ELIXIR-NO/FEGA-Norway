@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "no.elixir"
-version = "12.0.2"
+version = "NEW_CLEARINGHOUSE_VERSION"
 
 repositories {
     mavenCentral()
