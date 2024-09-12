@@ -63,4 +63,4 @@ jobs:
           git config --local user.email "action@github.com"
           git add lib/clearinghouse/build.gradle.kts
           git commit -m "Bump clearinghouse version to NEW_CLEARINGHOUSE_VERSION"
-          git push origin configuration-for-publish-clearinghouse
+          git push origin release/version-bump
