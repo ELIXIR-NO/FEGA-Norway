@@ -87,6 +87,7 @@ services:
       - "5005:5005" # This is the JDWP debug port. See command below.
     environment:
       - SSL_ENABLED=false
+      - TSD_SECURE=false
       - DB_PORT=5432
       - ROOT_CERT_PASSWORD=<<PROXY_ROOT_CERT_PASSWORD>>
       - TSD_ROOT_CERT_PASSWORD=<<PROXY_TSD_ROOT_CERT_PASSWORD>>

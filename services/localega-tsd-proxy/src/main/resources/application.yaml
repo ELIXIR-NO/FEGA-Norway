@@ -50,6 +50,7 @@ cega:
   password: ${CEGA_PASSWORD}
 
 tsd:
+  secure: ${TSD_SECURE:true}
   host: ${TSD_HOST:api.tsd.usit.no}
   project: ${TSD_PROJECT:p11}
   app-id: ${TSD_APP_ID:ega}

@@ -528,6 +528,11 @@ public class TSDFileAPIClient {
       return this;
     }
 
+    public Builder secure(String secure) {
+      this.secure = Boolean.parseBoolean(secure);
+      return this;
+    }
+
     /**
      * Sets hostname (maybe with port).
      *
@@ -600,7 +605,7 @@ public class TSDFileAPIClient {
 
       TSDFileAPIClient tsdFileAPIClient = new TSDFileAPIClient(httpClient);
 
-      tsdFileAPIClient.protocol = "http";
+      tsdFileAPIClient.protocol = this.secure ? "https" : "http";
       tsdFileAPIClient.host = this.host == null ? DEFAULT_HOST : this.host;
       tsdFileAPIClient.environment =
           this.environment == null ? DEFAULT_ENVIRONMENT : this.environment;
