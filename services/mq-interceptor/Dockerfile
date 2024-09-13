@@ -1,4 +1,4 @@
-FROM golang:latest as builder
+FROM golang:1.21 as builder
 
 ENV GOPATH=$PWD
 ENV CGO_ENABLED=0
