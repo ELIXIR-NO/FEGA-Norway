@@ -605,7 +605,7 @@ public class TSDFileAPIClient {
 
       TSDFileAPIClient tsdFileAPIClient = new TSDFileAPIClient(httpClient);
 
-      tsdFileAPIClient.protocol = this.secure == null || this.secure  ? "https" : "http";
+      tsdFileAPIClient.protocol = this.secure == null || this.secure ? "https" : "http";
       tsdFileAPIClient.host = this.host == null ? DEFAULT_HOST : this.host;
       tsdFileAPIClient.environment =
           this.environment == null ? DEFAULT_ENVIRONMENT : this.environment;
