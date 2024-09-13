@@ -1,5 +1,6 @@
 package no.elixir.tsdapimock.resumables;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigInteger;
 
@@ -11,4 +12,4 @@ public record ResumableUploadDto(
     @JsonProperty("previous_offset") BigInteger previousOffset,
     @JsonProperty("next_offset") BigInteger nextOffset,
     @JsonProperty("max_chunk") BigInteger maxChunk,
-    @JsonProperty("md5Sum") String md5Sum) {}
+    @JsonProperty("md5Sum") @JsonAlias("md5sum") String md5Sum) {}
