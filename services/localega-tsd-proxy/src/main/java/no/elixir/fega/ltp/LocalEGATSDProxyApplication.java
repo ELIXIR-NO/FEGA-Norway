@@ -125,7 +125,11 @@ public class LocalEGATSDProxyApplication {
       @Value("${tsd.root-ca-password}") String tsdRootCAPassword)
       throws GeneralSecurityException, IOException {
     TSDFileAPIClient.Builder tsdFileAPIClientBuilder =
-        new TSDFileAPIClient.Builder().secure(secure).host(tsdHost).project(tsdProject).accessKey(tsdAccessKey);
+        new TSDFileAPIClient.Builder()
+            .secure(secure)
+            .host(tsdHost)
+            .project(tsdProject)
+            .accessKey(tsdAccessKey);
     if (StringUtils.hasLength(tsdRootCA) && StringUtils.hasLength(tsdRootCAPassword)) {
       X509TrustManager trustManager =
           trustManagerForCertificates(Files.newInputStream(Path.of(tsdRootCA)), tsdRootCAPassword);
