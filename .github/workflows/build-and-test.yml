@@ -53,3 +53,10 @@ jobs:
 
       - name: Run tests
         run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test
+
+
+      - name: Run e2e tests
+        run: |
+          ./gradlew clean
+          ./gradlew start-docker-containers
+          ./gradlew :e2eTests:test
