@@ -31,7 +31,7 @@ import okhttp3.ResponseBody;
 @Slf4j
 public enum Clearinghouse {
   INSTANCE;
-  //fake changes
+  // fake changes
   private static final String KEY_WRAPPING = "-----(.*?)-----";
   private static final String JKU = "jku";
   private static final String RSA = "RSA";
