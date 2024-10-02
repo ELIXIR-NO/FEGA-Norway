@@ -1,6 +1,6 @@
 name: Publish
 on:
-  push:
+#  push:
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
@@ -92,3 +92,62 @@ jobs:
           tag_name: ${{ steps.version_fega_norway.outputs.fega_norway_version }}
           prerelease: false
           name: "FEGA Norway-${{ steps.version_fega_norway.outputs.fega_norway_version }}"
+
+  publish-clearinghouse:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.clearinghouse == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.5.0
+      - name: Get current version for clearinghouse
+        id: version_clearinghouse
+        run: |
+          CLEARINGHOUSE_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' lib/clearinghouse/build.gradle.kts)
+          echo "clearinghouse_version=$CLEARINGHOUSE_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for clearinghouse
+        id: bump_clearinghouse_version
+        run: |
+          CLEARINGHOUSE_VERSION="${{ steps.version_clearinghouse.outputs.clearinghouse_version }}"
+          VERSION_PARTS=(${CLEARINGHOUSE_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          PATCH=$((PATCH + 1))
+          NEW_CLEARINGHOUSE_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_clearinghouse_version=$NEW_CLEARINGHOUSE_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in clearinghouse's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}\"#" lib/clearinghouse/build.gradle.kts
+      - name: Release clearinghouse
+        run: |
+          ./gradlew :lib:clearinghouse:build
+          ./gradlew :lib:clearinghouse:publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit and Push Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME=${{ github.ref_name }}
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          for i in {1..3}; do
+            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+            git add -A
+            git commit -m "bump clearinghouse version to ${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}"
+            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+              break
+            fi
+            sleep 5
+          done
