@@ -660,4 +660,77 @@ jobs:
           prerelease: false
           name: "Mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
 
+  publish-lega-commander:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.lega-commander == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+        id: go
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get current version for lega-commander
+        id: version_lega_commander
+        run: |
+          LEGA_COMMANDER_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' cli/lega-commander/build.gradle.kts)
+          echo "lega_commander_version=$LEGA_COMMANDER_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for lega-commander
+        id: bump_lega_commander_version
+        run: |
+          LEGA_COMMANDER_VERSION="${{ steps.version_lega_commander.outputs.lega_commander_version }}"
+          VERSION_PARTS=(${LEGA_COMMANDER_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          PATCH=$((PATCH + 1))
+          NEW_LEGA_COMMANDER_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_lega_commander_version=$NEW_LEGA_COMMANDER_VERSION" >> $GITHUB_OUTPUT
+      - name: Create and push new tag
+        run: |
+          git tag v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }} ${{ github.sha }}
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+          workdir: cli/lega-commander
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update version in lega-commander's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}\"#" cli/lega-commander/build.gradle.kts
+      - name: Commit and Push Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME=${{ github.ref_name }}
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          for i in {1..3}; do
+            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+            git add -A
+            git commit -m "bump lega-commander version to ${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
+            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+              break
+            fi
+            sleep 5
+          done
+      - name: Create GitHub release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "lega-commander-${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
+          prerelease: false
+          name: "Lega-commander-${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
+
+
 
