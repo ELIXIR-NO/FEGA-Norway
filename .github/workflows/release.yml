@@ -396,4 +396,102 @@ jobs:
           prerelease: false
           name: "Localega_tsd_proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}"
 
+  publish-tsd_api_mock:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.tsd-api-mock == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: cache gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/cache
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Build with Gradle
+        run: ./gradlew :services:tsd-api-mock:assemble
+      - name: Get current version for tsd_api_mock
+        id: version_tsd_api_mock
+        run: |
+          TSD_API_MOCK_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' services/tsd-api-mock/build.gradle.kts)
+          echo "tsd_api_mock_version=$TSD_API_MOCK_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for tsd_api_mock
+        id: bump_tsd_api_mock_version
+        run: |
+          TSD_API_MOCK_VERSION="${{ steps.version_tsd_api_mock.outputs.tsd_api_mock_version }}"
+          VERSION_PARTS=(${TSD_API_MOCK_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          PATCH=$((PATCH + 1))
+          NEW_TSD_API_MOCK_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_tsd_api_mock_version=$NEW_TSD_API_MOCK_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in tsd_api_mock's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}\"#" services/tsd-api-mock/build.gradle.kts
+      - name: Log in to the Github Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+      - name: Set Repository Name
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/tsd-api-mock
+          push: true
+          no-cache: 'true'
+          tags: |
+            ghcr.io/${{ env.repo_name }}:tsd-api-mock-${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}
+            ghcr.io/${{ env.repo_name }}:tsd-api-mock-latest
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
+            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Commit and Push Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME=${{ github.ref_name }}
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          for i in {1..3}; do
+            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+            git add -A
+            git commit -m "bump tsd_api_mock version to ${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}"
+            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+              break
+            fi
+            sleep 5
+          done
+      - name: Create GitHub release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "tsd_api_mock-${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}"
+          prerelease: false
+          name: "Tsd_api_mock-${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}"
+
 
