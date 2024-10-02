@@ -1,0 +1,94 @@
+name: Publish
+on:
+  push:
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      lega-commander: ${{ steps.changes.outputs.lega-commander }}
+      e2eTests: ${{ steps.changes.outputs.e2eTests }}
+      clearinghouse: ${{ steps.changes.outputs.clearinghouse }}
+      crypt4gh: ${{ steps.changes.outputs.crypt4gh }}
+      tsd-file-api-client: ${{ steps.changes.outputs.tsd-file-api-client }}
+      cega-mock: ${{ steps.changes.outputs.cega-mock }}
+      localega-tsd-proxy: ${{ steps.changes.outputs.localega-tsd-proxy }}
+      mq-interceptor: ${{ steps.changes.outputs.mq-interceptor }}
+      tsd-api-mock: ${{ steps.changes.outputs.tsd-api-mock }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            lega-commander:
+              - 'cli/lega-commander/**'
+            e2eTests:
+              - 'e2eTests/**'
+            clearinghouse:
+              - 'lib/clearinghouse/**'
+            crypt4gh:
+              - 'lib/crypt4gh/**'
+            tsd-file-api-client:
+              - 'lib/tsd-file-api-client/**'
+            cega-mock:
+              - 'services/cega-mock/**'
+            localega-tsd-proxy:
+              - 'services/localega-tsd-proxy/**'
+            mq-interceptor:
+              - 'services/mq-interceptor/**'
+            tsd-api-mock:
+              - 'services/tsd-api-mock/**'
+
+  release-fega-norway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.5.0
+      - name: Get current version of fega-norway
+        id: version_fega_norway
+        run: |
+          FEGA_NORWAY_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' build.gradle.kts)
+          echo "fega_norway_version=$FEGA_NORWAY_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for fega-norway
+        id: bump_fega_norway_version
+        run: |
+          FEGA_NORWAY_VERSION="${{ steps.version_fega_norway.outputs.fega_norway_version }}"
+          VERSION_PARTS=(${FEGA_NORWAY_VERSION//./ }) 
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          PATCH=$((PATCH + 1))
+          NEW_FEGA_NORWAY_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_fega_norway_version=$NEW_FEGA_NORWAY_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in fega-norway's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}\"#" build.gradle.kts
+      - name: Commit and Push Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME=${{ github.ref_name }}
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          for i in {1..3}; do
+            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+            git add -A
+            git commit -m "bump fega_norway version to ${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}"
+            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+              break
+            fi
+            sleep 5
+          done
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: ${{ steps.version_fega_norway.outputs.fega_norway_version }}
+          prerelease: false
+          name: "FEGA Norway-${{ steps.version_fega_norway.outputs.fega_norway_version }}"
