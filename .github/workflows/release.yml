@@ -99,7 +99,7 @@ jobs:
             sleep 5
           done
 
-          - name: Create GitHub release
+      - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
