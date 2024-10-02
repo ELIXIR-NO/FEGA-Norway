@@ -250,7 +250,7 @@ jobs:
     if: needs.detect-changes.outputs.localega-tsd-proxy == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
       pull-requests: write
     steps:
@@ -729,9 +729,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
-          tag_name: ${{ steps.version_e2eTests.outputs.e2eTests_version }}
+          tag_name: ${{ steps.version_e2eTests.outputs.new_e2eTests_version }}
           prerelease: false
-          name: "E2eTests-${{ steps.version_e2eTests.outputs.e2eTests_version }}"
+          name: "E2eTests-${{ steps.version_e2eTests.outputs.new_e2eTests_version }}"
 
   release-fega-norway:
     runs-on: ubuntu-latest
