@@ -435,10 +435,7 @@ jobs:
 #    needs: detect-changes
 #    if: needs.detect-changes.outputs.cega-mock == 'true'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      pull-requests: write
+    permissions: write-all
     steps:
       - uses: actions/checkout@v4
       - name: Get current version for cega-mock
