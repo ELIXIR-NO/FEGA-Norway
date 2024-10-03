@@ -436,7 +436,7 @@ jobs:
 #    if: needs.detect-changes.outputs.cega-mock == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
       pull-requests: write
     steps:
