@@ -250,7 +250,7 @@ jobs:
     if: needs.detect-changes.outputs.localega-tsd-proxy == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
       pull-requests: write
     steps:
@@ -288,22 +288,17 @@ jobs:
           echo "new_localega_tsd_proxy_version=$NEW_LOCALEGA_TSD_PROXY_VERSION" >> $GITHUB_OUTPUT
       - name: Update version in localega_tsd_proxy's build.gradle.kts
         run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}\"#" services/localega-tsd-proxy/build.gradle.kts
+      - name: Set Repository Name
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
       - name: Log in to the Github Container registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-      - name: Set Repository Name
-        id: repo_name
-        run: |
-          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -386,22 +381,17 @@ jobs:
           echo "new_tsd_api_mock_version=$NEW_TSD_API_MOCK_VERSION" >> $GITHUB_OUTPUT
       - name: Update version in tsd_api_mock's build.gradle.kts
         run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}\"#" services/tsd-api-mock/build.gradle.kts
+      - name: Set Repository Name
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
       - name: Log in to the Github Container registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-      - name: Set Repository Name
-        id: repo_name
-        run: |
-          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -469,22 +459,17 @@ jobs:
           echo "new_cega_mock_version=$NEW_CEGA_MOCK_VERSION" >> $GITHUB_OUTPUT
       - name: Update version in cega-mock's build.gradle.kts
         run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}\"#" services/cega-mock/build.gradle.kts
+      - name: Set Repository Name
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
       - name: Log in to the Github Container registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-      - name: Set Repository Name
-        id: repo_name
-        run: |
-          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -552,22 +537,17 @@ jobs:
           echo "new_mq_interceptor_version=$NEW_MQ_INTERCEPTOR_VERSION" >> $GITHUB_OUTPUT
       - name: Update version in mq-interceptor's build.gradle.kts
         run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}\"#" services/mq-interceptor/build.gradle.kts
+      - name: Set Repository Name
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
       - name: Log in to the Github Container registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-      - name: Set Repository Name
-        id: repo_name
-        run: |
-          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -729,9 +709,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
-          tag_name: ${{ steps.version_e2eTests.outputs.new_e2eTests_version }}
+          tag_name: ${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}
           prerelease: false
-          name: "E2eTests-${{ steps.version_e2eTests.outputs.new_e2eTests_version }}"
+          name: "E2eTests-${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}"
 
   release-fega-norway:
     runs-on: ubuntu-latest
