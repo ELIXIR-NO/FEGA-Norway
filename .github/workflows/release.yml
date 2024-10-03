@@ -1,3 +1,4 @@
+# Fake change to test the action
 name: Publish
 on:
   push:
