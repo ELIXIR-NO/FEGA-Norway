@@ -628,7 +628,9 @@ jobs:
           git tag v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }} ${{ github.sha }}
 
       - name: Clean up go.mod and go.sum
-        run: go mod tidy
+        run: |
+          cd cli/lega-commander
+          go mod tidy
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
