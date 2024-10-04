@@ -2,7 +2,7 @@ plugins {
     base
 }
 
-version = "1.0.2"
+version = "1.0.3"
 
 val goBuild = tasks.register("goBuild", Exec::class) {
     description = "Build the Go application"
