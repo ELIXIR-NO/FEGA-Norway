@@ -5,7 +5,7 @@ plugins {
 
 group = "no.elixir"
 
-version = "1.0.3"
+version = "1.0.0"
 
 repositories { mavenCentral() }
 
