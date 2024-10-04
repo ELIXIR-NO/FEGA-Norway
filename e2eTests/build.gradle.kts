@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "no.elixir.fega"
-version = "10.0.1"
+version = "10.0.2"
 
 repositories {
     mavenCentral()
