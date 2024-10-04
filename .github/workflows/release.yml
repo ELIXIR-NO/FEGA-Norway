@@ -591,8 +591,6 @@ jobs:
           name: "Mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
 
   publish-lega-commander:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.lega-commander == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
