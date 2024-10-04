@@ -493,10 +493,10 @@ jobs:
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           for i in {1..3}; do
-            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/parisa68/fega-norway.git $BRANCH_NAME
             git add -A
             git commit -m "bump cega-mock version to ${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}"
-            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/parisa68/fega-norway.git HEAD:refs/heads/$BRANCH_NAME; then
               break
             fi
             sleep 5
