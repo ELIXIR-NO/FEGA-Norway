@@ -4,10 +4,9 @@ on:
   push:
 
 permissions:
-  contents: read
+  contents: write
   packages: write
-  attestations: write
-  id-token: write
+  pull-requests: write
 jobs:
 
 #  detect-changes:
