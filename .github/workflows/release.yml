@@ -591,8 +591,8 @@ jobs:
           name: "Mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
 
   publish-lega-commander:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.lega-commander == 'true'
+#    needs: detect-changes
+#    if: needs.detect-changes.outputs.lega-commander == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -626,7 +626,6 @@ jobs:
       - name: Create and push new tag
         run: |
           git tag v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }} ${{ github.sha }}
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
