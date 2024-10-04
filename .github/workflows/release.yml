@@ -623,10 +623,11 @@ jobs:
           PATCH=$((PATCH + 1))
           NEW_LEGA_COMMANDER_VERSION="$MAJOR.$MINOR.$PATCH"
           echo "new_lega_commander_version=$NEW_LEGA_COMMANDER_VERSION" >> $GITHUB_OUTPUT
-      - name: Create and push new tag
+          
+      - name: Set GoReleaser tags
         run: |
-          git tag v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }} ${{ github.sha }}
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}
+          echo "GORELEASER_CURRENT_TAG=v1.2.3" >> $GITHUB_ENV
+          echo "GORELEASER_PREVIOUS_TAG=v1.1.0" >> $GITHUB_ENV
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
