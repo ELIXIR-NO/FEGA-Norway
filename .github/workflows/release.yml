@@ -625,14 +625,16 @@ jobs:
           echo "new_lega_commander_version=$NEW_LEGA_COMMANDER_VERSION" >> $GITHUB_OUTPUT
       - name: Create and push new tag
         run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-          git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-          BRANCH_NAME=${{ github.ref_name }}
           git tag v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }} ${{ github.sha }}
-          git add -A
-          git commit -m "bump lega-commander"
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME;
+
+
+      - name: Dirty check
+        run: |
+          if [[ $(git diff --stat) != '' ]]; then
+            echo 'dirty'
+          else
+            echo 'clean'
+          fi
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
