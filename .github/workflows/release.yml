@@ -626,12 +626,7 @@ jobs:
       - name: Create and push new tag
         run: |
           git tag v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }} ${{ github.sha }}
-
-      - name: Clean up go.mod and go.sum
-        run: |
-          cd cli/lega-commander
-          go mod tidy
-
+          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
