@@ -1,186 +1,122 @@
 name: Publish
 on:
   push:
-
-
 jobs:
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            lega-commander: ['cli/lega-commander/**']
-            e2eTests: ['e2eTests/**']
-            clearinghouse: ['lib/clearinghouse/**']
-            crypt4gh: ['lib/crypt4gh/**']
-            tsd-file-api-client: ['lib/tsd-file-api-client/**']
-            cega-mock: ['services/cega-mock/**']
-            localega-tsd-proxy: ['services/localega-tsd-proxy/**']
-            mq-interceptor: ['services/mq-interceptor/**']
-            tsd-api-mock: ['services/tsd-api-mock/**']
-      - id: set-matrix
-        run: |
-          MATRIX=$(echo '${{ toJson(steps.changes.outputs) }}' | jq -c '{include: [to_entries[] | select(.value == "true") | {component: .key}]}')
-          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+  #  detect_changes:
+  #    runs-on: ubuntu-latest
+  #    outputs:
+  #      outputs:
+  #      lega-commander: ${{ steps.changes.outputs.lega-commander }}
+  #      e2eTests: ${{ steps.changes.outputs.e2eTests }}
+  #      clearinghouse: ${{ steps.changes.outputs.clearinghouse }}
+  #      crypt4gh: ${{ steps.changes.outputs.crypt4gh }}
+  #      tsd-file-api-client: ${{ steps.changes.outputs.tsd-file-api-client }}
+  #      lega-commander: ${{ steps.changes.outputs.lega-commander }}
+  #      tsd_api_mock: ${{ steps.changes.outputs.tsd_api_mock }}
+  #      lega-commander: ${{ steps.changes.outputs.lega-commander }}
+  #      tsd_api_mock: ${{ steps.changes.outputs.tsd_api_mock }}
+  #    steps:
+  #      - uses: actions/checkout@v4
+  #      - uses: dorny/paths-filter@v3
+  #        id: changes
+  #        with:
+  #          filters: |
+  #            lega-commander:
+  #              - 'cli/lega-commander/**'
+  #            e2eTests:
+  #              - 'e2eTests/**'
+  #            clearinghouse:
+  #              - 'lib/clearinghouse/**'
+  #            crypt4gh:
+  #              - 'lib/crypt4gh/**'
+  #            tsd-file-api-client:
+  #              - 'lib/tsd-file-api-client/**'
+  #            lega-commander:
+  #              - 'services/lega-commander/**'
+  #            tsd_api_mock:
+  #              - 'services/tsd_api_mock/**'
+  #            lega-commander:
+  #              - 'services/lega-commander/**'
+  #            tsd_api_mock:
+  #              - 'services/tsd_api_mock/**'
+  #
+  #
 
-  update-version-and-publish:
-    needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.matrix != '{"include":[]}' }}
+  publish-lega-commander:
+    #    needs: detect_changes
+    #    if: needs.detect_changes.outputs.lega-commander == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      matrix: ${{fromJson(needs.detect-changes.outputs.matrix)}}
-      fail-fast: false
     permissions:
       contents: write
       packages: write
+      pull-requests: write
     steps:
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+        id: go
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      #      - name: Get dependencies
+      #        run: |
+      #          cd cli/lega-commander
+      #          go get -v -t -d ./...
+      #          if [ -f Gopkg.toml ]; then
+      #              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+      #              dep ensure
+      #          fi
+      #      - name: Clean up go.mod and go.sum
+      #        run: |
+      #          cd cli/lega-commander
+      #          go mod tidy
 
-      - name: Set up Java
-        if: ${{ matrix.component != 'lega-commander' }}
-        uses: actions/setup-java@v4
+      - name: Get current version for lega-commander
+        id: version_lega_commander
+        run: |
+          LEGA_COMMANDER_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' cli/lega-commander/build.gradle.kts)
+          echo "lega_commander_version=$LEGA_COMMANDER_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for lega-commander
+        id: bump_lega_commander_version
+        run: |
+          LEGA_COMMANDER_VERSION="${{ steps.version_lega_commander.outputs.lega_commander_version }}"
+          VERSION_PARTS=(${LEGA_COMMANDER_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          PATCH=$((PATCH + 1))
+          NEW_LEGA_COMMANDER_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_lega_commander_version=$NEW_LEGA_COMMANDER_VERSION" >> $GITHUB_OUTPUT
+      - name: Create and push new tag
+        run: |
+          git tag v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }} ${{ github.sha }}
+      #          git push origin v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}
+
+      #      - name: Export goreleaser tags
+      #        run: |
+      #          echo "GORELEASER_CURRENT_TAG=v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}" >> $GITHUB_ENV
+      #          echo "GORELEASER_PREVIOUS_TAG=v${{ steps.version_lega_commander.outputs.lega_commander_version }}" >> $GITHUB_ENV
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
         with:
-          java-version: '21'
-          distribution: 'temurin'
-
-      - name: Set up Go
-        if: ${{ matrix.component == 'lega-commander' }}
-        uses: actions/setup-go@v5
-
-        with:
-          go-version: 1.22
-          cache: 'false'
-
-      - name: Setup Gradle
-        if: ${{ matrix.component != 'lega-commander' }}
-        uses: gradle/actions/setup-gradle@v3.5.0
-
-      - name: Determine build.gradle.kts path
-        id: gradle_path
-        run: |
-          COMPONENT="${{ matrix.component }}"
-          if [[ $COMPONENT == lega-commander ]]; then
-            GRADLE_PATH="cli/lega-commander/build.gradle.kts"
-          elif [[ $COMPONENT == e2eTests ]]; then
-            GRADLE_PATH="e2eTests/build.gradle.kts"
-          elif [[ $COMPONENT == clearinghouse || $COMPONENT == crypt4gh || $COMPONENT == tsd-file-api-client ]]; then
-            GRADLE_PATH="lib/$COMPONENT/build.gradle.kts"
-          else
-            GRADLE_PATH="services/$COMPONENT/build.gradle.kts"
-          fi
-          echo "gradle_path=$GRADLE_PATH" >> $GITHUB_OUTPUT
-
-      - name: Get current version
-        id: get_version
-        run: |
-          GRADLE_PATH="${{ steps.gradle_path.outputs.gradle_path }}"
-          if [[ ! -f $GRADLE_PATH ]]; then
-            echo "Error: build.gradle.kts not found at $GRADLE_PATH"
-            exit 1
-          fi
-          CURRENT_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' $GRADLE_PATH)
-          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Bump version
-        id: bump_version
-        run: |
-          CURRENT_VERSION="${{ steps.get_version.outputs.current_version }}"
-          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
-          NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$((VERSION_PARTS[2] + 1))"
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Update version in file
-        if: ${{ matrix.component != 'lega-commander'}}
-        run: |
-          GRADLE_PATH="${{ steps.gradle_path.outputs.gradle_path }}"
-          sed -i "s/version = \".*\"/version = \"${{ steps.bump_version.outputs.new_version }}\"/" $GRADLE_PATH
-
-
-      - name: Build and publish
-        if: ${{ matrix.component != 'lega-commander' && matrix.component != 'e2eTests' }}
-        run: |
-          COMPONENT="${{ matrix.component }}"
-          if [[ $COMPONENT == clearinghouse || $COMPONENT == crypt4gh || $COMPONENT == tsd-file-api-client ]]; then
-            ./gradlew :lib:$COMPONENT:build
-            ./gradlew :lib:$COMPONENT:publish
-          else
-            ./gradlew :services:$COMPONENT:build
-          fi
+          version: latest
+          args: release --clean
+          workdir: cli/lega-commander
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to the Github Container registry
-        uses: docker/login-action@v3
-        if: ${{ matrix.component != 'lega-commander' && matrix.component != 'clearinghouse' && matrix.component != 'crypt4gh' && matrix.component != 'tsd-file-api-client' && matrix.component != 'e2eTests' }}
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata (tags, labels) for Docker
-        if: ${{ matrix.component != 'lega-commander' && matrix.component != 'clearinghouse' && matrix.component != 'crypt4gh' && matrix.component != 'tsd-file-api-client' && matrix.component != 'e2eTests' }}
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-      - name: Set Repository Name
-        id: repo_name
-        if: ${{ matrix.component != 'lega-commander' && matrix.component != 'clearinghouse' && matrix.component != 'crypt4gh' && matrix.component != 'tsd-file-api-client' && matrix.component != 'e2eTests' }}
-        run: |
-          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
 
-      - name: Build and push Docker image
-        if: ${{ matrix.component != 'lega-commander' && matrix.component != 'clearinghouse' && matrix.component != 'crypt4gh' && matrix.component != 'tsd-file-api-client' && matrix.component != 'e2eTests' }}
-        uses: docker/build-push-action@v6
-        with:
-          context: ./services/${{ matrix.component }}
-          push: true
-          tags: |
-            ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ steps.bump_version.outputs.new_version }}
-            ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-latest
-          labels: |
-            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
-            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-            org.opencontainers.image.revision=${{ github.sha }}
-
-      #      - name: Create and push new tag
-      #        if: ${{ matrix.component == 'lega-commander' }}
-      #        run: |
-      #          git tag v${{ steps.bump_version.outputs.new_version }} ${{ github.sha }}
-      #      - name: Run GoReleaser
-      #        if: ${{ matrix.component == 'lega-commander' }}
-      #        uses: goreleaser/goreleaser-action@v6
-      #        with:
-      #          version: latest
-      #          args: release --clean
-      #          workdir: cli/lega-commander
-
-      - name: Update version in file in lega commander
-        if: ${{ matrix.component == 'lega-commander'}}
-        run: |
-          GRADLE_PATH="${{ steps.gradle_path.outputs.gradle_path }}"
-          sed -i "s/version = \".*\"/version = \"${{ steps.bump_version.outputs.new_version }}\"/" $GRADLE_PATH
-
-      - name: Commit and push changes
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add .
-          git commit -m "Bump ${{ matrix.component }} version to ${{ steps.bump_version.outputs.new_version }}"
-          git push
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          target_commitish: ${{ github.head_ref || github.ref_name }}
-          token: "${{ secrets.GITHUB_TOKEN }}"
-          tag_name: "${{ matrix.component }}-${{ steps.bump_version.outputs.new_version }}"
-          name: "${{ matrix.component }} ${{ steps.bump_version.outputs.new_version }}"
-          generate_release_notes: true
-          prerelease: false
+      - name: Update version in lega-commander's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}\"#" cli/lega-commander/build.gradle.kts
+#      - name: Create GitHub release
+#        if: success()
+#        uses: softprops/action-gh-release@v2
+#        with:
+#          target_commitish: ${{ github.head_ref || github.ref_name }}
+#          token: "${{ secrets.GITHUB_TOKEN }}"
+#          tag_name: "lega-commander-${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
+#          prerelease: false
+#          name: "Lega-commander-${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
