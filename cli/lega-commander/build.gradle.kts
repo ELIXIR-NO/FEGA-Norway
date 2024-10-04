@@ -2,7 +2,7 @@ plugins {
     base
 }
 
-version = "1.1.1"
+version = "1.1.33"
 
 val legaTests = tasks.register("test", Exec::class) {
     group = "verification"
