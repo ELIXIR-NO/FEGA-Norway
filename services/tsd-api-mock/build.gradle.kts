@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "no.elixir"
-version = "1.0-SNAPSHOT"
+version = "2.0.0"
 
 dependencies {
     runtimeOnly("com.h2database:h2")

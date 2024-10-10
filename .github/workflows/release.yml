@@ -1,0 +1,793 @@
+name: Publish
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  detect-changes:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      lega-commander: ${{ steps.changes.outputs.lega-commander }}
+      e2eTests: ${{ steps.changes.outputs.e2eTests }}
+      clearinghouse: ${{ steps.changes.outputs.clearinghouse }}
+      crypt4gh: ${{ steps.changes.outputs.crypt4gh }}
+      tsd-file-api-client: ${{ steps.changes.outputs.tsd-file-api-client }}
+      cega-mock: ${{ steps.changes.outputs.cega-mock }}
+      localega-tsd-proxy: ${{ steps.changes.outputs.localega-tsd-proxy }}
+      mq-interceptor: ${{ steps.changes.outputs.mq-interceptor }}
+      tsd-api-mock: ${{ steps.changes.outputs.tsd-api-mock }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            lega-commander:
+              - 'cli/lega-commander/**'
+            e2eTests:
+              - 'e2eTests/**'
+            clearinghouse:
+              - 'lib/clearinghouse/**'
+            crypt4gh:
+              - 'lib/crypt4gh/**'
+            tsd-file-api-client:
+              - 'lib/tsd-file-api-client/**'
+            cega-mock:
+              - 'services/cega-mock/**'
+            localega-tsd-proxy:
+              - 'services/localega-tsd-proxy/**'
+            mq-interceptor:
+              - 'services/mq-interceptor/**'
+            tsd-api-mock:
+              - 'services/tsd-api-mock/**'
+  
+
+  publish-clearinghouse:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.clearinghouse == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.5.0
+      - name: Get current version for clearinghouse
+        id: version_clearinghouse
+        run: |
+          CLEARINGHOUSE_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' lib/clearinghouse/build.gradle.kts)
+          echo "clearinghouse_version=$CLEARINGHOUSE_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for clearinghouse
+        id: bump_clearinghouse_version
+        run: |
+          CLEARINGHOUSE_VERSION="${{ steps.version_clearinghouse.outputs.clearinghouse_version }}"
+          VERSION_PARTS=(${CLEARINGHOUSE_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+#          PATCH=$((PATCH + 1))
+          NEW_CLEARINGHOUSE_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_clearinghouse_version=$NEW_CLEARINGHOUSE_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in clearinghouse's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}\"#" lib/clearinghouse/build.gradle.kts
+      - name: Release clearinghouse
+        run: |
+          ./gradlew :lib:clearinghouse:build
+          ./gradlew :lib:clearinghouse:publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Commit and Push Changes
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          BRANCH_NAME=main
+#          git config user.name 'GitHub Actions'
+#          git config user.email 'actions@github.com'
+#          git config pull.rebase false
+#          for i in {1..3}; do
+#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+#            git add -A
+#            git commit -m "bump clearinghouse version to ${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}"
+#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+#              break
+#            else
+#              echo "Push failed, retrying in 5 seconds..."
+#              sleep 5
+#            fi
+#          done
+
+      - name: Create GitHub release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "clearinghouse-${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}"
+          prerelease: false
+          name: "Clearinghouse-${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}"
+
+  publish-crypt4gh:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.crypt4gh == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.5.0
+      - name: Get current version for crypt4gh
+        id: version_crypt4gh
+        run: |
+          CRYPT4GH_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' lib/crypt4gh/build.gradle.kts)
+          echo "crypt4gh_version=$CRYPT4GH_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for crypt4gh
+        id: bump_crypt4gh_version
+        run: |
+          CRYPT4GH_VERSION="${{ steps.version_crypt4gh.outputs.crypt4gh_version }}"
+          VERSION_PARTS=(${CRYPT4GH_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+#          PATCH=$((PATCH + 1))
+          NEW_CRYPT4GH_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_crypt4gh_version=$NEW_CRYPT4GH_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in crypt4gh's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_crypt4gh_version.outputs.new_crypt4gh_version }}\"#" lib/crypt4gh/build.gradle.kts
+      - name: Release crypt4gh
+        run: |
+          ./gradlew :lib:crypt4gh:build
+          ./gradlew :lib:crypt4gh:publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Commit and Push Changes
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          BRANCH_NAME=main
+#          git config user.name 'GitHub Actions'
+#          git config user.email 'actions@github.com'
+#          git config pull.rebase false
+#          for i in {1..3}; do
+#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+#            git add -A
+#            git commit -m "bump crypt4gh version to ${{ steps.bump_crypt4gh_version.outputs.new_crypt4gh_version }}"
+#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+#              break
+#            else
+#              echo "Push failed, retrying in 5 seconds..."
+#              sleep 5
+#            fi
+#          done
+      - name: Create GitHub release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "crypt4gh-${{ steps.bump_crypt4gh_version.outputs.new_crypt4gh_version }}"
+          prerelease: false
+          name: "Crypt4gh-${{ steps.bump_crypt4gh_version.outputs.new_crypt4gh_version }}"
+
+  publish-tsd-file-api-client:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.tsd-file-api-client == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.5.0
+      - name: Get current version for tsd-file-api-client
+        id: version_tsd-file-api-client
+        run: |
+          TSD_FILE_API_CLIENT_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' lib/tsd-file-api-client/build.gradle.kts)
+          echo "tsd-file-api-client_version=$TSD_FILE_API_CLIENT_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for tsd-file-api-client
+        id: bump_tsd-file-api-client_version
+        run: |
+          TSD_FILE_API_CLIENT_VERSION="${{ steps.version_tsd-file-api-client.outputs.tsd-file-api-client_version }}"
+          VERSION_PARTS=(${TSD_FILE_API_CLIENT_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+#          PATCH=$((PATCH + 1))
+          NEW_TSD_FILE_API_CLIENT_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_tsd-file-api-client_version=$NEW_TSD_FILE_API_CLIENT_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in tsd-file-api-client's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version }}\"#" lib/tsd-file-api-client/build.gradle.kts
+      - name: Release tsd-file-api-client
+        run: |
+          ./gradlew :lib:tsd-file-api-client:build
+          ./gradlew :lib:tsd-file-api-client:publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Commit and Push Changes
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          BRANCH_NAME=main
+#          git config user.name 'GitHub Actions'
+#          git config user.email 'actions@github.com'
+#          git config pull.rebase false
+#          for i in {1..3}; do
+#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+#            git add -A
+#            git commit -m "bump tsd-file-api-client version to ${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version }}"
+#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+#              break
+#            else
+#              echo "Push failed, retrying in 5 seconds..."
+#              sleep 5
+#            fi
+#          done
+      - name: Create GitHub release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "crypt4gh-${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version  }}"
+          prerelease: false
+          name: "Crypt4gh-${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version  }}"
+
+  publish-localega_tsd_proxy:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.localega-tsd-proxy == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: cache gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/cache
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Build with Gradle
+        run: ./gradlew services:localega-tsd-proxy:assemble
+      - name: Get current version for localega_tsd_proxy
+        id: version_localega_tsd_proxy
+        run: |
+          LOCALEGA_TSD_PROXY_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' services/localega-tsd-proxy/build.gradle.kts)
+          echo "localega_tsd_proxy_version=$LOCALEGA_TSD_PROXY_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for localega_tsd_proxy
+        id: bump_localega_tsd_proxy_version
+        run: |
+          LOCALEGA_TSD_PROXY_VERSION="${{ steps.version_localega_tsd_proxy.outputs.localega_tsd_proxy_version }}"
+          VERSION_PARTS=(${LOCALEGA_TSD_PROXY_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+#          PATCH=$((PATCH + 1))
+          NEW_LOCALEGA_TSD_PROXY_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_localega_tsd_proxy_version=$NEW_LOCALEGA_TSD_PROXY_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in localega_tsd_proxy's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}\"#" services/localega-tsd-proxy/build.gradle.kts
+      - name: Set Repository Name
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
+      - name: Log in to the Github Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/localega-tsd-proxy
+          push: true
+          no-cache: 'true'
+          tags: |
+            ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}
+            ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-latest
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
+            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            org.opencontainers.image.revision=${{ github.sha }}
+#      - name: Commit and Push Changes
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          BRANCH_NAME=main
+#          git config user.name 'GitHub Actions'
+#          git config user.email 'actions@github.com'
+#          git config pull.rebase false
+#          for i in {1..3}; do
+#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+#            git add -A
+#            git commit -m "bump localega_tsd_proxy version to ${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}"
+#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+#              break
+#            else
+#              echo "Push failed, retrying in 5 seconds..."
+#              sleep 5
+#            fi
+#          done
+      - name: Create GitHub release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "localega_tsd_proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}"
+          prerelease: false
+          name: "Localega_tsd_proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}"
+
+  publish-tsd_api_mock:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.tsd-api-mock == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: cache gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/cache
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Build with Gradle
+        run: ./gradlew :services:tsd-api-mock:assemble
+      - name: Get current version for tsd_api_mock
+        id: version_tsd_api_mock
+        run: |
+          TSD_API_MOCK_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' services/tsd-api-mock/build.gradle.kts)
+          echo "tsd_api_mock_version=$TSD_API_MOCK_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for tsd_api_mock
+        id: bump_tsd_api_mock_version
+        run: |
+          TSD_API_MOCK_VERSION="${{ steps.version_tsd_api_mock.outputs.tsd_api_mock_version }}"
+          VERSION_PARTS=(${TSD_API_MOCK_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+#          PATCH=$((PATCH + 1))
+          NEW_TSD_API_MOCK_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_tsd_api_mock_version=$NEW_TSD_API_MOCK_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in tsd_api_mock's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}\"#" services/tsd-api-mock/build.gradle.kts
+      - name: Set Repository Name
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
+      - name: Log in to the Github Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/tsd-api-mock
+          push: true
+          no-cache: 'true'
+          tags: |
+            ghcr.io/${{ env.repo_name }}:tsd-api-mock-${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}
+            ghcr.io/${{ env.repo_name }}:tsd-api-mock-latest
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
+            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            org.opencontainers.image.revision=${{ github.sha }}
+#      - name: Commit and Push Changes
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          BRANCH_NAME=main
+#          git config user.name 'GitHub Actions'
+#          git config user.email 'actions@github.com'
+#          git config pull.rebase false
+#          for i in {1..3}; do
+#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+#            git add -A
+#            git commit -m "bump tsd_api_mock version to ${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}"
+#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+#              break
+#            else
+#              echo "Push failed, retrying in 5 seconds..."
+#              sleep 5
+#            fi
+#          done
+      - name: Create GitHub release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "tsd_api_mock-${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}"
+          prerelease: false
+          name: "Tsd_api_mock-${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}"
+
+  publish-cega-mock:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.cega-mock == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get current version for cega-mock
+        id: version_cega_mock
+        run: |
+          CEGA_MOCK_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' services/cega-mock/build.gradle.kts)
+          echo "cega_mock_version=$CEGA_MOCK_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for cega-mock
+        id: bump_cega_mock_version
+        run: |
+          CEGA_MOCK_VERSION="${{ steps.version_cega_mock.outputs.cega_mock_version }}"
+          VERSION_PARTS=(${CEGA_MOCK_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+#          PATCH=$((PATCH + 1))
+          NEW_CEGA_MOCK_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_cega_mock_version=$NEW_CEGA_MOCK_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in cega-mock's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}\"#" services/cega-mock/build.gradle.kts
+      - name: Set Repository Name
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
+      - name: Log in to the Github Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/cega-mock
+          push: true
+          no-cache: 'true'
+          tags: |
+            ghcr.io/${{ env.repo_name }}:cega-mock-${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}
+            ghcr.io/${{ env.repo_name }}:cega-mock-latest
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
+            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            org.opencontainers.image.revision=${{ github.sha }}
+#      - name: Commit and Push Changes
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          BRANCH_NAME=main
+#          git config user.name 'GitHub Actions'
+#          git config user.email 'actions@github.com'
+#          git config pull.rebase false
+#          for i in {1..3}; do
+#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+#            git add -A
+#            git commit -m "bump cega-mock version to ${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}"
+#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+#              break
+#            else
+#              echo "Push failed, retrying in 5 seconds..."
+#              sleep 5
+#            fi
+#          done
+      - name: Create GitHub release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "cega-mock-${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}"
+          prerelease: false
+          name: "Cega-mock-${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}"
+
+  publish-mq-interceptor:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.mq-interceptor == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get current version for mq-interceptor
+        id: version_mq_interceptor
+        run: |
+          MQ_INTERCEPTOR_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' services/mq-interceptor/build.gradle.kts)
+          echo "mq_interceptor_version=$MQ_INTERCEPTOR_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for mq-interceptor
+        id: bump_mq_interceptor_version
+        run: |
+          MQ_INTERCEPTOR_VERSION="${{ steps.version_mq_interceptor.outputs.mq_interceptor_version }}"
+          VERSION_PARTS=(${MQ_INTERCEPTOR_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+#          PATCH=$((PATCH + 1))
+          NEW_MQ_INTERCEPTOR_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_mq_interceptor_version=$NEW_MQ_INTERCEPTOR_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in mq-interceptor's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}\"#" services/mq-interceptor/build.gradle.kts
+      - name: Set Repository Name
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
+      - name: Log in to the Github Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/mq-interceptor
+          push: true
+          no-cache: 'true'
+          tags: |
+            ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}
+            ghcr.io/${{ env.repo_name }}:mq-interceptor-latest
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
+            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            org.opencontainers.image.revision=${{ github.sha }}
+#      - name: Commit and Push Changes
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          BRANCH_NAME=main
+#          git config user.name 'GitHub Actions'
+#          git config user.email 'actions@github.com'
+#          git config pull.rebase false
+#          for i in {1..3}; do
+#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+#            git add -A
+#            git commit -m "bump mq-interceptor version to ${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
+#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+#              break
+#            else
+#              echo "Push failed, retrying in 5 seconds..."
+#              sleep 5
+#            fi
+#          done
+      - name: Create GitHub release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
+          prerelease: false
+          name: "Mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
+
+  publish-lega-commander:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.lega-commander == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+        id: go
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get current version for lega-commander
+        id: version_lega_commander
+        run: |
+          LEGA_COMMANDER_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' cli/lega-commander/build.gradle.kts)
+          echo "lega_commander_version=$LEGA_COMMANDER_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for lega-commander
+        id: bump_lega_commander_version
+        run: |
+          LEGA_COMMANDER_VERSION="${{ steps.version_lega_commander.outputs.lega_commander_version }}"
+          VERSION_PARTS=(${LEGA_COMMANDER_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+#          PATCH=$((PATCH + 1))
+          NEW_LEGA_COMMANDER_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_lega_commander_version=$NEW_LEGA_COMMANDER_VERSION" >> $GITHUB_OUTPUT
+      - name: Create and push new tag
+        run: |
+          git tag v${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }} ${{ github.sha }}
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: release --clean
+          workdir: cli/lega-commander
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update version in lega-commander's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}\"#" cli/lega-commander/build.gradle.kts
+#      - name: Commit and Push Changes
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          BRANCH_NAME=main
+#          git config user.name 'GitHub Actions'
+#          git config user.email 'actions@github.com'
+#          git config pull.rebase false
+#          for i in {1..3}; do
+#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+#            git add -A
+#            git commit -m "bump lega-commander version to ${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
+#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+#              break
+#            else
+#              echo "Push failed, retrying in 5 seconds..."
+#              sleep 5
+#            fi
+#          done
+      - name: Create GitHub release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          target_commitish: ${{ github.head_ref || github.ref_name }}
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "lega-commander-${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
+          prerelease: false
+          name: "Lega-commander-${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
+
+  release-e2eTests:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.e2eTests == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.5.0
+      - name: Get current version of e2eTests
+        id: version_e2eTests
+        run: |
+          E2ETESTS_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' e2eTests/build.gradle.kts)
+          echo "e2eTests_version=$E2ETESTS_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for e2eTests
+        id: bump_e2eTests_version
+        run: |
+          E2ETESTS_VERSION="${{ steps.version_e2eTests.outputs.e2eTests_version }}"
+          VERSION_PARTS=(${E2ETESTS_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+#          PATCH=$((PATCH + 1))
+          NEW_E2ETESTS_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_e2eTests_version=$NEW_E2ETESTS_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in e2eTests's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}\"#" e2eTests/build.gradle.kts
+#      - name: Commit and Push Changes
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          BRANCH_NAME=main
+#          git config user.name 'GitHub Actions'
+#          git config user.email 'actions@github.com'
+#          git config pull.rebase false
+#          for i in {1..3}; do
+#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+#            git add -A
+#            git commit -m "bump e2eTests version to ${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}"
+#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+#              break
+#            else
+#              echo "Push failed, retrying in 5 seconds..."
+#              sleep 5
+#            fi
+#          done
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: ${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}
+          prerelease: false
+          name: "E2eTests-${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}"
+
+  release-fega-norway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.5.0
+      - name: Get current version of fega-norway
+        id: version_fega_norway
+        run: |
+          FEGA_NORWAY_VERSION=$(grep -oP 'version = "\K[0-9]+\.[0-9]+\.[0-9]+' build.gradle.kts)
+          echo "fega_norway_version=$FEGA_NORWAY_VERSION" >> $GITHUB_OUTPUT
+      - name: Bump patch version for fega-norway
+        id: bump_fega_norway_version
+        run: |
+          FEGA_NORWAY_VERSION="${{ steps.version_fega_norway.outputs.fega_norway_version }}"
+          VERSION_PARTS=(${FEGA_NORWAY_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+#          PATCH=$((PATCH + 1))
+          NEW_FEGA_NORWAY_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_fega_norway_version=$NEW_FEGA_NORWAY_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in fega-norway's build.gradle.kts
+        run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}\"#" build.gradle.kts
+#      - name: Commit and Push Changes
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          BRANCH_NAME=main
+#          git config user.name 'GitHub Actions'
+#          git config user.email 'actions@github.com'
+#          git config pull.rebase false
+#          for i in {1..3}; do
+#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+#            git add -A
+#            git commit -m "bump fega_norway version to ${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}"
+#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+#              break
+#            else
+#              echo "Push failed, retrying in 5 seconds..."
+#              sleep 5
+#            fi
+#          done
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: ${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}
+          prerelease: false
+          name: "FEGA Norway-${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}"
