@@ -1,0 +1,99 @@
+{
+  "heartbeat": {
+    "hosts": [
+      {
+        "host": "doa",
+        "port": "8080",
+        "name": "sda-doa"
+      },
+      {
+        "host": "db",
+        "port": "5432",
+        "name": "sda-db"
+      }
+    ],
+    "rmq_consumers": [
+      {
+        "queue": "inbox",
+        "listeners": [
+          {
+            "tag": "mq-interceptor",
+            "name": "mq-interceptor"
+          }
+        ]
+      },
+      {
+        "queue": "ingest",
+        "listeners": [
+          {
+            "tag": "sda-ingest",
+            "name": "sda-ingest"
+          }
+        ]
+      },
+      {
+        "queue": "archived",
+        "listeners": [
+          {
+            "tag": "sda-verify",
+            "name": "sda-verify"
+          }
+        ]
+      },
+      {
+        "queue": "verified",
+        "listeners": [
+          {
+            "tag": "mq-interceptor",
+            "name": "mq-interceptor"
+          }
+        ]
+      },
+      {
+        "queue": "completed",
+        "listeners": [
+          {
+            "tag":  "mq-interceptor",
+            "name":  "mq-interceptor"
+          }
+        ]
+      },
+      {
+        "queue": "accessionIDs",
+        "listeners": [
+          {
+            "tag": "sda-finalize",
+            "name": "sda-finalize"
+          }
+        ]
+      },
+      {
+        "queue": "mappings",
+        "listeners": [
+          {
+            "tag": "sda-mapper",
+            "name": "sda-mapper"
+          }
+        ]
+      },
+      {
+        "queue": "error",
+        "listeners": [
+          {
+            "tag": "mq-interceptor",
+            "name": "mq-interceptor"
+          }
+        ]
+      },
+      {
+        "queue": "files",
+        "listeners": [
+          {
+            "tag": "sda-intercept",
+            "name": "sda-intercept"
+          }
+        ]
+      }
+    ]
+  }
+}

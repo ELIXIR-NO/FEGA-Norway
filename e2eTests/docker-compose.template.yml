@@ -77,11 +77,14 @@ services:
         condition: service_started
       postgres:
         condition: service_started
+      redis:
+        condition: service_started
     links:
       - tsd
       - mq
       - cegamq
       - postgres
+      - redis
     ports:
       - "10443:8080"
       - "5005:5005" # This is the JDWP debug port. See command below.
@@ -445,3 +448,70 @@ services:
       - CEGA_USERS_USER=dummy
     ports:
       - "8443:8443"
+
+
+  # Heartbeat
+
+  heartbeat-pub:
+    container_name: heartbeat-pub
+    hostname: heartbeat-pub
+    image: ghcr.io/elixir-no/pipeline-heartbeat:latest
+    environment:
+      - HEARTBEAT_MODE=publisher
+      - RABBITMQ_HOST=<<MQ_HOST>>
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=<<PRIVATE_BROKER_USER>>
+      - RABBITMQ_PASS=<<PRIVATE_BROKER_PASSWORD>>
+      - RABBITMQ_VHOST=<<PRIVATE_BROKER_VHOST>>
+      - RABBITMQ_EXCHANGE=sda
+      - RABBITMQ_QUEUE=heartbeat
+      - RABBITMQ_ROUTING_KEY=sda_heartbeat
+      - RABBITMQ_TLS=false
+      - RABBITMQ_CA_CERT_PATH=
+      - RABBITMQ_TLS_PORT=5671
+      - PUBLISH_INTERVAL=60
+      - RABBITMQ_MANAGEMENT_PORT=15671
+    volumes:
+      - <<TMP_CONFS_DIR>>/heartbeat-pub/publisher_config.json:/publisher_config.json
+    depends_on:
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+
+  heartbeat-sub:
+    container_name: heartbeat-sub
+    hostname: heartbeat-sub
+    image: ghcr.io/elixir-no/pipeline-heartbeat:latest
+    environment:
+      - HEARTBEAT_MODE=subscriber
+      - RABBITMQ_HOST=<<MQ_HOST>>
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=<<PRIVATE_BROKER_USER>>
+      - RABBITMQ_PASS=<<PRIVATE_BROKER_PASSWORD>>
+      - RABBITMQ_VHOST=<<PRIVATE_BROKER_VHOST>>
+      - RABBITMQ_EXCHANGE=sda
+      - RABBITMQ_QUEUE=heartbeat
+      - RABBITMQ_ROUTING_KEY=sda_heartbeat
+      - RABBITMQ_TLS=false
+      - RABBITMQ_CA_CERT_PATH=
+      - RABBITMQ_TLS_PORT=5671
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    depends_on:
+      mq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    links:
+      - mq
+      - redis
+
+
+  redis:
+    container_name: redis
+    hostname: redis
+    image: redis:alpine
+    ports:
+      - "6379:6379"
