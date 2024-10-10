@@ -785,6 +785,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
-          tag_name: ${{ steps.version_fega_norway.outputs.new_fega_norway_version }}
+          tag_name: ${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}
           prerelease: false
-          name: "FEGA Norway-${{ steps.version_fega_norway.outputs.new_fega_norway_version }}"
+          name: "FEGA Norway-${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}"
