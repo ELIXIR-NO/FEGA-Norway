@@ -2,7 +2,7 @@ plugins {
     base
 }
 
-version = "1.1.0"
+version = "6.6.5"
 
 // Build
 val goBuild = tasks.register("goBuild", Exec::class) {
