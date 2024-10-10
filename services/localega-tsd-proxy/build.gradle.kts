@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "no.elixir.fega"
-version = "8.8.7"
+version = "8.8.8"
 
 dependencies {
     implementation(project(":lib:clearinghouse"))
