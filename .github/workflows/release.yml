@@ -674,6 +674,8 @@ jobs:
           name: "Lega-commander-${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
 
   release-e2eTests:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.e2eTests == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -783,6 +785,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
-          tag_name: ${{ steps.version_fega_norway.outputs.fega_norway_version }}
+          tag_name: ${{ steps.version_fega_norway.outputs.new_fega_norway_version }}
           prerelease: false
-          name: "FEGA Norway-${{ steps.version_fega_norway.outputs.fega_norway_version }}"
+          name: "FEGA Norway-${{ steps.version_fega_norway.outputs.new_fega_norway_version }}"
