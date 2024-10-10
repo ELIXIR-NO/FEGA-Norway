@@ -1,12 +1,12 @@
 plugins {
     id("java-library")
-    id("io.freefair.lombok") version "8.10"
+    id("io.freefair.lombok") version "8.10.2"
     id("formatting-conventions")
     id("maven-publish")
 }
 
 group = "elixir.no"
-version = "2.0.0"
+version = "6.6.5"
 
 repositories {
     mavenCentral()
@@ -25,7 +25,7 @@ dependencies {
     api("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.slf4j:slf4j-jdk14:2.0.16")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
