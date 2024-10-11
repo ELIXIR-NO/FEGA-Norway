@@ -134,12 +134,13 @@ class Crypt4GHInputStreamInternal extends FilterInputStream {
     long delta = newDecryptedPosition - currentDecryptedPosition;
     if (bytesRead + delta > buffer.length) {
       long missingBytes = bytesRead + delta - buffer.length;
-      assert bytesRead + delta - missingBytes <= Integer.MAX_VALUE : "Value assigned to int exceeds integer range";
-      bytesRead = (int)(bytesRead + delta - missingBytes);
+      assert bytesRead + delta - missingBytes <= Integer.MAX_VALUE
+          : "Value assigned to int exceeds integer range";
+      bytesRead = (int) (bytesRead + delta - missingBytes);
       return n - missingBytes;
     }
     assert bytesRead + delta <= Integer.MAX_VALUE : "Value assigned to int exceeds integer range";
-    bytesRead = (int)(bytesRead + delta);
+    bytesRead = (int) (bytesRead + delta);
     return n;
   }
 
