@@ -30,7 +30,7 @@ class Crypt4GHInputStreamInternal extends FilterInputStream {
   private Optional<DataEditList> dataEditList;
 
   private int encryptedSegmentSize;
-  private int lastDecryptedSegment = -1;
+  private long lastDecryptedSegment = -1;
 
   /**
    * Constructs the internal part of Crypt4GHInputStream that wraps existing InputStream, not a
@@ -134,10 +134,12 @@ class Crypt4GHInputStreamInternal extends FilterInputStream {
     long delta = newDecryptedPosition - currentDecryptedPosition;
     if (bytesRead + delta > buffer.length) {
       long missingBytes = bytesRead + delta - buffer.length;
-      bytesRead += (delta - missingBytes);
+      assert bytesRead + delta - missingBytes <= Integer.MAX_VALUE : "Value assigned to int exceeds integer range";
+      bytesRead = (int)(bytesRead + delta - missingBytes);
       return n - missingBytes;
     }
-    bytesRead += delta;
+    assert bytesRead + delta <= Integer.MAX_VALUE : "Value assigned to int exceeds integer range";
+    bytesRead = (int)(bytesRead + delta);
     return n;
   }
 
