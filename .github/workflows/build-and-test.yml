@@ -38,17 +38,5 @@ jobs:
         run: |
           ./gradlew clean
           ./gradlew start-docker-containers
-           CONTAINERS=("tsd" "db" "mq" "proxy" "interceptor" 
-                      "postgres" "ingest" "verify" "finalize" 
-                      "mapper" "intercept" "doa" "cegamq" 
-                      "cegaauth" "heartbeat-pub" "heartbeat-sub" 
-                      "redis")
-          # Wait for all containers to be running
-          for container in "${CONTAINERS[@]}"; do
-            echo "Waiting for $container to be running..."
-            until [ "$(docker ps -q -f name="$container" -f status=running)" ]; do
-              sleep 1
-            done
-            echo "$container is up and running."
-          done
+           sleep 20
           ./gradlew :e2eTests:test --stacktrace
