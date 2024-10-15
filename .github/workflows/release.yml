@@ -108,7 +108,6 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          target_commitish: ${{ github.head_ref || github.ref_name }}
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "clearinghouse-${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}"
           prerelease: false
@@ -177,7 +176,6 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          target_commitish: ${{ github.head_ref || github.ref_name }}
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "crypt4gh-${{ steps.bump_crypt4gh_version.outputs.new_crypt4gh_version }}"
           prerelease: false
@@ -246,7 +244,6 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          target_commitish: ${{ github.head_ref || github.ref_name }}
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "crypt4gh-${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version  }}"
           prerelease: false
@@ -275,8 +272,6 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - name: Build with Gradle
-        run: ./gradlew services:localega-tsd-proxy:assemble
       - name: Get current version for localega_tsd_proxy
         id: version_localega_tsd_proxy
         run: |
@@ -294,6 +289,8 @@ jobs:
           echo "new_localega_tsd_proxy_version=$NEW_LOCALEGA_TSD_PROXY_VERSION" >> $GITHUB_OUTPUT
       - name: Update version in localega_tsd_proxy's build.gradle.kts
         run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}\"#" services/localega-tsd-proxy/build.gradle.kts
+      - name: Build with Gradle
+        run: ./gradlew services:localega-tsd-proxy:assemble
       - name: Set Repository Name
         id: repo_name
         run: |
@@ -341,7 +338,6 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          target_commitish: ${{ github.head_ref || github.ref_name }}
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "localega_tsd_proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}"
           prerelease: false
@@ -383,8 +379,6 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - name: Build with Gradle
-        run: ./gradlew :services:tsd-api-mock:assemble
       - name: Get current version for tsd_api_mock
         id: version_tsd_api_mock
         run: |
@@ -402,6 +396,8 @@ jobs:
           echo "new_tsd_api_mock_version=$NEW_TSD_API_MOCK_VERSION" >> $GITHUB_OUTPUT
       - name: Update version in tsd_api_mock's build.gradle.kts
         run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}\"#" services/tsd-api-mock/build.gradle.kts
+      - name: Build with Gradle
+        run: ./gradlew :services:tsd-api-mock:assemble
       - name: Set Repository Name
         id: repo_name
         run: |
@@ -449,7 +445,6 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          target_commitish: ${{ github.head_ref || github.ref_name }}
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "tsd_api_mock-${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}"
           prerelease: false
@@ -525,7 +520,6 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          target_commitish: ${{ github.head_ref || github.ref_name }}
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "cega-mock-${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}"
           prerelease: false
@@ -605,7 +599,6 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          target_commitish: ${{ github.head_ref || github.ref_name }}
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
           prerelease: false
@@ -692,7 +685,6 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          target_commitish: ${{ github.head_ref || github.ref_name }}
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "lega-commander-${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
           prerelease: false
@@ -808,6 +800,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
-          tag_name: ${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}
+          tag_name: FEGA Norway-${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}
           prerelease: false
           name: "FEGA Norway-${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}"
