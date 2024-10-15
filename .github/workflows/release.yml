@@ -1,6 +1,7 @@
 name: Publish
 on:
   pull_request:
+    branches: [ "main" ]
     types:
       - closed
 
@@ -84,25 +85,25 @@ jobs:
           ./gradlew :lib:clearinghouse:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Commit and Push Changes
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          BRANCH_NAME=main
-#          git config user.name 'GitHub Actions'
-#          git config user.email 'actions@github.com'
-#          git config pull.rebase false
-#          for i in {1..3}; do
-#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-#            git add -A
-#            git commit -m "bump clearinghouse version to ${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}"
-#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
-#              break
-#            else
-#              echo "Push failed, retrying in 5 seconds..."
-#              sleep 5
-#            fi
-#          done
+      #      - name: Commit and Push Changes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        run: |
+      #          BRANCH_NAME=main
+      #          git config user.name 'GitHub Actions'
+      #          git config user.email 'actions@github.com'
+      #          git config pull.rebase false
+      #          for i in {1..3}; do
+      #            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+      #            git add -A
+      #            git commit -m "bump clearinghouse version to ${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}"
+      #            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+      #              break
+      #            else
+      #              echo "Push failed, retrying in 5 seconds..."
+      #              sleep 5
+      #            fi
+      #          done
 
       - name: Create GitHub release
         if: success()
@@ -153,25 +154,25 @@ jobs:
           ./gradlew :lib:crypt4gh:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Commit and Push Changes
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          BRANCH_NAME=main
-#          git config user.name 'GitHub Actions'
-#          git config user.email 'actions@github.com'
-#          git config pull.rebase false
-#          for i in {1..3}; do
-#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-#            git add -A
-#            git commit -m "bump crypt4gh version to ${{ steps.bump_crypt4gh_version.outputs.new_crypt4gh_version }}"
-#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
-#              break
-#            else
-#              echo "Push failed, retrying in 5 seconds..."
-#              sleep 5
-#            fi
-#          done
+      #      - name: Commit and Push Changes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        run: |
+      #          BRANCH_NAME=main
+      #          git config user.name 'GitHub Actions'
+      #          git config user.email 'actions@github.com'
+      #          git config pull.rebase false
+      #          for i in {1..3}; do
+      #            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+      #            git add -A
+      #            git commit -m "bump crypt4gh version to ${{ steps.bump_crypt4gh_version.outputs.new_crypt4gh_version }}"
+      #            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+      #              break
+      #            else
+      #              echo "Push failed, retrying in 5 seconds..."
+      #              sleep 5
+      #            fi
+      #          done
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
@@ -221,25 +222,25 @@ jobs:
           ./gradlew :lib:tsd-file-api-client:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Commit and Push Changes
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          BRANCH_NAME=main
-#          git config user.name 'GitHub Actions'
-#          git config user.email 'actions@github.com'
-#          git config pull.rebase false
-#          for i in {1..3}; do
-#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-#            git add -A
-#            git commit -m "bump tsd-file-api-client version to ${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version }}"
-#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
-#              break
-#            else
-#              echo "Push failed, retrying in 5 seconds..."
-#              sleep 5
-#            fi
-#          done
+      #      - name: Commit and Push Changes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        run: |
+      #          BRANCH_NAME=main
+      #          git config user.name 'GitHub Actions'
+      #          git config user.email 'actions@github.com'
+      #          git config pull.rebase false
+      #          for i in {1..3}; do
+      #            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+      #            git add -A
+      #            git commit -m "bump tsd-file-api-client version to ${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version }}"
+      #            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+      #              break
+      #            else
+      #              echo "Push failed, retrying in 5 seconds..."
+      #              sleep 5
+      #            fi
+      #          done
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
@@ -315,25 +316,25 @@ jobs:
             org.opencontainers.image.source=${{ github.event.repository.clone_url }}
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             org.opencontainers.image.revision=${{ github.sha }}
-#      - name: Commit and Push Changes
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          BRANCH_NAME=main
-#          git config user.name 'GitHub Actions'
-#          git config user.email 'actions@github.com'
-#          git config pull.rebase false
-#          for i in {1..3}; do
-#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-#            git add -A
-#            git commit -m "bump localega_tsd_proxy version to ${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}"
-#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
-#              break
-#            else
-#              echo "Push failed, retrying in 5 seconds..."
-#              sleep 5
-#            fi
-#          done
+      #      - name: Commit and Push Changes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        run: |
+      #          BRANCH_NAME=main
+      #          git config user.name 'GitHub Actions'
+      #          git config user.email 'actions@github.com'
+      #          git config pull.rebase false
+      #          for i in {1..3}; do
+      #            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+      #            git add -A
+      #            git commit -m "bump localega_tsd_proxy version to ${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}"
+      #            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+      #              break
+      #            else
+      #              echo "Push failed, retrying in 5 seconds..."
+      #              sleep 5
+      #            fi
+      #          done
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
@@ -422,25 +423,25 @@ jobs:
             org.opencontainers.image.source=${{ github.event.repository.clone_url }}
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             org.opencontainers.image.revision=${{ github.sha }}
-#      - name: Commit and Push Changes
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          BRANCH_NAME=main
-#          git config user.name 'GitHub Actions'
-#          git config user.email 'actions@github.com'
-#          git config pull.rebase false
-#          for i in {1..3}; do
-#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-#            git add -A
-#            git commit -m "bump tsd_api_mock version to ${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}"
-#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
-#              break
-#            else
-#              echo "Push failed, retrying in 5 seconds..."
-#              sleep 5
-#            fi
-#          done
+      #      - name: Commit and Push Changes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        run: |
+      #          BRANCH_NAME=main
+      #          git config user.name 'GitHub Actions'
+      #          git config user.email 'actions@github.com'
+      #          git config pull.rebase false
+      #          for i in {1..3}; do
+      #            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+      #            git add -A
+      #            git commit -m "bump tsd_api_mock version to ${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}"
+      #            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+      #              break
+      #            else
+      #              echo "Push failed, retrying in 5 seconds..."
+      #              sleep 5
+      #            fi
+      #          done
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
@@ -497,25 +498,25 @@ jobs:
             org.opencontainers.image.source=${{ github.event.repository.clone_url }}
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             org.opencontainers.image.revision=${{ github.sha }}
-#      - name: Commit and Push Changes
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          BRANCH_NAME=main
-#          git config user.name 'GitHub Actions'
-#          git config user.email 'actions@github.com'
-#          git config pull.rebase false
-#          for i in {1..3}; do
-#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-#            git add -A
-#            git commit -m "bump cega-mock version to ${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}"
-#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
-#              break
-#            else
-#              echo "Push failed, retrying in 5 seconds..."
-#              sleep 5
-#            fi
-#          done
+      #      - name: Commit and Push Changes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        run: |
+      #          BRANCH_NAME=main
+      #          git config user.name 'GitHub Actions'
+      #          git config user.email 'actions@github.com'
+      #          git config pull.rebase false
+      #          for i in {1..3}; do
+      #            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+      #            git add -A
+      #            git commit -m "bump cega-mock version to ${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}"
+      #            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+      #              break
+      #            else
+      #              echo "Push failed, retrying in 5 seconds..."
+      #              sleep 5
+      #            fi
+      #          done
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
@@ -576,25 +577,25 @@ jobs:
             org.opencontainers.image.source=${{ github.event.repository.clone_url }}
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             org.opencontainers.image.revision=${{ github.sha }}
-#      - name: Commit and Push Changes
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          BRANCH_NAME=main
-#          git config user.name 'GitHub Actions'
-#          git config user.email 'actions@github.com'
-#          git config pull.rebase false
-#          for i in {1..3}; do
-#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-#            git add -A
-#            git commit -m "bump mq-interceptor version to ${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
-#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
-#              break
-#            else
-#              echo "Push failed, retrying in 5 seconds..."
-#              sleep 5
-#            fi
-#          done
+      #      - name: Commit and Push Changes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        run: |
+      #          BRANCH_NAME=main
+      #          git config user.name 'GitHub Actions'
+      #          git config user.email 'actions@github.com'
+      #          git config pull.rebase false
+      #          for i in {1..3}; do
+      #            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+      #            git add -A
+      #            git commit -m "bump mq-interceptor version to ${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
+      #            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+      #              break
+      #            else
+      #              echo "Push failed, retrying in 5 seconds..."
+      #              sleep 5
+      #            fi
+      #          done
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
@@ -662,25 +663,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Update version in lega-commander's build.gradle.kts
         run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}\"#" cli/lega-commander/build.gradle.kts
-#      - name: Commit and Push Changes
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          BRANCH_NAME=main
-#          git config user.name 'GitHub Actions'
-#          git config user.email 'actions@github.com'
-#          git config pull.rebase false
-#          for i in {1..3}; do
-#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-#            git add -A
-#            git commit -m "bump lega-commander version to ${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
-#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
-#              break
-#            else
-#              echo "Push failed, retrying in 5 seconds..."
-#              sleep 5
-#            fi
-#          done
+      #      - name: Commit and Push Changes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        run: |
+      #          BRANCH_NAME=main
+      #          git config user.name 'GitHub Actions'
+      #          git config user.email 'actions@github.com'
+      #          git config pull.rebase false
+      #          for i in {1..3}; do
+      #            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+      #            git add -A
+      #            git commit -m "bump lega-commander version to ${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
+      #            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+      #              break
+      #            else
+      #              echo "Push failed, retrying in 5 seconds..."
+      #              sleep 5
+      #            fi
+      #          done
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
@@ -721,30 +722,30 @@ jobs:
           echo "new_e2eTests_version=$NEW_E2ETESTS_VERSION" >> $GITHUB_OUTPUT
       - name: Update version in e2eTests's build.gradle.kts
         run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}\"#" e2eTests/build.gradle.kts
-#      - name: Commit and Push Changes
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          BRANCH_NAME=main
-#          git config user.name 'GitHub Actions'
-#          git config user.email 'actions@github.com'
-#          git config pull.rebase false
-#          for i in {1..3}; do
-#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-#            git add -A
-#            git commit -m "bump e2eTests version to ${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}"
-#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
-#              break
-#            else
-#              echo "Push failed, retrying in 5 seconds..."
-#              sleep 5
-#            fi
-#          done
+      #      - name: Commit and Push Changes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        run: |
+      #          BRANCH_NAME=main
+      #          git config user.name 'GitHub Actions'
+      #          git config user.email 'actions@github.com'
+      #          git config pull.rebase false
+      #          for i in {1..3}; do
+      #            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+      #            git add -A
+      #            git commit -m "bump e2eTests version to ${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}"
+      #            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+      #              break
+      #            else
+      #              echo "Push failed, retrying in 5 seconds..."
+      #              sleep 5
+      #            fi
+      #          done
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
-          tag_name: ${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}
+          tag_name: e2etests-${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}
           prerelease: false
           name: "E2eTests-${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}"
 
@@ -777,29 +778,29 @@ jobs:
           echo "new_fega_norway_version=$NEW_FEGA_NORWAY_VERSION" >> $GITHUB_OUTPUT
       - name: Update version in fega-norway's build.gradle.kts
         run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}\"#" build.gradle.kts
-#      - name: Commit and Push Changes
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          BRANCH_NAME=main
-#          git config user.name 'GitHub Actions'
-#          git config user.email 'actions@github.com'
-#          git config pull.rebase false
-#          for i in {1..3}; do
-#            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
-#            git add -A
-#            git commit -m "bump fega_norway version to ${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}"
-#            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
-#              break
-#            else
-#              echo "Push failed, retrying in 5 seconds..."
-#              sleep 5
-#            fi
-#          done
+      #      - name: Commit and Push Changes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        run: |
+      #          BRANCH_NAME=main
+      #          git config user.name 'GitHub Actions'
+      #          git config user.email 'actions@github.com'
+      #          git config pull.rebase false
+      #          for i in {1..3}; do
+      #            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git $BRANCH_NAME
+      #            git add -A
+      #            git commit -m "bump fega_norway version to ${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}"
+      #            if git push https://${{ secrets.GITHUB_TOKEN }}@github.com/ELIXIR-NO/FEGA-Norway.git HEAD:refs/heads/$BRANCH_NAME; then
+      #              break
+      #            else
+      #              echo "Push failed, retrying in 5 seconds..."
+      #              sleep 5
+      #            fi
+      #          done
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
-          tag_name: FEGA Norway-${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}
+          tag_name: fega-norway-${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}
           prerelease: false
           name: "FEGA Norway-${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}"
