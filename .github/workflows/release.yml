@@ -248,9 +248,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
-          tag_name: "crypt4gh-${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version  }}"
+          tag_name: "tsd-file-api-client-${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version  }}"
           prerelease: false
-          name: "Crypt4gh-${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version  }}"
+          name: "tsd-file-api-client-${{ steps.bump_tsd-file-api-client_version.outputs.new_tsd-file-api-client_version  }}"
 
   publish-localega_tsd_proxy:
     needs: detect-changes
