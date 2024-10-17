@@ -4,7 +4,7 @@ plugins {
     id("formatting-conventions")
     id("maven-publish")
 }
-//fake changes
+// fake changes
 group = "elixir.no"
 version = "2.0.7"
 

@@ -3,7 +3,7 @@ plugins {
     id("springboot-conventions")
     id("jsonwebtoken")
 }
-//fake changes
+// fake changes
 group = "no.elixir.fega"
 version = "2.1.4"
 
