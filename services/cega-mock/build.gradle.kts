@@ -1,7 +1,7 @@
 plugins {
     base
 }
-
+//fake changes
 version = "1.0.0"
 
 val goBuild = tasks.register("goBuild", Exec::class) {
