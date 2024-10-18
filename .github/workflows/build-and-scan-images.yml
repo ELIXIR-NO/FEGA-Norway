@@ -2,8 +2,8 @@ name: build and scan images
 on:
   pull_request:
     paths:
-      - 'services/localega-tsd-proxy'
-      - 'services/mq-interceptor'
+      - 'services/localega-tsd-proxy/**'
+      - 'services/mq-interceptor/**'
 
 jobs:
   detect-changes:
