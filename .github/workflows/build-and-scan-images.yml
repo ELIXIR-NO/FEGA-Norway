@@ -47,6 +47,8 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+      - name: Build with Gradle
+        run: ./gradlew services:localega-tsd-proxy:assemble
       - name: Set Repository Name
         id: repo_name
         run: |
