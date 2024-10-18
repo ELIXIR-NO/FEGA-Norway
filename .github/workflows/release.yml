@@ -759,6 +759,7 @@ jobs:
           name: "E2eTests-${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}"
 
   release-fega-norway:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
