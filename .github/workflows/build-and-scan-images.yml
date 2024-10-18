@@ -7,7 +7,6 @@ on:
 
 jobs:
   detect-changes:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
       localega-tsd-proxy: ${{ steps.changes.outputs.localega-tsd-proxy }}
