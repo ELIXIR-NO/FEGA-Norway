@@ -260,22 +260,8 @@ jobs:
     permissions:
       contents: write
       packages: write
-      security-events: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-      - name: cache gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/cache
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
       - name: Get current version for localega_tsd_proxy
         id: version_localega_tsd_proxy
         run: |
@@ -307,19 +293,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: ./services/localega-tsd-proxy
-          push: true
-          no-cache: 'true'
-          tags: |
-            ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}
-            ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-latest
-          labels: |
-            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
-            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Retag
+        run: |
+          docker pull ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ github.event.number }}
+          docker tag ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ github.event.number }} ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}
+          docker push ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}
       - name: Commit and Push Changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -347,20 +325,6 @@ jobs:
           tag_name: "localega_tsd_proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}"
           prerelease: false
           name: "Localega_tsd_proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}"
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}
-          format: 'sarif'
-          severity: "CRITICAL,HIGH,MEDIUM"
-          ignore-unfixed: true
-          output: 'tsd-proxy-result.sarif'
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'tsd-proxy-result.sarif'
-          category: 'tsd-proxy'
 
   publish-tsd_api_mock:
     needs: detect-changes
@@ -539,7 +503,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      security-events: write
     steps:
       - uses: actions/checkout@v4
       - name: Get current version for mq-interceptor
@@ -571,19 +534,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: ./services/mq-interceptor
-          push: true
-          no-cache: 'true'
-          tags: |
-            ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}
-            ghcr.io/${{ env.repo_name }}:mq-interceptor-latest
-          labels: |
-            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
-            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Retag
+        run: |
+          docker pull ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ github.event.number }}
+          docker tag ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ github.event.number }} ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ steps.version_mq_interceptor.outputs.mq_interceptor_version }}
+          docker push ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ steps.version_mq_interceptor.outputs.mq_interceptor_version }}
       - name: Commit and Push Changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -611,20 +566,6 @@ jobs:
           tag_name: "mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
           prerelease: false
           name: "Mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}
-          format: 'sarif'
-          ignore-unfixed: true
-          output: 'mq-interceptor-result.sarif'
-          severity: 'CRITICAL,HIGH,MEDIUM'
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'mq-interceptor-result.sarif'
-          category: 'mq-interceptor'
 
   publish-lega-commander:
     needs: detect-changes
@@ -759,6 +700,7 @@ jobs:
           name: "E2eTests-${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}"
 
   release-fega-norway:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
