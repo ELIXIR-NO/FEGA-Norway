@@ -38,15 +38,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      - name: cache gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/cache
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
       - name: Build with Gradle
         run: ./gradlew services:localega-tsd-proxy:assemble
       - name: Set Repository Name
