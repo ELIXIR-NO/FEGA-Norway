@@ -16,9 +16,8 @@ dependencies {
     implementation("org.hibernate.orm:hibernate-gradle-plugin:6.6.1.Final")
 }
 
-gradlePlugin {
+gradlePlugin {  
     plugins {
-        // here we register our plugin with an ID
         register("extra-java-module-info") {
             id = "extra-java-module-info"
             implementationClass = "org.gradle.transform.javamodules.ExtraModuleInfoPlugin"
