@@ -61,7 +61,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3.5.0
+        uses: gradle/actions/setup-gradle@v4.1.0
       - name: Get current version for clearinghouse
         id: version_clearinghouse
         run: |
@@ -131,7 +131,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3.5.0
+        uses: gradle/actions/setup-gradle@v4.1.0
       - name: Get current version for crypt4gh
         id: version_crypt4gh
         run: |
@@ -200,7 +200,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3.5.0
+        uses: gradle/actions/setup-gradle@v4.1.0
       - name: Get current version for tsd-file-api-client
         id: version_tsd-file-api-client
         run: |
@@ -653,7 +653,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3.5.0
+        uses: gradle/actions/setup-gradle@v4.1.0
       - name: Get current version of e2eTests
         id: version_e2eTests
         run: |
@@ -711,7 +711,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3.5.0
+        uses: gradle/actions/setup-gradle@v4.1.0
       - name: Get current version of fega-norway
         id: version_fega_norway
         run: |
