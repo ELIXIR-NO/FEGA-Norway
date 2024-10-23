@@ -21,7 +21,6 @@ tasks.register("test", Exec::class) {
     commandLine("go", "test")
 }
 
-// Cleanup
 val goClean = tasks.register("goClean", Exec::class) {
     description = "Deletes the build directory"
     commandLine("go", "clean")

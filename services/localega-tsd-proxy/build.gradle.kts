@@ -32,7 +32,6 @@ configurations {
     }
 }
 
-// Build Docker image
 tasks.register("buildDockerImage", Exec::class) {
     group = "build"
     dependsOn("bootJar")
