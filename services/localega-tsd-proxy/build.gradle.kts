@@ -31,7 +31,6 @@ configurations {
         exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
 }
-
 tasks.register("buildDockerImage", Exec::class) {
     group = "build"
     dependsOn("bootJar")

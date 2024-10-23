@@ -274,8 +274,6 @@ jobs:
           echo "new_localega_tsd_proxy_version=$NEW_LOCALEGA_TSD_PROXY_VERSION" >> $GITHUB_OUTPUT
       - name: Update version in localega_tsd_proxy's build.gradle.kts
         run: sed -i "s#version = \".*\"#version = \"${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}\"#" services/localega-tsd-proxy/build.gradle.kts
-      - name: Build with Gradle
-        run: ./gradlew services:localega-tsd-proxy:assemble
       - name: Set Repository Name
         id: repo_name
         run: |
