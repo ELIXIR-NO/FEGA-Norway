@@ -15,7 +15,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses:  aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: '.'
+          image-ref: ghcr.io/parisa68/fega-norway:localega-tsd-proxy-22
           ignore-unfixed: true
           format: 'template'
           template: '@/contrib/sarif.tpl'
