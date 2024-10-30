@@ -1,0 +1,11 @@
+name: Print Ref Name
+
+on:
+  push:
+
+jobs:
+  print-ref-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print github.ref_name
+        run: echo "The ref name is: ${{ github.ref_name }}"
