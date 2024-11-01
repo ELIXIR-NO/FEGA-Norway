@@ -5,6 +5,8 @@ on:
       - 'services/localega-tsd-proxy/**'
       - 'services/mq-interceptor/**'
     branches: [ main ]
+    types:
+      - closed
 
   push:
     paths:
