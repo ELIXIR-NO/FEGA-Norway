@@ -14,7 +14,6 @@ tasks.named("build") {
     dependsOn(goBuild)
 }
 
-// Test
 tasks.register("test", Exec::class) {
     group = "verification"
     description = "Test the Go application"
