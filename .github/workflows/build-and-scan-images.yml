@@ -4,6 +4,14 @@ on:
     paths:
       - 'services/localega-tsd-proxy/**'
       - 'services/mq-interceptor/**'
+    branches: [ main ]
+
+  push:
+    paths:
+      - 'services/localega-tsd-proxy/**'
+      - 'services/mq-interceptor/**'
+    branches: [ main ]
+
 
 jobs:
   detect-changes:
