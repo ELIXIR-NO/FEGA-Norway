@@ -30,10 +30,3 @@ configurations {
         exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
 }
-
-tasks.register("buildDockerImage", Exec::class) {
-    group = "build"
-    dependsOn("bootJar")
-    description = "Builds the Docker image for localega-tsd-proxy"
-    commandLine("docker", "build", "-t", "localega-tsd-proxy", ".")
-}
