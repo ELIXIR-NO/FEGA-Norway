@@ -2,7 +2,6 @@
 
 function start() {
   ./gradlew clean &&
-    sudo rm -rf e2eTests/tmp &&
     bash -c "./gradlew start-docker-containers"
 }
 
