@@ -74,32 +74,44 @@ get_binaries() {
 
 tag_to_version() {
   if [ -z "${TAG}" ]; then
-    log_info "checking GitHub for latest tag"
+    log_info "checking GitHub for the latest tag"
+    REALTAG=$(github_release "$OWNER/$REPO" "latest") && true
   else
-    log_info "checking GitHub for tag 'lega-commander-${TAG}'"
+    log_info "checking GitHub for tag '${TAG}'"
+    REALTAG=$(github_release "$OWNER/$REPO" "${TAG}") && true
   fi
-  # Add the prefix to any specified or latest tag
-  REALTAG=$(github_release "$OWNER/$REPO" "lega-commander-${TAG}") && true
-  if test -z "$REALTAG"; then
-    log_crit "unable to find 'lega-commander-${TAG}' - use 'latest' or see https://github.com/${PREFIX}/releases for details"
+
+  if [ -z "$REALTAG" ]; then
+    log_crit "unable to find tag '${TAG:-latest}' - see https://github.com/${OWNER}/${REPO}/releases for details"
     exit 1
   fi
-  # if version starts with 'v', remove it
+
   TAG="$REALTAG"
-  VERSION=${TAG#lega-commander-}
+  VERSION="${TAG}"
 }
+
 
 github_release() {
   owner_repo=$1
   version=$2
-  test -z "$version" && version="latest"
-  giturl="https://github.com/${owner_repo}/releases/${version}"
-  json=$(http_copy "$giturl" "Accept:application/json")
-  test -z "$json" && return 1
-  version=$(echo "$json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
-  test -z "$version" && return 1
-  echo "$version"
+  giturl="https://api.github.com/repos/${owner_repo}/releases"
+
+  # Fetch all releases from GitHub API
+  json=$(curl -s -H "Accept: application/json" "$giturl")
+  if [ -z "$json" ]; then
+    log_crit "Failed to fetch releases from GitHub. Please check your network connection."
+    exit 1
+  fi
+
+  if [ "$version" = "latest" ]; then
+    # Get the tag_name of the first release
+    echo "$json" | grep -m1 '"tag_name"' | sed -E 's/.*"tag_name":\s*"([^"]+)".*/\1/'
+  else
+    # Look for a specific version
+    echo "$json" | grep '"tag_name"' | grep -m1 "\"$version\"" | sed -E 's/.*"tag_name":\s*"([^"]+)".*/\1/'
+  fi
 }
+
 
 adjust_format() { true; }
 adjust_os() { true; }
@@ -128,9 +140,8 @@ http_copy() { tmp=$(mktemp); http_download "$tmp" "$1" "$2" || return 1; cat "$t
 hash_sha256() { TARGET=${1:-/dev/stdin}; hash=$(sha256sum "$TARGET" 2>/dev/null | awk '{print $1}'); echo "$hash"; }
 hash_sha256_verify() { TARGET=$1; checksums=$2; BASENAME=${TARGET##*/}; want=$(grep "${BASENAME}" "${checksums}" | cut -d ' ' -f 1); [ "$(hash_sha256 "$TARGET")" = "$want" ] || log_err "checksum failed for $TARGET"; }
 
-PROJECT_NAME="lega-commander"
 OWNER="ELIXIR-NO"
-REPO="FEGA-Norway/cli/lega-commander"
+REPO="FEGA-Norway"
 BINARY="lega-commander"
 FORMAT="tar.gz"
 OS=$(uname_os)
@@ -139,9 +150,9 @@ PREFIX="${OWNER}/${REPO}"
 PLATFORM="${OS}/${ARCH}"
 GITHUB_DOWNLOAD="https://github.com/${OWNER}/${REPO}/releases/download"
 
+# Main Execution
 uname_os_check "$OS"
 uname_arch_check "$ARCH"
-
 parse_args "$@"
 get_binaries
 tag_to_version
@@ -154,7 +165,8 @@ log_info "found version: ${VERSION} for ${TAG}/${OS}/${ARCH}"
 NAME="${BINARY}_${OS}_${ARCH}"
 TARBALL="${NAME}.${FORMAT}"
 TARBALL_URL="${GITHUB_DOWNLOAD}/${TAG}/${TARBALL}"
-CHECKSUM="${PROJECT_NAME}_${VERSION}_checksums.txt"
+CHECKSUM="${BINARY}_${VERSION}_checksums.txt"
 CHECKSUM_URL="${GITHUB_DOWNLOAD}/${TAG}/${CHECKSUM}"
+
 
 execute
