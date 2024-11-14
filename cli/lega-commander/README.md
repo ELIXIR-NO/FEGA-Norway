@@ -1,23 +1,23 @@
 # lega-commander
-[![Build Status](https://github.com/elixir-oslo/lega-commander/workflows/Go/badge.svg)](https://github.com/elixir-oslo/lega-commander/actions)
-[![GoDoc](https://godoc.org/github.com/elixir-oslo/lega-commander?status.svg)](https://pkg.go.dev/github.com/elixir-oslo/lega-commander?tab=subdirectories)
-[![CodeFactor](https://www.codefactor.io/repository/github/elixir-oslo/lega-commander/badge)](https://www.codefactor.io/repository/github/elixir-oslo/lega-commander)
-[![Go Report Card](https://goreportcard.com/badge/github.com/elixir-oslo/lega-commander)](https://goreportcard.com/report/github.com/elixir-oslo/lega-commander)
-[![codecov](https://codecov.io/gh/elixir-oslo/lega-commander/branch/master/graph/badge.svg)](https://codecov.io/gh/elixir-oslo/lega-commander)
-[![DeepSource](https://deepsource.io/gh/elixir-oslo/lega-commander.svg/?label=active+issues&show_trend=true)](https://deepsource.io/gh/elixir-oslo/lega-commander/?ref=repository-badge)
+[![Build Status](https://github.com/ELIXIR-NO/FEGA-Norway/workflows/Go/badge.svg)](https://github.com/ELIXIR-NO/FEGA-Norway/actions)
+[![GoDoc](https://godoc.org/github.com/ELIXIR-NO/FEGA-Norway?status.svg)](https://pkg.go.dev/github.com/ELIXIR-NO/FEGA-Norway?tab=subdirectories)
+[![CodeFactor](https://www.codefactor.io/repository/github/ELIXIR-NO/FEGA-Norway/badge)](https://www.codefactor.io/repository/github/ELIXIR-NO/FEGA-Norway)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ELIXIR-NO/FEGA-Norway)](https://goreportcard.com/report/github.com/ELIXIR-NO/FEGA-Norway)
+[![codecov](https://codecov.io/gh/ELIXIR-NO/FEGA-Norway/branch/main/graph/badge.svg)](https://codecov.io/gh/ELIXIR-NO/FEGA-Norway)
+[![DeepSource](https://deepsource.io/gh/ELIXIR-NO/FEGA-Norway.svg/?label=active+issues&show_trend=true)](https://deepsource.io/gh/ELIXIR-NO/FEGA-Norway/?ref=repository-badge)
 
 ## Installation / Update
 
 ### Linux
-run the command below on your terminal:
+Run the command below on your terminal:
 ```
-curl -fsSL https://raw.githubusercontent.com/elixir-oslo/lega-commander/master/install.sh | sudo sh
+curl -fsSL https://raw.githubusercontent.com/ELIXIR-NO/FEGA-Norway/main/cli/lega-commander/install.sh | sudo sh
 ```
 
 ### MacOS
-run the command below on your terminal:
+Run the command below on your terminal:
 ```
-curl -fsSL https://raw.githubusercontent.com/elixir-oslo/lega-commander/master/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/ELIXIR-NO/FEGA-Norway/main/cli/lega-commander/install.sh | sh
 ```
 
 ### Windows
