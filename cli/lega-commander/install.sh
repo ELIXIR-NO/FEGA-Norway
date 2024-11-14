@@ -76,16 +76,29 @@ tag_to_version() {
   if [ -z "${TAG}" ]; then
     log_info "checking GitHub for latest tag"
   else
-    log_info "checking GitHub for tag '${TAG}'"
+    log_info "checking GitHub for tag 'lega-commander-${TAG}'"
   fi
-  REALTAG=$(github_release "$OWNER/$REPO" "${TAG}") && true
+  # Add the prefix to any specified or latest tag
+  REALTAG=$(github_release "$OWNER/$REPO" "lega-commander-${TAG}") && true
   if test -z "$REALTAG"; then
-    log_crit "unable to find '${TAG}' - use 'latest' or see https://github.com/${PREFIX}/releases for details"
+    log_crit "unable to find 'lega-commander-${TAG}' - use 'latest' or see https://github.com/${PREFIX}/releases for details"
     exit 1
   fi
   # if version starts with 'v', remove it
   TAG="$REALTAG"
-  VERSION=${TAG#v}
+  VERSION=${TAG#lega-commander-}
+}
+
+github_release() {
+  owner_repo=$1
+  version=$2
+  test -z "$version" && version="latest"
+  giturl="https://github.com/${owner_repo}/releases/${version}"
+  json=$(http_copy "$giturl" "Accept:application/json")
+  test -z "$json" && return 1
+  version=$(echo "$json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
+  test -z "$version" && return 1
+  echo "$version"
 }
 
 adjust_format() { true; }
@@ -112,7 +125,6 @@ http_download_curl() { local_file=$1; source_url=$2; header=$3; code=$(curl -w '
 http_download_wget() { local_file=$1; source_url=$2; header=$3; wget -q ${header:+--header "$header"} -O "$local_file" "$source_url"; }
 http_download() { is_command curl && http_download_curl "$@" || is_command wget && http_download_wget "$@" || log_crit "curl or wget required"; return 1; }
 http_copy() { tmp=$(mktemp); http_download "$tmp" "$1" "$2" || return 1; cat "$tmp"; rm -f "$tmp"; }
-github_release() { owner_repo=$1; version=${2:-latest}; giturl="https://github.com/${owner_repo}/releases/${version}"; json=$(http_copy "$giturl" "Accept:application/json"); echo "$json" | grep -oP '"tag_name":"\K(.*?)(?=")'; }
 hash_sha256() { TARGET=${1:-/dev/stdin}; hash=$(sha256sum "$TARGET" 2>/dev/null | awk '{print $1}'); echo "$hash"; }
 hash_sha256_verify() { TARGET=$1; checksums=$2; BASENAME=${TARGET##*/}; want=$(grep "${BASENAME}" "${checksums}" | cut -d ' ' -f 1); [ "$(hash_sha256 "$TARGET")" = "$want" ] || log_err "checksum failed for $TARGET"; }
 
