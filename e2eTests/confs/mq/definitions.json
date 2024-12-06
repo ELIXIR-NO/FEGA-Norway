@@ -97,6 +97,14 @@
       "auto_delete": false,
       "arguments": {
       }
+    },
+    {
+      "name": "exportRequests",
+      "vhost": "<<VIRTUAL_HOST>>",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+      }
     }
   ],
   "exchanges": [
@@ -199,6 +207,15 @@
       "destination": "files",
       "destination_type": "queue",
       "routing_key": "files",
+      "arguments": {
+      }
+    },
+    {
+      "source": "sda",
+      "vhost": "<<VIRTUAL_HOST>>",
+      "destination": "exportRequests",
+      "destination_type": "queue",
+      "routing_key": "exportRequests",
       "arguments": {
       }
     }

@@ -5,18 +5,26 @@ server.ssl:
   key-store-password: ${SERVER_CERT_PASSWORD}
 
 spring:
+
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+
+  main:
+    allow-circular-references: true
+
   datasource:
     url: jdbc:postgresql://${DB_INSTANCE:postgres}:${DB_PORT:5432}/${POSTGRES_DB:postgres}
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
   jpa:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   web:
     resources:
-      static-locations: classpath:/static/,file:/app/static
+      static-locations: classpath:/static/,file:/app/static/
 
   data:
     redis:
@@ -31,19 +39,29 @@ spring:
   cache:
     type: simple
 
-spring.rabbitmq:
-  host: ${BROKER_HOST:public-mq}
-  port: ${BROKER_PORT:5671}
-  virtual-host: ${BROKER_VHOST:/}
-  username: ${BROKER_USERNAME:admin}
-  password: ${BROKER_PASSWORD:guest}
-  ssl:
-    validate-server-certificate: ${BROKER_VALIDATE:true}
-    enabled: ${BROKER_SSL_ENABLED:true}
-    algorithm: TLSv1.2
+  rabbitmq:
+    connections:
+      cega:
+        host: ${BROKER_HOST:public-mq}
+        port: ${BROKER_PORT:5671}
+        virtual-host: ${BROKER_VHOST:/}
+        username: ${BROKER_USERNAME:admin}
+        password: ${BROKER_PASSWORD:guest}
+        ssl:
+          validate-server-certificate: ${BROKER_VALIDATE:true}
+          enabled: ${BROKER_SSL_ENABLED:true}
+          algorithm: TLSv1.2
+      tsd:
+        host: ${TSD_MQ_HOST:mq}
+        port: ${TSD_MQ_PORT:5671}
+        virtual-host: ${TSD_MQ_VHOST:/}
+        username: ${TSD_MQ_USERNAME:admin}
+        password: ${TSD_MQ_PASSWORD:admin}
 
-spring.main:
-  allow-circular-references: true
+  security:
+    user:
+      name: ${ADMIN_USER}
+      password: ${ADMIN_PASSWORD}
 
 elixir:
   client:
@@ -77,8 +95,12 @@ tsd:
   root-ca-password: ${TSD_ROOT_CERT_PASSWORD:}
 
 mq:
-  exchange: ${EXCHANGE:cega}
-  routing-key: ${ROUTING_KEY:files.inbox}
+  cega:
+    exchange: ${EXCHANGE:cega}
+    routing-key: ${ROUTING_KEY:files.inbox}
+  tsd:
+    exchange: ${TSD_MQ_EXCHANGE:sda}
+    routing-key: ${TSD_MQ_ROUTING_KEY:exportRequests}
 
 heartbeat:
   ok_if_ok_is_after_failed_and_diff_in_minutes_ge: 10

@@ -111,6 +111,8 @@ services:
       - TSD_HOST=<<PROXY_TSD_HOST>>
       - TSD_ACCESS_KEY=<<PROXY_TSD_ACCESS_KEY>>
       - POSTGRES_PASSWORD=<<PROXY_POSTGRES_PASSWORD>>
+      - ADMIN_USER=admin
+      - ADMIN_PASSWORD=aDm!n_01x.
     volumes:
       - <<TMP_CERTS_DIR>>/proxy/CA.cert:/etc/ega/ssl/CA.cert
       - <<TMP_CERTS_DIR>>/proxy/server.cert:/etc/ega/ssl/server.cert

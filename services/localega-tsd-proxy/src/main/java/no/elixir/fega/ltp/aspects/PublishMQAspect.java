@@ -32,7 +32,7 @@ public class PublishMQAspect {
 
   private final Gson gson;
 
-  private final RabbitTemplate rabbitTemplate;
+  private final RabbitTemplate cegaRabbitTemplate;
 
   @Value("${tsd.project}")
   private String tsdProjectId;
@@ -40,17 +40,17 @@ public class PublishMQAspect {
   @Value("${tsd.inbox-location}")
   private String tsdInboxLocation;
 
-  @Value("${mq.exchange}")
+  @Value("${mq.cega.exchange}")
   private String exchange;
 
-  @Value("${mq.routing-key}")
+  @Value("${mq.cega.routing-key}")
   private String routingKey;
 
   @Autowired
-  public PublishMQAspect(HttpServletRequest request, Gson gson, RabbitTemplate rabbitTemplate) {
+  public PublishMQAspect(HttpServletRequest request, Gson gson, RabbitTemplate cegaRabbitTemplate) {
     this.request = request;
     this.gson = gson;
-    this.rabbitTemplate = rabbitTemplate;
+    this.cegaRabbitTemplate = cegaRabbitTemplate;
   }
 
   /**
@@ -139,7 +139,7 @@ public class PublishMQAspect {
 
   private void publishMessage(FileDescriptor fileDescriptor) {
     String json = gson.toJson(fileDescriptor);
-    rabbitTemplate.convertAndSend(
+    cegaRabbitTemplate.convertAndSend(
         exchange,
         routingKey,
         json,
