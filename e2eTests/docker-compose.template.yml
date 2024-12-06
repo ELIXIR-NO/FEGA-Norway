@@ -569,6 +569,7 @@ services:
       - cegamq-certs:/volumes/cegamq-certs
       - cegamq-confs:/volumes/cegamq-confs
       - heartbeat-pub-confs:/volumes/heartbeat-pub-confs
+      - storage:/storage
 
 
 volumes:
@@ -585,3 +586,4 @@ volumes:
   cegamq-certs:
   cegamq-confs:
   heartbeat-pub-confs:
+  storage:

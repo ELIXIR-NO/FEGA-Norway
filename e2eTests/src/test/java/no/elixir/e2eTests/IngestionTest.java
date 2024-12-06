@@ -36,6 +36,7 @@ import kong.unirest.UnirestInstance;
 import no.elixir.crypt4gh.stream.Crypt4GHInputStream;
 import no.elixir.crypt4gh.stream.Crypt4GHOutputStream;
 import no.elixir.crypt4gh.util.KeyUtils;
+import no.elixir.e2eTests.utils.CertificateUtil;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -79,9 +80,9 @@ public class IngestionTest {
   private String correlationId;
 
   @BeforeEach
-  public void setup() throws IOException, GeneralSecurityException {
+  public void setup() throws Exception {
 
-    String basePath = "./tmp/";
+    String basePath = "./";
 
     long fileSize = 1024 * 1024 * 10;
     log.info("Generating {} bytes file to submit...", fileSize);
@@ -106,7 +107,7 @@ public class IngestionTest {
     encFile = new File(basePath + rawFile.getName() + ".enc");
 
     PublicKey localEGAInstancePublicKey =
-        keyUtils.readPublicKey(new File(getCertificateLocation("ega.pub.pem")));
+        keyUtils.readPublicKey(getCertificateFile("ega.pub.pem"));
 
     try (FileOutputStream fileOutputStream = new FileOutputStream(encFile);
         Crypt4GHOutputStream crypt4GHOutputStream =
@@ -146,7 +147,7 @@ public class IngestionTest {
     downloadDatasetAndVerifyResults();
   }
 
-  private void upload() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+  private void upload() throws Exception {
     log.info("Uploading a file through a proxy...");
     String token = generateVisaToken("upload");
     log.info("Visa JWT token: {}", token);
@@ -372,8 +373,7 @@ public class IngestionTest {
     log.info("Dataset release message sent successfully");
   }
 
-  private void downloadDatasetAndVerifyResults()
-      throws GeneralSecurityException, IOException, JSONException {
+  private void downloadDatasetAndVerifyResults() throws Exception {
 
     String token = generateVisaToken(datasetId);
     log.info("Visa JWT token: {}", token);
@@ -444,8 +444,7 @@ public class IngestionTest {
     assertEquals(rawSHA256Checksum, obtainedChecksum);
   }
 
-  private String generateVisaToken(String resource)
-      throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
+  private String generateVisaToken(String resource) throws Exception {
     RSAPublicKey publicKey = getPublicKey();
     RSAPrivateKey privateKey = getPrivateKey();
     byte[] visaHeader =
@@ -489,11 +488,11 @@ public class IngestionTest {
   }
 
   private RSAPublicKey getPublicKey()
-      throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
+          throws Exception {
     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
     String jwtPublicKey =
         FileUtils.readFileToString(
-            new File(getCertificateLocation("jwt.pub.pem")), Charset.defaultCharset());
+            getCertificateFile("jwt.pub.pem"), Charset.defaultCharset());
     String encodedKey =
         jwtPublicKey
             .replace(BEGIN_PUBLIC_KEY, "")
@@ -505,12 +504,11 @@ public class IngestionTest {
     return (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(decodedKey));
   }
 
-  private RSAPrivateKey getPrivateKey()
-      throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
+  private RSAPrivateKey getPrivateKey() throws Exception {
     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
     String jwtPublicKey =
         FileUtils.readFileToString(
-            new File(getCertificateLocation("jwt.priv.pem")), Charset.defaultCharset());
+            getCertificateFile("jwt.priv.pem"), Charset.defaultCharset());
     String encodedKey =
         jwtPublicKey
             .replace(BEGIN_PRIVATE_KEY, "")
@@ -531,8 +529,11 @@ public class IngestionTest {
     return sb.toString();
   }
 
-  private String getCertificateLocation(String name) {
-    return String.format("./tmp/certs/%s", name);
+  private File getCertificateFile(String name) throws Exception {
+    return CertificateUtil.getFileInContainer(
+            "file-orchestrator",
+            "/storage/certs/%s".formatted(name)
+    );
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
