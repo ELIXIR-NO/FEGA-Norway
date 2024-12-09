@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.uio.ifi.clearinghouse.Clearinghouse;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class TokenService {
+
+  private static final Pattern BASE64URL_PATTERN = Pattern.compile("^[A-Za-z0-9-_]+={0,2}$");
 
   @Value("${ga4gh.passport.openid-configuration-url}")
   private String openIDConfigurationURL;
@@ -92,7 +95,7 @@ public class TokenService {
    * @return the subject claim (sub) as a {@link String}.
    * @throws NullPointerException if the JWT does not contain a subject claim.
    */
-  public String getSubject(String jwtToken) {
+  public String getSubject(String jwtToken) throws IllegalArgumentException {
     JsonObject claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
     return claims.get(Claims.SUBJECT).getAsString();
   }
@@ -112,9 +115,14 @@ public class TokenService {
    * @throws IllegalArgumentException if the JWT token format is invalid or the specified fragment
    *     is missing.
    */
-  private JsonObject extractFragmentFromJWT(String jwtToken, TokenFragment tokenFragment) {
+  private JsonObject extractFragmentFromJWT(String jwtToken, TokenFragment tokenFragment)
+      throws IllegalArgumentException {
     var fragments = jwtToken.split("[.]");
-    byte[] decodedPayload = Base64.getUrlDecoder().decode(fragments[tokenFragment.ordinal()]);
+    String fragment = fragments[tokenFragment.ordinal()];
+    if (!isValidBase64Url(fragment)) {
+      throw new IllegalArgumentException("Invalid Base64 URL string");
+    }
+    byte[] decodedPayload = Base64.getUrlDecoder().decode(fragment);
     String decodedPayloadString = new String(decodedPayload);
     return new Gson().fromJson(decodedPayloadString, JsonObject.class);
   }
@@ -240,6 +248,20 @@ public class TokenService {
     return visas.stream()
         .filter(v -> v.getType().equalsIgnoreCase(visaType.name()))
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Validates whether the given input string is a valid Base64 URL-encoded string.
+   *
+   * <p>A valid Base64 URL string contains only alphanumeric characters, hyphens ('-'), underscores
+   * ('_'), and at most two '=' padding characters. The input is checked against a regular
+   * expression to ensure it conforms to these rules.
+   *
+   * @param input the string to validate
+   * @return {@code true} if the input is a valid Base64 URL-encoded string, {@code false} otherwise
+   */
+  private boolean isValidBase64Url(String input) {
+    return BASE64URL_PATTERN.matcher(input).matches();
   }
 
   public enum TokenFragment {

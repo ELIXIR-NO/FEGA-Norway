@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Request Form</title>
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    >
+    <link rel="stylesheet" href="@sweetalert2/theme-bulma/bulma.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        .form-title {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #363636;
+        }
+        .response {
+            margin-top: 1rem;
+        }
+        .response p {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h1 class="form-title title is-4">Export Request Form</h1>
+    <form id="exportForm">
+        <div class="field">
+            <label class="label" for="accessToken">Access Token</label>
+            <div class="control">
+                <textarea class="textarea" id="accessToken" name="accessToken" required placeholder="Paste your access token here"></textarea>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label" for="id">ID</label>
+            <div class="control">
+                <input class="input" type="text" id="id" name="id" required placeholder="Enter the ID">
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label" for="type">ID Type</label>
+            <div class="control">
+                <div class="select is-fullwidth">
+                    <select id="type" name="type" required>
+                        <option value="DATASET_ID">Dataset ID</option>
+                        <option value="FILE_ID">File ID</option>
+                    </select>
+                </div>
+            </div>
+            <p class="help is-info">This field specifies the type of the ID provided above. It determines whether the export request is for a file or a dataset. Select File ID if the ID represents a specific file, or Dataset ID if it represents an entire dataset.</p>
+        </div>
+
+        <div class="field">
+            <label class="label">User Public Key</label>
+            <div class="control">
+                <input class="input" type="file" id="publicKeyFile" name="publicKeyFile" accept=".txt,.pem">
+                <p class="help">Upload a .txt or .pem file containing the public key.</p>
+            </div>
+            <div class="control mt-2">
+                <label for="publicKeyString" class="label">Public Key (Raw Text)</label>
+                <textarea class="textarea" id="publicKeyString" name="publicKeyString" placeholder="Or paste the public key here"></textarea>
+            </div>
+            <p class="help is-info">You can either upload a file or paste the public key directly. Selecting one will disable the other.</p>
+        </div>
+
+        <div class="field">
+            <div class="control">
+                <button class="button is-primary is-fullwidth" type="submit">Submit</button>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+<script>
+    // Get references to the file input and textarea
+    const publicKeyFile = document.getElementById('publicKeyFile');
+    const publicKeyString = document.getElementById('publicKeyString');
+
+    // Disable textarea if file is selected
+    publicKeyFile.addEventListener('change', () => {
+        if (publicKeyFile.files.length > 0) {
+            publicKeyString.value = ''; // Clear the textarea
+            publicKeyString.disabled = true; // Disable the textarea
+        } else {
+            publicKeyString.disabled = false; // Enable the textarea if no file is selected
+        }
+    });
+
+    // Disable file input if textarea is filled
+    publicKeyString.addEventListener('input', () => {
+        if (publicKeyString.value.trim().length > 0) {
+            publicKeyFile.value = ''; // Clear the file input
+            publicKeyFile.disabled = true; // Disable the file input
+        } else {
+            publicKeyFile.disabled = false; // Enable the file input if textarea is empty
+        }
+    });
+
+    // Form submission handler
+    document.getElementById('exportForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        // Gather form data
+        const accessToken = document.getElementById('accessToken').value;
+        const id = document.getElementById('id').value;
+        const type = document.getElementById('type').value;
+
+        // Read public key from file or textarea
+        let userPublicKey = publicKeyString.value.trim(); // Default to textarea
+        if (publicKeyFile.files.length > 0) {
+            userPublicKey = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.trim());
+                reader.readAsText(publicKeyFile.files[0]);
+            });
+        }
+
+        // Trigger SweetAlert to collect username and password
+        const { value: credentials } = await Swal.fire({
+            title: 'Enter Credentials',
+            html: `
+                <input id="username" class="swal2-input" placeholder="Username" />
+                <input id="password" type="password" class="swal2-input" placeholder="Password" />
+            `,
+            focusConfirm: false,
+            preConfirm: () => {
+                return {
+                    username: document.getElementById('username').value,
+                    password: document.getElementById('password').value
+                };
+            }
+        });
+
+        if (!credentials || !credentials.username || !credentials.password) {
+            // If no credentials are provided, don't proceed
+            Swal.fire({
+                title: 'No credentials provided',
+                text: 'Please enter your username and password to submit the form.',
+                icon: 'error',
+                confirmButtonText: 'Close'
+            });
+            return; // Abort the submission process
+        }
+
+        // Construct payload
+        const payload = {
+            accessToken,
+            id,
+            userPublicKey,
+            type
+        };
+
+        // Encode username and password to base64
+        const encodedCredentials = btoa(`${credentials.username}:${credentials.password}`);
+
+        try {
+            const response = await fetch('/export', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${encodedCredentials}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response?.json();
+            if (response.ok) {
+                Swal.fire({
+                    title: 'Request submitted successfully',
+                    text: result.message,
+                    icon: 'success',
+                    confirmButtonText: 'Close'
+                })
+            } else {
+                Swal.fire({
+                    title: 'Failed to submit request',
+                    text: result.message,
+                    icon: 'error',
+                    confirmButtonText: 'Close'
+                })
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire({
+                title: 'Unexpected error',
+                text: error.message,
+                icon: 'error',
+                confirmButtonText: 'Close'
+            })
+        }
+    });
+</script>
+
+</body>
+</html>
