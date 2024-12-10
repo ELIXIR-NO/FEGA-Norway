@@ -26,14 +26,17 @@ RUN echo "Installing crypt4gh locally..." && \
     chmod +x "$LOCAL_BIN/crypt4gh" && \
     echo "crypt4gh installed successfully for the current user."
 
-
 COPY .env .env
 RUN mkdir -p "certs"
 COPY confs confs
 COPY scripts/generate_certs.sh scripts/copy_confs_and_change_ownerships.sh scripts/replace_template_variables.sh ./
 RUN chmod +x generate_certs.sh copy_confs_and_change_ownerships.sh replace_template_variables.sh
 
-ENTRYPOINT [ "/bin/sh", "-c", "./generate_certs.sh && ./copy_confs_and_change_ownerships.sh && ./replace_template_variables.sh && touch /storage/ready && tail -f /dev/null" ]
+# We recursively set chmod 777 on the volumes/ directory and its subdirectories.
+# Next, we adjust ownership and permissions more granularly using the
+# copy_confs_and_change_ownerships.sh script, tailored to the requirements of
+# each container (e.g., PostgreSQL and RabbitMQ containers).
+ENTRYPOINT [ "/bin/sh", "-c", "chmod -R 777 /volumes && ./generate_certs.sh && ./copy_confs_and_change_ownerships.sh && ./replace_template_variables.sh && touch /storage/ready && tail -f /dev/null" ]
 
 # Add a HEALTHCHECK to verify readiness
 HEALTHCHECK --interval=5s --timeout=3s --retries=5 \

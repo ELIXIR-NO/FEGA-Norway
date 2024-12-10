@@ -20,6 +20,9 @@ cp -R ./cegamq/* /volumes/cegamq-confs
 chmod -R 0644 /volumes/cegamq-confs/*
 chown -R 100:101 /volumes/cegamq-confs/*
 
+# db
+chmod -R 0700 /volumes/db-data /volumes/db-certs
+
 cd .. # Go back to the working directory.
 
 echo "Done modifying the file ownerships to match expected uid:gid ✅"

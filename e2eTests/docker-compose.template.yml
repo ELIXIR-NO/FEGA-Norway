@@ -5,7 +5,6 @@ services:
   # TSD
 
   tsd:
-    user: "65534:65534"
     container_name: tsd
     hostname: tsd
     image: tsd-api-mock:latest
@@ -398,7 +397,7 @@ services:
   doa:
     container_name: doa
     hostname: doa
-    image: neicnordic/sda-doa:release-v1.6.0
+    image: ghcr.io/neicnordic/sda-doa:v1.6.175
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -423,7 +422,6 @@ services:
     volumes:
       - tsd-vault:/ega/archive/
       - doa-certs:/etc/ega/
-    user: "65534:65534"
 
   # CEGA
 
@@ -571,6 +569,7 @@ services:
       - cegamq-certs:/volumes/cegamq-certs
       - cegamq-confs:/volumes/cegamq-confs
       - heartbeat-pub-confs:/volumes/heartbeat-pub-confs
+      - storage:/storage
 
 
 volumes:
@@ -587,3 +586,4 @@ volumes:
   cegamq-certs:
   cegamq-confs:
   heartbeat-pub-confs:
+  storage:
