@@ -1,5 +1,5 @@
 # Use a lightweight base image with necessary tools
-FROM ubuntu
+FROM --platform=linux/amd64 ubuntu:latest
 
 # Specify the mkcert version you want to install
 ARG MKCERT_VERSION="v1.4.4"
