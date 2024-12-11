@@ -410,6 +410,7 @@ services:
       - db
     ports:
       - "80:8080"
+      - "8088:8088"
     environment:
       - SSL_MODE=disable # PG SSL MODE
       - SSL_ENABLED=false
@@ -422,6 +423,11 @@ services:
     volumes:
       - tsd-vault:/ega/archive/
       - doa-certs:/etc/ega/
+    command:
+      - "java"
+      - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8088"
+      - "-jar"
+      - "/localega-doa.jar"
 
   # CEGA
 
