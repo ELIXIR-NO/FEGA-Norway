@@ -29,14 +29,11 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.Unirest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.*;
 import no.elixir.crypt4gh.stream.Crypt4GHInputStream;
 import no.elixir.crypt4gh.stream.Crypt4GHOutputStream;
 import no.elixir.crypt4gh.util.KeyUtils;
-import no.elixir.e2eTests.utils.CertificateUtil;
+import no.elixir.e2eTests.utils.CertificateUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -83,10 +80,7 @@ public class IngestionTest {
     long fileSize = 1024 * 1024 * 10;
     log.info("Generating {} bytes file to submit...", fileSize);
 
-    rawFile = new File(basePath + UUID.randomUUID() + ".raw");
-    RandomAccessFile randomAccessFile = new RandomAccessFile(rawFile, "rw");
-    randomAccessFile.setLength(fileSize);
-    randomAccessFile.close();
+    rawFile = no.elixir.e2eTests.utils.FileUtils.createRandomFile(basePath, fileSize);
 
     byte[] bytes = DigestUtils.sha256(Files.newInputStream(rawFile.toPath()));
     rawSHA256Checksum = Hex.encodeHexString(bytes);
@@ -413,32 +407,48 @@ public class IngestionTest {
 
     JSONAssert.assertEquals(expected, actual, false);
 
-    byte[] file =
+    // Fetch the non-encrypted file
+
+    HttpResponse<byte[]> response =
         Unirest.get(String.format("http://localhost/files/%s", stableId))
             .header("Authorization", "Bearer " + token)
-            .asBytes()
-            .getBody();
-    String obtainedChecksum = Hex.encodeHexString(DigestUtils.sha256(file));
-    assertEquals(rawSHA256Checksum, obtainedChecksum);
+            .asBytes();
+
+    if (response.getStatus() == 200) { // Check if the response is OK
+      byte[] file = response.getBody();
+      String obtainedChecksum = Hex.encodeHexString(DigestUtils.sha256(file));
+      assertEquals(rawSHA256Checksum, obtainedChecksum);
+    } else {
+      fail("Failed to fetch the file. Status: " + response.getStatus());
+    }
+
+    // Fetch the encrypted file
 
     KeyPair recipientKeyPair = keyUtils.generateKeyPair();
     StringWriter stringWriter = new StringWriter();
     keyUtils.writeCrypt4GHKey(stringWriter, recipientKeyPair.getPublic(), null);
     String key = stringWriter.toString();
-    file =
+
+    HttpResponse<byte[]> encFileRes =
         Unirest.get(String.format("http://localhost/files/%s?destinationFormat=CRYPT4GH", stableId))
             .header("Authorization", "Bearer " + token)
             .header("Public-Key", key)
-            .asBytes()
-            .getBody();
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file);
-        Crypt4GHInputStream crypt4GHInputStream =
-            new Crypt4GHInputStream(byteArrayInputStream, recipientKeyPair.getPrivate())) {
-      IOUtils.copyLarge(crypt4GHInputStream, byteArrayOutputStream);
+            .asBytes();
+
+    if (encFileRes.getStatus() == 200) { // Check if the response is OK
+      byte[] file = encFileRes.getBody();
+      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+      try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file);
+          Crypt4GHInputStream crypt4GHInputStream =
+              new Crypt4GHInputStream(byteArrayInputStream, recipientKeyPair.getPrivate())) {
+        IOUtils.copyLarge(crypt4GHInputStream, byteArrayOutputStream);
+      }
+      String obtainedChecksum =
+          Hex.encodeHexString(DigestUtils.sha256(byteArrayOutputStream.toByteArray()));
+      assertEquals(rawSHA256Checksum, obtainedChecksum);
+    } else {
+      fail("Failed to fetch the encrypted file. Status: " + response.getStatus());
     }
-    obtainedChecksum = Hex.encodeHexString(DigestUtils.sha256(byteArrayOutputStream.toByteArray()));
-    assertEquals(rawSHA256Checksum, obtainedChecksum);
   }
 
   private String generateVisaToken(String resource) throws Exception {
@@ -524,7 +534,7 @@ public class IngestionTest {
   }
 
   private File getCertificateFile(String name) throws Exception {
-    return CertificateUtil.getFileInContainer(
+    return CertificateUtils.getFileInContainer(
         "file-orchestrator", "/storage/certs/%s".formatted(name));
   }
 

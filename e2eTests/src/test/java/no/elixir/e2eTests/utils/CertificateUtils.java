@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class CertificateUtil {
+public class CertificateUtils {
 
   /**
    * Retrieves a file from a specified path in a running Docker container. The file is copied to a
