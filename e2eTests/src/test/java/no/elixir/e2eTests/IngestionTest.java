@@ -1,5 +1,6 @@
 package no.elixir.e2eTests;
 
+import static no.elixir.e2eTests.utils.JsonUtils.toCompactJson;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -17,7 +18,6 @@ import java.nio.file.Files;
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.sql.DriverManager;
@@ -29,19 +29,16 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.Unirest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.*;
 import no.elixir.crypt4gh.stream.Crypt4GHInputStream;
 import no.elixir.crypt4gh.stream.Crypt4GHOutputStream;
 import no.elixir.crypt4gh.util.KeyUtils;
+import no.elixir.e2eTests.utils.CertificateUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,15 +48,12 @@ import org.slf4j.LoggerFactory;
 
 public class IngestionTest {
 
-  private static final Logger log = LoggerFactory.getLogger(IngestionTest.class);
-
-  static final Dotenv dotenv = Dotenv.load();
-
   public static final String BEGIN_PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----";
   public static final String END_PUBLIC_KEY = "-----END PUBLIC KEY-----";
   public static final String BEGIN_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----";
   public static final String END_PRIVATE_KEY = "-----END PRIVATE KEY-----";
-
+  static final Dotenv dotenv = Dotenv.load();
+  private static final Logger log = LoggerFactory.getLogger(IngestionTest.class);
   private static final String DB_USERNAME = dotenv.get("SDA_DB_USERNAME");
   private static final String DB_PASSWORD = dotenv.get("SDA_DB_PASSWORD");
   private static final String EGA_BOX_USERNAME = dotenv.get("EGA_BOX_USERNAME");
@@ -79,17 +73,14 @@ public class IngestionTest {
   private String correlationId;
 
   @BeforeEach
-  public void setup() throws IOException, GeneralSecurityException {
+  public void setup() throws Exception {
 
-    String basePath = "./tmp/";
+    String basePath = "./";
 
     long fileSize = 1024 * 1024 * 10;
     log.info("Generating {} bytes file to submit...", fileSize);
 
-    rawFile = new File(basePath + UUID.randomUUID() + ".raw");
-    RandomAccessFile randomAccessFile = new RandomAccessFile(rawFile, "rw");
-    randomAccessFile.setLength(fileSize);
-    randomAccessFile.close();
+    rawFile = no.elixir.e2eTests.utils.FileUtils.createRandomFile(basePath, fileSize);
 
     byte[] bytes = DigestUtils.sha256(Files.newInputStream(rawFile.toPath()));
     rawSHA256Checksum = Hex.encodeHexString(bytes);
@@ -105,8 +96,7 @@ public class IngestionTest {
     log.info("Encrypting the file with Crypt4GH...");
     encFile = new File(basePath + rawFile.getName() + ".enc");
 
-    PublicKey localEGAInstancePublicKey =
-        keyUtils.readPublicKey(new File(getCertificateLocation("ega.pub.pem")));
+    PublicKey localEGAInstancePublicKey = keyUtils.readPublicKey(getCertificateFile("ega.pub.pem"));
 
     try (FileOutputStream fileOutputStream = new FileOutputStream(encFile);
         Crypt4GHOutputStream crypt4GHOutputStream =
@@ -146,7 +136,7 @@ public class IngestionTest {
     downloadDatasetAndVerifyResults();
   }
 
-  private void upload() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+  private void upload() throws Exception {
     log.info("Uploading a file through a proxy...");
     String token = generateVisaToken("upload");
     log.info("Visa JWT token: {}", token);
@@ -372,8 +362,7 @@ public class IngestionTest {
     log.info("Dataset release message sent successfully");
   }
 
-  private void downloadDatasetAndVerifyResults()
-      throws GeneralSecurityException, IOException, JSONException {
+  private void downloadDatasetAndVerifyResults() throws Exception {
 
     String token = generateVisaToken(datasetId);
     log.info("Visa JWT token: {}", token);
@@ -387,8 +376,9 @@ public class IngestionTest {
 
     // Meta data check
     String expected =
-        String.format(
-                """
+        toCompactJson(
+            String.format(
+                    """
                                         [{
                                             "fileId": "%s",
                                             "datasetId": "%s",
@@ -403,49 +393,65 @@ public class IngestionTest {
                                             "fileStatus": "READY"
                                         }]
                                         """,
-                stableId, datasetId, encFile.getName(), archivePath, rawSHA256Checksum)
-            .strip();
+                    stableId, datasetId, encFile.getName(), archivePath, rawSHA256Checksum)
+                .strip());
     String actual =
-        Unirest.get(String.format("http://localhost/metadata/datasets/%s/files", datasetId))
-            .header("Authorization", "Bearer " + token)
-            .asString()
-            .getBody()
-            .strip();
+        toCompactJson(
+            Unirest.get(String.format("http://localhost/metadata/datasets/%s/files", datasetId))
+                .header("Authorization", "Bearer " + token)
+                .asString()
+                .getBody()
+                .strip());
     log.info("Expected: {}", expected);
     log.info("Actual: {}", actual);
 
     JSONAssert.assertEquals(expected, actual, false);
 
-    byte[] file =
+    // Fetch the non-encrypted file
+
+    HttpResponse<byte[]> response =
         Unirest.get(String.format("http://localhost/files/%s", stableId))
             .header("Authorization", "Bearer " + token)
-            .asBytes()
-            .getBody();
-    String obtainedChecksum = Hex.encodeHexString(DigestUtils.sha256(file));
-    assertEquals(rawSHA256Checksum, obtainedChecksum);
+            .asBytes();
+
+    if (response.getStatus() == 200) { // Check if the response is OK
+      byte[] file = response.getBody();
+      String obtainedChecksum = Hex.encodeHexString(DigestUtils.sha256(file));
+      assertEquals(rawSHA256Checksum, obtainedChecksum);
+    } else {
+      fail("Failed to fetch the file. Status: " + response.getStatus());
+    }
+
+    // Fetch the encrypted file
 
     KeyPair recipientKeyPair = keyUtils.generateKeyPair();
     StringWriter stringWriter = new StringWriter();
     keyUtils.writeCrypt4GHKey(stringWriter, recipientKeyPair.getPublic(), null);
     String key = stringWriter.toString();
-    file =
+
+    HttpResponse<byte[]> encFileRes =
         Unirest.get(String.format("http://localhost/files/%s?destinationFormat=CRYPT4GH", stableId))
             .header("Authorization", "Bearer " + token)
             .header("Public-Key", key)
-            .asBytes()
-            .getBody();
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file);
-        Crypt4GHInputStream crypt4GHInputStream =
-            new Crypt4GHInputStream(byteArrayInputStream, recipientKeyPair.getPrivate())) {
-      IOUtils.copyLarge(crypt4GHInputStream, byteArrayOutputStream);
+            .asBytes();
+
+    if (encFileRes.getStatus() == 200) { // Check if the response is OK
+      byte[] file = encFileRes.getBody();
+      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+      try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file);
+          Crypt4GHInputStream crypt4GHInputStream =
+              new Crypt4GHInputStream(byteArrayInputStream, recipientKeyPair.getPrivate())) {
+        IOUtils.copyLarge(crypt4GHInputStream, byteArrayOutputStream);
+      }
+      String obtainedChecksum =
+          Hex.encodeHexString(DigestUtils.sha256(byteArrayOutputStream.toByteArray()));
+      assertEquals(rawSHA256Checksum, obtainedChecksum);
+    } else {
+      fail("Failed to fetch the encrypted file. Status: " + response.getStatus());
     }
-    obtainedChecksum = Hex.encodeHexString(DigestUtils.sha256(byteArrayOutputStream.toByteArray()));
-    assertEquals(rawSHA256Checksum, obtainedChecksum);
   }
 
-  private String generateVisaToken(String resource)
-      throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
+  private String generateVisaToken(String resource) throws Exception {
     RSAPublicKey publicKey = getPublicKey();
     RSAPrivateKey privateKey = getPrivateKey();
     byte[] visaHeader =
@@ -488,12 +494,10 @@ public class IngestionTest {
         + Base64.getUrlEncoder().encodeToString(visaSignature);
   }
 
-  private RSAPublicKey getPublicKey()
-      throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
+  private RSAPublicKey getPublicKey() throws Exception {
     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
     String jwtPublicKey =
-        FileUtils.readFileToString(
-            new File(getCertificateLocation("jwt.pub.pem")), Charset.defaultCharset());
+        FileUtils.readFileToString(getCertificateFile("jwt.pub.pem"), Charset.defaultCharset());
     String encodedKey =
         jwtPublicKey
             .replace(BEGIN_PUBLIC_KEY, "")
@@ -505,12 +509,10 @@ public class IngestionTest {
     return (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(decodedKey));
   }
 
-  private RSAPrivateKey getPrivateKey()
-      throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
+  private RSAPrivateKey getPrivateKey() throws Exception {
     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
     String jwtPublicKey =
-        FileUtils.readFileToString(
-            new File(getCertificateLocation("jwt.priv.pem")), Charset.defaultCharset());
+        FileUtils.readFileToString(getCertificateFile("jwt.priv.pem"), Charset.defaultCharset());
     String encodedKey =
         jwtPublicKey
             .replace(BEGIN_PRIVATE_KEY, "")
@@ -531,8 +533,9 @@ public class IngestionTest {
     return sb.toString();
   }
 
-  private String getCertificateLocation(String name) {
-    return String.format("./tmp/certs/%s", name);
+  private File getCertificateFile(String name) throws Exception {
+    return CertificateUtils.getFileInContainer(
+        "file-orchestrator", "/storage/certs/%s".formatted(name));
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")

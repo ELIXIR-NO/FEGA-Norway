@@ -27,36 +27,49 @@ dependencies {
 // Start setup scripts.
 
 tasks.register<Exec>("make-executable") {
-    commandLine("chmod", "+x", "./setup.sh")
+    commandLine("chmod", "+x", "./scripts/bootstrap.sh")
 }
 
 tasks.register<Exec>("cleanup") {
     dependsOn("make-executable")
-    commandLine("sh", "-c", "./setup.sh clean")
+    commandLine("../gradlew", "clean")
 }
 
-tasks.register<Exec>("initialize") {
+tasks.register<Exec>("assemble-binaries") {
     dependsOn("cleanup")
-    commandLine("sh", "-c", "./setup.sh init")
+    commandLine(
+        "../gradlew",
+        ":cli:lega-commander:build",
+        ":lib:crypt4gh:build",
+        ":lib:clearinghouse:build",
+        ":lib:tsd-file-api-client:build",
+        ":services:cega-mock:build",
+        ":services:tsd-api-mock:build",
+        ":services:mq-interceptor:build",
+        ":services:localega-tsd-proxy:build",
+        "-x",
+        "test",
+        "--parallel"
+    )
 }
 
-tasks.register<Exec>("generate-certs") {
-    dependsOn("initialize")
-    commandLine("sh", "-c", "./setup.sh generate_certs")
+tasks.register<Exec>("check-requirements") {
+    dependsOn("assemble-binaries")
+    commandLine("sh", "-c", "./scripts/bootstrap.sh apply_configs")
 }
 
 tasks.register<Exec>("apply-configs") {
-    dependsOn("generate-certs")
-    commandLine("sh", "-c", "./setup.sh apply_configs")
+    dependsOn("check-requirements")
+    commandLine("sh", "-c", "./scripts/bootstrap.sh check_requirements")
 }
 
 tasks.register<Exec>("start-docker-containers") {
     dependsOn("apply-configs")
-    commandLine("docker", "compose", "up", "-d")
+    commandLine("docker", "compose", "up", "--pull", "always", "--build", "-d")
 }
 
 tasks.register<Exec>("stop-docker-containers") {
-    commandLine("docker", "compose", "down")
+    commandLine("docker", "compose", "down", "--rmi", "local", "-v")
 }
 
 tasks.test {
