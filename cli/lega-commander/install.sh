@@ -329,10 +329,11 @@ Credit appreciated.
 ------------------------------------------------------------------------
 EOF
 
-
+PROJECT_NAME="lega-commander"
 OWNER="ELIXIR-NO"
 REPO="FEGA-Norway"
 BINARY="lega-commander"
+FORMAT=tar.gz
 OS=$(uname_os)
 ARCH=$(uname_arch)
 PREFIX="$OWNER/$REPO"
