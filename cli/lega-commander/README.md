@@ -11,13 +11,13 @@
 ### Linux
 run the command below on your terminal:
 ```
-curl -fsSL https://raw.githubusercontent.com/elixir-oslo/lega-commander/master/install.sh | sudo sh
+curl -fsSL https://raw.githubusercontent.com/ELIXIR-NO/FEGA-Norway/main/cli/lega-commander/install.sh | sudo sh
 ```
 
 ### MacOS
 run the command below on your terminal:
 ```
-curl -fsSL https://raw.githubusercontent.com/elixir-oslo/lega-commander/master/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/ELIXIR-NO/FEGA-Norway/main/cli/lega-commander/install.sh | sh
 ```
 
 ### Windows
