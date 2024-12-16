@@ -33,35 +33,20 @@ parse_args() {
 }
 
 execute() {
-  # Determine the default BINDIR based on writable permissions
+# Determine the default BINDIR based on writable permissions
   if [ -w "/usr/local/bin" ]; then
     BINDIR=${BINDIR:-"/usr/local/bin"}
   else
     BINDIR=${BINDIR:-"$HOME/.local/bin"}
     echo "INFO: Default installation path changed to '${BINDIR}' because '/usr/local/bin' is not writable."
-    echo ""
-    echo "To install globally, rerun the script with sudo:"
-    echo "  curl -fsSL https://raw.githubusercontent.com/.../install.sh | sudo sh"
-    echo ""
-    echo "Or specify a custom installation path using the -b flag:"
-    echo "  curl -fsSL https://raw.githubusercontent.com/.../install.sh | sh -s -- -b <path>"
-    echo ""
   fi
 
-  # Ensure BINDIR is writable
+  # Ensure the final BINDIR is writable
   if [ ! -w "${BINDIR}" ]; then
-    echo "ERROR: BINDIR (${BINDIR}) is not writable."
-    echo ""
-    echo "Please choose one of the following options:"
-    echo "  - Run the script with sudo for global installation:"
-    echo "      curl -fsSL https://raw.githubusercontent.com/.../install.sh | sudo sh"
-    echo ""
-    echo "  - Use the -b flag to specify a writable installation directory:"
-    echo "      curl -fsSL https://raw.githubusercontent.com/.../install.sh | sh -s -- -b <path>"
-    echo ""
-    echo "Exiting installation."
+    echo "ERROR: BINDIR (${BINDIR}) is not writable. Please run with sudo or choose a writable path using the -b flag."
     exit 1
   fi
+
 
 
   # Create a temporary directory for downloads
