@@ -35,12 +35,17 @@ parse_args() {
 execute() {
   tmpdir=$(mktemp -d)
   log_debug "downloading files into ${tmpdir}"
+
   http_download "${tmpdir}/${TARBALL}" "${TARBALL_URL}"
   http_download "${tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}"
+
   hash_sha256_verify "${tmpdir}/${TARBALL}" "${tmpdir}/${CHECKSUM}"
+
   srcdir="${tmpdir}"
   (cd "${tmpdir}" && untar "${TARBALL}")
+
   test ! -d "${BINDIR}" && install -d "${BINDIR}"
+
   for binexe in $BINARIES; do
     if [ "$OS" = "windows" ]; then
       binexe="${binexe}.exe"
@@ -48,6 +53,7 @@ execute() {
     install "${srcdir}/${binexe}" "${BINDIR}/"
     log_info "installed ${BINDIR}/${binexe}"
   done
+
   rm -rf "${tmpdir}"
 }
 
@@ -73,26 +79,27 @@ tag_to_version() {
   else
     log_info "checking GitHub for tag '${TAG}'"
   fi
-  REALTAG=$(github_release "$OWNER/$REPO" "${TAG}") && true
-  if [ -z "$REALTAG" ]; then
-    log_crit "unable to find '${TAG}' - use 'latest' or see https://github.com/${PREFIX}/releases for details"
+
+  REALTAG=$(github_release "$OWNER/$REPO" "${TAG}") || {
+    log_crit "Failed to fetch tag from GitHub"
     exit 1
-  fi
+  }
+
+  log_debug "REALTAG: ${REALTAG}"
 
   if echo "$REALTAG" | grep -q '^v'; then
-    # If it already starts with v, just strip the v
+    # If it starts with 'v', strip the 'v' to get VERSION
     VERSION=${REALTAG#v}
     TAG="$REALTAG"
   else
-    # Strip the known prefix "lega-commander-"
+    # Assume the tag follows 'lega-commander-<version>'
     VERSION=${REALTAG#lega-commander-}
-    # Now add 'v' to form the correct tag
     TAG="v${VERSION}"
   fi
+
+  log_debug "VERSION: ${VERSION}"
+  log_debug "TAG: ${TAG}"
 }
-
-
-
 
 adjust_format() {
   true
@@ -177,7 +184,7 @@ uname_arch() {
     armv6*) arch="armv6" ;;
     armv7*) arch="armv7" ;;
   esac
-  echo ${arch}
+  echo "${arch}"
 }
 
 uname_os_check() {
@@ -264,9 +271,10 @@ github_release() {
   owner_repo=$1
   version=$2
   [ -z "$version" ] && version="latest"
-  giturl="https://github.com/${owner_repo}/releases/${version}"
-  json=$(http_copy "$giturl" "Accept:application/json") || return 1
-  version=$(echo "$json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
+  giturl="https://api.github.com/repos/${owner_repo}/releases/${version}"
+  json=$(http_copy "$giturl" "Accept:application/vnd.github.v3+json") || return 1
+  # Extract the tag_name field using POSIX-compliant whitespace matching
+  version=$(echo "$json" | tr -s '\n' ' ' | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p')
   [ -z "$version" ] && return 1
   echo "$version"
 }
@@ -285,7 +293,7 @@ hash_sha256() {
   elif is_command openssl; then
     hash=$(openssl dgst -sha256 "$TARGET") || return 1
     # Output looks like: SHA256(<file>)= <hash>
-    echo "$hash" | cut -d ' ' -f 2
+    echo "$hash" | awk '{print $2}'
   else
     log_crit "hash_sha256 unable to find command to compute sha-256 hash"
     return 1
@@ -312,9 +320,12 @@ hash_sha256_verify() {
   }
 }
 
+# Source: https://github.com/client9/shlib - portable posix shell functions
 cat /dev/null <<EOF
 ------------------------------------------------------------------------
-End of functions from https://github.com/client9/shlib
+https://github.com/client9/shlib - portable posix shell functions
+Public domain - http://unlicense.org
+Credit appreciated.
 ------------------------------------------------------------------------
 EOF
 
