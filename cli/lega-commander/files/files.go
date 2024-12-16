@@ -63,7 +63,9 @@ func (rm defaultFileManager) ListFiles(inbox bool) (*[]File, error) {
 		configuration.GetLocalEGAInstanceURL()+"/files",
 		nil,
 		map[string]string{"Proxy-Authorization": "Bearer " + configuration.GetElixirAAIToken()},
-		map[string]string{"inbox": strconv.FormatBool(inbox)},
+		map[string]string{"inbox": strconv.FormatBool(inbox),
+		"per_page": "1000", //This value controls the number of files displayed per request, max of 50,000.
+		},
 		username,
 		password)
 	if err != nil {
