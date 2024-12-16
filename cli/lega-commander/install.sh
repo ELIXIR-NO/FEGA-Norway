@@ -5,7 +5,7 @@ set -e
 usage() {
   this=$1
   cat <<EOF
-$this: download go binaries for lega-commander from ELIXIR-NO/FEGA-Norway
+$this: Download Go binaries for lega-commander from ELIXIR-NO/FEGA-Norway
 
 Usage: $this [-b] bindir [-d] [tag]
   -b sets bindir or installation directory, Defaults to /usr/local/bin
@@ -20,7 +20,7 @@ EOF
 
 parse_args() {
   BINDIR=${BINDIR:-/usr/local/bin}
-  while getopts "b:dh?x" arg; do
+  while getopts "b:dhx?" arg; do
     case "$arg" in
       b) BINDIR="$OPTARG" ;;
       d) log_set_priority 10 ;;
@@ -33,55 +33,83 @@ parse_args() {
 }
 
 execute() {
-# Determine the default BINDIR based on writable permissions
+  log_info "Starting execution..."
+
+  # Determine the default BINDIR based on writable permissions
   if [ -w "/usr/local/bin" ]; then
     BINDIR=${BINDIR:-"/usr/local/bin"}
+    log_info "Using '/usr/local/bin' as the installation directory."
   else
     BINDIR=${BINDIR:-"$HOME/.local/bin"}
-    echo "INFO: Default installation path changed to '${BINDIR}' because '/usr/local/bin' is not writable."
+    log_info "Default installation path changed to '${BINDIR}' because '/usr/local/bin' is not writable."
   fi
 
   # Ensure the final BINDIR is writable
   if [ ! -w "${BINDIR}" ]; then
-    echo "ERROR: BINDIR (${BINDIR}) is not writable. Please run with sudo or choose a writable path using the -b flag."
+    log_crit "BINDIR (${BINDIR}) is not writable. Please run with sudo or choose a writable path using the -b flag."
     exit 1
   fi
 
-
-
   # Create a temporary directory for downloads
   tmpdir=$(mktemp -d)
-  log_debug "downloading files into ${tmpdir}"
+  log_info "Downloading files into ${tmpdir}"
 
-  # Download the tarball and checksum
-  http_download "${tmpdir}/${TARBALL}" "${TARBALL_URL}"
-  http_download "${tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}"
+  # Download the tarball
+  log_info "Downloading tarball: ${TARBALL_URL}"
+  if http_download "${tmpdir}/${TARBALL}" "${TARBALL_URL}"; then
+    log_info "Successfully downloaded tarball: ${TARBALL_URL}"
+  else
+    log_crit "Failed to download tarball: ${TARBALL_URL}"
+    exit 1
+  fi
+
+  # Download the checksum
+  log_info "Downloading checksum: ${CHECKSUM_URL}"
+  if http_download "${tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}"; then
+    log_info "Successfully downloaded checksum: ${CHECKSUM_URL}"
+  else
+    log_crit "Failed to download checksum: ${CHECKSUM_URL}"
+    exit 1
+  fi
 
   # Verify the checksum
+  log_info "Verifying checksum..."
   hash_sha256_verify "${tmpdir}/${TARBALL}" "${tmpdir}/${CHECKSUM}"
+  log_info "Checksum verification passed."
 
   # Extract the tarball
+  log_info "Extracting tarball..."
   srcdir="${tmpdir}"
   (cd "${tmpdir}" && untar "${TARBALL}")
+  log_info "Extracted tarball."
 
   # Create the BINDIR if it doesn't exist
-  test ! -d "${BINDIR}" && mkdir -p "${BINDIR}"
+  if [ ! -d "${BINDIR}" ]; then
+    mkdir -p "${BINDIR}"
+    log_info "Created installation directory: ${BINDIR}"
+  else
+    log_info "Installation directory already exists: ${BINDIR}"
+  fi
 
   # Install the binaries
   for binexe in $BINARIES; do
     if [ "$OS" = "windows" ]; then
       binexe="${binexe}.exe"
     fi
+    log_info "Installing ${binexe} to ${BINDIR}/"
     install "${srcdir}/${binexe}" "${BINDIR}/"
-    log_info "installed ${BINDIR}/${binexe}"
+    log_info "Installed ${BINDIR}/${binexe}"
   done
 
   # Clean up the temporary directory
   rm -rf "${tmpdir}"
+  log_info "Cleaned up temporary files."
+
+  log_info "Installation completed successfully."
 }
 
-
 get_binaries() {
+  log_info "Determining binaries for platform: ${PLATFORM}"
   case "$PLATFORM" in
     Darwin/386) BINARIES="lega-commander" ;;
     Darwin/x86_64) BINARIES="lega-commander" ;;
@@ -91,25 +119,26 @@ get_binaries() {
     Windows/386) BINARIES="lega-commander" ;;
     Windows/x86_64) BINARIES="lega-commander" ;;
     *)
-      log_crit "platform $PLATFORM is not supported. Please file a request at https://github.com/${PREFIX}/issues/new"
+      log_crit "Platform $PLATFORM is not supported. Please file a request at https://github.com/${PREFIX}/issues/new"
       exit 1
       ;;
   esac
+  log_info "Binaries to install: ${BINARIES}"
 }
 
 tag_to_version() {
   if [ -z "${TAG}" ]; then
-    log_info "checking GitHub for latest tag"
+    log_info "Checking GitHub for the latest tag."
   else
-    log_info "checking GitHub for tag '${TAG}'"
+    log_info "Checking GitHub for tag '${TAG}'."
   fi
 
   REALTAG=$(github_release "$OWNER/$REPO" "${TAG}") || {
-    log_crit "Failed to fetch tag from GitHub"
+    log_crit "Failed to fetch tag from GitHub."
     exit 1
   }
 
-  log_debug "REALTAG: ${REALTAG}"
+  log_info "REALTAG: ${REALTAG}"
 
   if echo "$REALTAG" | grep -q '^v'; then
     # If it starts with 'v', strip the 'v' to get VERSION
@@ -121,8 +150,8 @@ tag_to_version() {
     TAG="v${VERSION}"
   fi
 
-  log_debug "VERSION: ${VERSION}"
-  log_debug "TAG: ${TAG}"
+  log_info "VERSION: ${VERSION}"
+  log_info "TAG: ${TAG}"
 }
 
 adjust_format() {
@@ -214,19 +243,23 @@ uname_arch() {
 uname_os_check() {
   os=$1
   case "$os" in
-    Darwin|Dragonfly|Freebsd|Linux|Android|Nacl|Netbsd|Openbsd|Plan9|Solaris|Windows) return 0 ;;
+    Darwin|Dragonfly|Freebsd|Linux|Android|Nacl|Netbsd|Openbsd|Plan9|Solaris|Windows)
+      return 0 ;;
+    *)
+      log_crit "uname_os_check '$os' is not a GOOS value."
+      return 1 ;;
   esac
-  log_crit "uname_os_check '$os' is not a GOOS value."
-  return 1
 }
 
 uname_arch_check() {
   arch=$1
   case "$arch" in
-    386|x86_64|amd64|arm64|armv5|armv6|armv7|ppc64|ppc64le|mips|mipsle|mips64|mips64le|s390x|amd64p32) return 0 ;;
+    386|x86_64|amd64|arm64|armv5|armv6|armv7|ppc64|ppc64le|mips|mipsle|mips64|mips64le|s390x|amd64p32)
+      return 0 ;;
+    *)
+      log_crit "uname_arch_check '$arch' is not a GOARCH value."
+      return 1 ;;
   esac
-  log_crit "uname_arch_check '$arch' is not a GOARCH value."
-  return 1
 }
 
 untar() {
@@ -237,8 +270,7 @@ untar() {
     *.zip) unzip "${tarball}" ;;
     *)
       log_err "untar unknown archive format for ${tarball}"
-      return 1
-      ;;
+      return 1 ;;
   esac
 }
 
@@ -251,6 +283,9 @@ http_download_curl() {
   else
     code=$(curl -w '%{http_code}' -sL -H "$header" -o "$local_file" "$source_url")
   fi
+  if [ "$code" != "200" ]; then
+    log_crit "Download failed for $source_url with HTTP code $code"
+  fi
   [ "$code" = "200" ]
 }
 
@@ -262,6 +297,9 @@ http_download_wget() {
     wget -q -O "$local_file" "$source_url"
   else
     wget -q --header "$header" -O "$local_file" "$source_url"
+  fi
+  if [ $? -ne 0 ]; then
+    log_crit "Download failed for $source_url using wget"
   fi
 }
 
