@@ -33,19 +33,56 @@ parse_args() {
 }
 
 execute() {
+  # Determine the default BINDIR based on writable permissions
+  if [ -w "/usr/local/bin" ]; then
+    BINDIR=${BINDIR:-"/usr/local/bin"}
+  else
+    BINDIR=${BINDIR:-"$HOME/.local/bin"}
+    echo "INFO: Default installation path changed to '${BINDIR}' because '/usr/local/bin' is not writable."
+    echo ""
+    echo "To install globally, rerun the script with sudo:"
+    echo "  curl -fsSL https://raw.githubusercontent.com/.../install.sh | sudo sh"
+    echo ""
+    echo "Or specify a custom installation path using the -b flag:"
+    echo "  curl -fsSL https://raw.githubusercontent.com/.../install.sh | sh -s -- -b <path>"
+    echo ""
+  fi
+
+  # Ensure BINDIR is writable
+  if [ ! -w "${BINDIR}" ]; then
+    echo "ERROR: BINDIR (${BINDIR}) is not writable."
+    echo ""
+    echo "Please choose one of the following options:"
+    echo "  - Run the script with sudo for global installation:"
+    echo "      curl -fsSL https://raw.githubusercontent.com/.../install.sh | sudo sh"
+    echo ""
+    echo "  - Use the -b flag to specify a writable installation directory:"
+    echo "      curl -fsSL https://raw.githubusercontent.com/.../install.sh | sh -s -- -b <path>"
+    echo ""
+    echo "Exiting installation."
+    exit 1
+  fi
+
+
+  # Create a temporary directory for downloads
   tmpdir=$(mktemp -d)
   log_debug "downloading files into ${tmpdir}"
 
+  # Download the tarball and checksum
   http_download "${tmpdir}/${TARBALL}" "${TARBALL_URL}"
   http_download "${tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}"
 
+  # Verify the checksum
   hash_sha256_verify "${tmpdir}/${TARBALL}" "${tmpdir}/${CHECKSUM}"
 
+  # Extract the tarball
   srcdir="${tmpdir}"
   (cd "${tmpdir}" && untar "${TARBALL}")
 
-  test ! -d "${BINDIR}" && install -d "${BINDIR}"
+  # Create the BINDIR if it doesn't exist
+  test ! -d "${BINDIR}" && mkdir -p "${BINDIR}"
 
+  # Install the binaries
   for binexe in $BINARIES; do
     if [ "$OS" = "windows" ]; then
       binexe="${binexe}.exe"
@@ -54,8 +91,10 @@ execute() {
     log_info "installed ${BINDIR}/${binexe}"
   done
 
+  # Clean up the temporary directory
   rm -rf "${tmpdir}"
 }
+
 
 get_binaries() {
   case "$PLATFORM" in
