@@ -15,7 +15,7 @@ curl -fsSL https://raw.githubusercontent.com/ELIXIR-NO/FEGA-Norway/main/cli/lega
 ```
 
 ### Windows
-Go to the [releases page](https://github.com/ELIXIR-NO/FEGA-Norway/releases/) and download the latest binary manually under **lega-commander-1.2.8-assets**.
+Go to the [releases page](https://github.com/ELIXIR-NO/FEGA-Norway/releases/) and download the latest binary manually under **lega-commander-x.x.x-assets**.
 
 ## Configuration
 Before using the lega commander, make sure all the environment variables required for authentication are set:
