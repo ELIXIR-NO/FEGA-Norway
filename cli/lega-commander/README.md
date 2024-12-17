@@ -1,10 +1,4 @@
 # lega-commander
-[![Build Status](https://github.com/elixir-oslo/lega-commander/workflows/Go/badge.svg)](https://github.com/elixir-oslo/lega-commander/actions)
-[![GoDoc](https://godoc.org/github.com/elixir-oslo/lega-commander?status.svg)](https://pkg.go.dev/github.com/elixir-oslo/lega-commander?tab=subdirectories)
-[![CodeFactor](https://www.codefactor.io/repository/github/elixir-oslo/lega-commander/badge)](https://www.codefactor.io/repository/github/elixir-oslo/lega-commander)
-[![Go Report Card](https://goreportcard.com/badge/github.com/elixir-oslo/lega-commander)](https://goreportcard.com/report/github.com/elixir-oslo/lega-commander)
-[![codecov](https://codecov.io/gh/elixir-oslo/lega-commander/branch/master/graph/badge.svg)](https://codecov.io/gh/elixir-oslo/lega-commander)
-[![DeepSource](https://deepsource.io/gh/elixir-oslo/lega-commander.svg/?label=active+issues&show_trend=true)](https://deepsource.io/gh/elixir-oslo/lega-commander/?ref=repository-badge)
 
 ## Installation / Update
 
@@ -21,7 +15,7 @@ curl -fsSL https://raw.githubusercontent.com/ELIXIR-NO/FEGA-Norway/main/cli/lega
 ```
 
 ### Windows
-Go to the [releases page](https://github.com/elixir-oslo/lega-commander/releases) and download the latest binary manually.
+Go to the [releases page](https://github.com/ELIXIR-NO/FEGA-Norway/releases/) and download the latest binary manually under **lega-commander-1.2.8-assets**.
 
 ## Configuration
 Before using the lega commander, make sure all the environment variables required for authentication are set:
