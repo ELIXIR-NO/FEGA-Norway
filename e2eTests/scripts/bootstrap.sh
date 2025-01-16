@@ -70,13 +70,17 @@ function apply_configs() {
 
   # interceptor
   frepl "<<INTERCEPTOR_POSTGRES_CONNECTION>>" "$POSTGRES_CONNECTION" $f
-  frepl "<<INTERCEPTOR_CEGA_MQ_CONNECTION>>" "$CEGA_MQ_CONNECTION" $f
   frepl "<<INTERCEPTOR_MQ_CONNECTION>>" "$MQ_CONNECTION" $f
+  frepl "<<CEGAMQ_USERNAME>>" "$BROKER_USERNAME" $f
+  frepl "<<CEGAMQ_PASSWORD>>" "$BROKER_PASSWORD" $f
+  frepl "<<CEGAMQ_HOST>>" "$BROKER_HOST" $f
+  frepl "<<CEGAMQ_PORT>>" "$BROKER_PORT" $f
+  frepl "<<CEGAMQ_VHOST>>" "$BROKER_VHOST" $f
 
   # postgres
   frepl "<<POSTGRES_PASSWORD>>" "$POSTGRES_PASSWORD" $f
 
-  # ingest, verify, finalize, mapper, heartbeat
+  # ingest, verify, finalize, mapper, intercept, heartbeat
   frepl "<<BROKER_HOST>>" "$MQ_HOST" $f
   frepl "<<PRIVATE_BROKER_USER>>" "$PRIVATE_BROKER_USER" $f
   frepl "<<PRIVATE_BROKER_PASSWORD>>" "$PRIVATE_BROKER_PASSWORD" $f

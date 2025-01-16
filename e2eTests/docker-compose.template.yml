@@ -124,7 +124,7 @@ services:
         condition: service_started
     environment:
       - POSTGRES_CONNECTION=<<INTERCEPTOR_POSTGRES_CONNECTION>>
-      - CEGA_MQ_CONNECTION=<<INTERCEPTOR_CEGA_MQ_CONNECTION>>
+      - CEGA_MQ_CONNECTION=amqp://<<CEGAMQ_USERNAME>>:<<CEGAMQ_PASSWORD>>@<<CEGAMQ_HOST>>:<<CEGAMQ_PORT>>/<<CEGAMQ_VHOST>>
       - CEGA_MQ_EXCHANGE=localega
       - CEGA_MQ_QUEUE=v1.files
       - LEGA_MQ_CONNECTION=<<INTERCEPTOR_MQ_CONNECTION>>
@@ -579,6 +579,26 @@ services:
       - heartbeat-pub-confs:/volumes/heartbeat-pub-confs
       - storage:/storage
 
+
+  # E2E Setup
+
+  e2e-tests:
+    container_name: e2e-tests
+    hostname: e2e_tests
+    build:
+      context: .
+      dockerfile: e2e-tests.Dockerfile
+    depends_on:
+      proxy:
+        condition: service_started
+      doa:
+        condition: service_started
+      cegamq:
+        condition: service_started
+      db:
+        condition: service_started
+    volumes:
+      - storage:/storage
 
 volumes:
   tsd-inbox:
