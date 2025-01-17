@@ -30,8 +30,12 @@ services:
     hostname: mq
     image: rabbitmq:3.12.13-management-alpine
     ports:
-      - "5672:5672"
+      - "5671:5671"
       - "15671:15671"
+    environment:
+      - SSL_VERIFY=verify_peer
+      - SSL_FAIL_IF_NO_PEER_CERT=true
+      - SSL_DEPTH=2
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -39,7 +43,7 @@ services:
       - mq-confs-and-certs:/etc/rabbitmq
     command: sh -c "rabbitmq-plugins enable --offline rabbitmq_federation rabbitmq_federation_management rabbitmq_shovel rabbitmq_shovel_management && rabbitmq-server"
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
+      test: [ "CMD", "nc", "-z", "localhost", "5671" ]
       interval: 5s
       timeout: 20s
       retries: 3
@@ -74,8 +78,8 @@ services:
       - "10443:8080"
       - "5005:5005" # This is the JDWP debug port. See command below.
     environment:
-      - SSL_ENABLED=false
-      - TSD_SECURE=false
+      - SSL_ENABLED=true
+      - TSD_SECURE=true
       - DB_PORT=5432
       - ROOT_CERT_PASSWORD=<<PROXY_ROOT_CERT_PASSWORD>>
       - TSD_ROOT_CERT_PASSWORD=<<PROXY_TSD_ROOT_CERT_PASSWORD>>
@@ -157,10 +161,10 @@ services:
       - PGDATA=/var/lib/postgresql/data
       - POSTGRES_USER=<<SDA_DB_USERNAME>>
       - POSTGRES_PASSWORD=<<SDA_DB_PASSWORD>>
-      - POSTGRES_SERVER_CERT=
-      - POSTGRES_SERVER_KEY=
-      - POSTGRES_SERVER_CACERT=
-      - POSTGRES_VERIFY_PEER=
+      - POSTGRES_SERVER_CERT=/etc/ega/pg.pem
+      - POSTGRES_SERVER_KEY=/etc/ega/pg-server.pem
+      - POSTGRES_SERVER_CACERT=/etc/ega/CA.pem
+      - POSTGRES_VERIFY_PEER=verify-ca
     volumes:
       - db-data:/var/lib/postgresql/data
       - db-certs:/etc/ega/
@@ -191,7 +195,7 @@ services:
       - ARCHIVE_TYPE=posix
       - ARCHIVE_LOCATION=/ega/archive
       - BROKER_HOST=<<BROKER_HOST>>
-      - BROKER_PORT=5672
+      - BROKER_PORT=<<MQ_PORT>>
       - BROKER_USER=<<PRIVATE_BROKER_USER>>
       - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
       - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
@@ -199,11 +203,11 @@ services:
       - BROKER_EXCHANGE=sda
       - BROKER_ROUTINGKEY=archived
       - BROKER_ROUTINGERROR=error
-      - BROKER_SSL=false
-      - BROKER_VERIFYPEER=false
-      - BROKER_CACERT=
-      - BROKER_CLIENTCERT=
-      - BROKER_CLIENTKEY=
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
       - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
       - C4GH_FILEPATH=/etc/ega/ega.sec
       - DB_HOST=<<SDA_DB_HOST>>
@@ -211,9 +215,9 @@ services:
       - DB_USER=<<SDA_DB_USERNAME>>
       - DB_PASSWORD=<<SDA_DB_PASSWORD>>
       - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
-      - DB_SSLMODE=disable
-      - DB_CLIENTCERT=
-      - DB_CLIENTKEY=
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/etc/ega/client.cert
+      - DB_CLIENTKEY=/etc/ega/client-key.cert
       - INBOX_TYPE=posix
       - INBOX_LOCATION=/ega/inbox
       - LOG_LEVEL=debug
@@ -241,7 +245,7 @@ services:
       - ARCHIVE_TYPE=posix
       - ARCHIVE_LOCATION=/ega/archive
       - BROKER_HOST=<<MQ_HOST>>
-      - BROKER_PORT=5672
+      - BROKER_PORT=<<MQ_PORT>>
       - BROKER_USER=<<PRIVATE_BROKER_USER>>
       - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
       - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
@@ -249,11 +253,11 @@ services:
       - BROKER_EXCHANGE=sda
       - BROKER_ROUTINGKEY=verified
       - BROKER_ROUTINGERROR=error
-      - BROKER_SSL=false
-      - BROKER_VERIFYPEER=false
-      - BROKER_CACERT=
-      - BROKER_CLIENTCERT=
-      - BROKER_CLIENTKEY=
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
       - C4GH_PASSPHRASE=<<C4GH_PASSPHRASE>>
       - C4GH_FILEPATH=/etc/ega/ega.sec
       - DB_HOST=<<SDA_DB_HOST>>
@@ -261,9 +265,9 @@ services:
       - DB_USER=<<SDA_DB_USERNAME>>
       - DB_PASSWORD=<<SDA_DB_PASSWORD>>
       - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
-      - DB_SSLMODE=disable
-      - DB_CLIENTCERT=
-      - DB_CLIENTKEY=
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/etc/ega/client.cert
+      - DB_CLIENTKEY=/etc/ega/client-key.cert
       - INBOX_LOCATION=/ega/inbox
       - LOG_LEVEL=debug
     volumes:
@@ -288,7 +292,7 @@ services:
       - db
     environment:
       - BROKER_HOST=<<MQ_HOST>>
-      - BROKER_PORT=5672
+      - BROKER_PORT=<<MQ_PORT>>
       - BROKER_USER=<<PRIVATE_BROKER_USER>>
       - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
       - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
@@ -296,19 +300,19 @@ services:
       - BROKER_EXCHANGE=sda
       - BROKER_ROUTINGKEY=completed
       - BROKER_ROUTINGERROR=error
-      - BROKER_SSL=false
-      - BROKER_VERIFYPEER=false
-      - BROKER_CACERT=
-      - BROKER_CLIENTCERT=
-      - BROKER_CLIENTKEY=
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
       - DB_HOST=<<SDA_DB_HOST>>
       - DB_PORT=5432
       - DB_USER=<<SDA_DB_USERNAME>>
       - DB_PASSWORD=<<SDA_DB_PASSWORD>>
       - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
-      - DB_SSLMODE=disable
-      - DB_CLIENTCERT=
-      - DB_CLIENTKEY=
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/etc/ega/client.cert
+      - DB_CLIENTKEY=/etc/ega/client-key.cert
       - LOG_LEVEL=debug
     command: "sda-finalize"
     volumes:
@@ -330,26 +334,26 @@ services:
       - db
     environment:
       - BROKER_HOST=<<MQ_HOST>>
-      - BROKER_PORT=5672
+      - BROKER_PORT=<<MQ_PORT>>
       - BROKER_USER=<<PRIVATE_BROKER_USER>>
       - BROKER_PASSWORD=<<PRIVATE_BROKER_PASSWORD>>
       - BROKER_VHOST=<<PRIVATE_BROKER_VHOST>>
       - BROKER_QUEUE=mappings
       - BROKER_EXCHANGE=sda
       - BROKER_ROUTINGERROR=error
-      - BROKER_SSL=false
-      - BROKER_VERIFYPEER=false
-      - BROKER_CACERT=
-      - BROKER_CLIENTCERT=
-      - BROKER_CLIENTKEY=
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
       - DB_HOST=<<SDA_DB_HOST>>
       - DB_PORT=5432
       - DB_USER=<<SDA_DB_USERNAME>>
       - DB_PASSWORD=<<SDA_DB_PASSWORD>>
       - DB_DATABASE=<<SDA_DB_DATABASE_NAME>>
-      - DB_SSLMODE=disable
-      - DB_CLIENTCERT=
-      - DB_CLIENTKEY=
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/etc/ega/client.cert
+      - DB_CLIENTKEY=/etc/ega/client-key.cert
       - LOG_LEVEL=debug
       - INBOX_LOCATION=/ega/inbox
     volumes:
@@ -369,19 +373,27 @@ services:
       mq:
         condition: service_healthy
     environment:
-      - BROKER_HOST=mq
-      - BROKER_PORT=5672
+      - BROKER_HOST=<<MQ_HOST>>
+      - BROKER_PORT=<<MQ_PORT>>
       - BROKER_USER=admin
       - BROKER_PASSWORD=guest
       - BROKER_QUEUE=files
       - BROKER_VHOST=test
       - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=ro0tpasswd
       - DB_DATABASE=sda
-      - DB_SSLMODE=disable
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/etc/ega/client.cert
+      - DB_CLIENTKEY=/etc/ega/client-key.cert
       - LOG_LEVEL=debug
     links:
       - mq
@@ -390,6 +402,8 @@ services:
       - verify
       - finalize
       - mapper
+    volumes:
+      - sda-certs:/etc/ega/
     command: "sda-intercept"
 
 
@@ -413,7 +427,7 @@ services:
       - "80:8080"
       - "8088:8088"
     environment:
-      - SSL_MODE=disable # PG SSL MODE
+      - SSL_MODE=require # PG SSL MODE
       - SSL_ENABLED=false
       - ARCHIVE_PATH=<<ARCHIVE_PATH>>
       - DB_INSTANCE=<<SDA_DB_HOST>>
@@ -439,12 +453,12 @@ services:
     environment:
       - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/conf/cega
       - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/conf/cega.plugins
-      - RABBITMQ_NODE_PORT=5673
+      # - RABBITMQ_NODE_PORT=5673
     depends_on:
       file-orchestrator:
         condition: service_healthy
     ports:
-      - "5673:5673"
+      - "5673:5671"
       - "15672:15672"
       - "25672:15672"
     volumes:
@@ -490,7 +504,7 @@ services:
     environment:
       - HEARTBEAT_MODE=publisher
       - RABBITMQ_HOST=<<MQ_HOST>>
-      - RABBITMQ_PORT=5672
+      - RABBITMQ_PORT=<<MQ_PORT>>
       - RABBITMQ_USER=<<PRIVATE_BROKER_USER>>
       - RABBITMQ_PASS=<<PRIVATE_BROKER_PASSWORD>>
       - RABBITMQ_VHOST=<<PRIVATE_BROKER_VHOST>>
@@ -520,7 +534,7 @@ services:
     environment:
       - HEARTBEAT_MODE=subscriber
       - RABBITMQ_HOST=<<MQ_HOST>>
-      - RABBITMQ_PORT=5672
+      - RABBITMQ_PORT=<<MQ_PORT>>
       - RABBITMQ_USER=<<PRIVATE_BROKER_USER>>
       - RABBITMQ_PASS=<<PRIVATE_BROKER_PASSWORD>>
       - RABBITMQ_VHOST=<<PRIVATE_BROKER_VHOST>>

@@ -91,6 +91,7 @@ function apply_configs() {
   frepl "<<SDA_DB_PASSWORD>>" "$SDA_DB_PASSWORD" $f
   frepl "<<SDA_DB_DATABASE_NAME>>" "$SDA_DB_DATABASE_NAME" $f
   frepl "<<MQ_HOST>>" "$MQ_HOST" $f
+  frepl "<<MQ_PORT>>" "$MQ_PORT" $f
 
   # doa
   frepl "<<ARCHIVE_PATH>>" "$ARCHIVE_PATH" $f
