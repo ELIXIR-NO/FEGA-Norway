@@ -17,19 +17,16 @@ import lombok.ToString;
 public class ExportRequest {
 
   // This is the user's Passport Scoped Access Token.
-  @NotBlank(message = "The field 'accessToken' must not be blank.")
-  @JsonProperty
+  @NotBlank(message = "The field 'accessToken' must not be blank.") @JsonProperty
   private String accessToken;
 
   // This is the visa token that DOA expects
   @JsonIgnore private String jwtToken;
 
-  @NotBlank(message = "The field 'id' must not be blank.")
-  @JsonProperty
+  @NotBlank(message = "The field 'id' must not be blank.") @JsonProperty
   private String id;
 
-  @NotBlank(message = "The field 'userPublicKey' must not be blank.")
-  @JsonProperty
+  @NotBlank(message = "The field 'userPublicKey' must not be blank.") @JsonProperty
   private String userPublicKey;
 
   @NotNull(message = "The field 'type' must not be null. Should be either 'fileId' or 'datasetId'.") @JsonProperty
