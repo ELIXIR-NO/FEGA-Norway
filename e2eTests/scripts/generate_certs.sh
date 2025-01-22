@@ -109,8 +109,7 @@ cp server.pem /volumes/db-certs/pg.pem &&
 cp rootCA.pem /volumes/sda-certs/CA.cert &&
   cp client.pem /volumes/sda-certs/client.cert &&
   cp client-key.pem /volumes/sda-certs/client-key.cert &&
-  cp ega.sec.pem /volumes/sda-certs/ega.sec &&
-  chmod -R 644 /volumes/sda-certs/*
+  cp ega.sec.pem /volumes/sda-certs/ega.sec
 
 # doa
 #      /etc/ega/ssl/CA.cert

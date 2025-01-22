@@ -9,7 +9,6 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import io.github.cdimascio.dotenv.Dotenv;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -29,10 +28,15 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
-import kong.unirest.*;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestInstance;
 import no.elixir.crypt4gh.stream.Crypt4GHInputStream;
 import no.elixir.crypt4gh.stream.Crypt4GHOutputStream;
 import no.elixir.crypt4gh.util.KeyUtils;
+import no.elixir.e2eTests.config.Environment;
+import no.elixir.e2eTests.constants.Strings;
 import no.elixir.e2eTests.utils.CertificateUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -48,19 +52,9 @@ import org.slf4j.LoggerFactory;
 
 public class IngestionTest {
 
-  public static final String BEGIN_PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----";
-  public static final String END_PUBLIC_KEY = "-----END PUBLIC KEY-----";
-  public static final String BEGIN_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----";
-  public static final String END_PRIVATE_KEY = "-----END PRIVATE KEY-----";
-  static final Dotenv dotenv = Dotenv.load();
+  private static final Environment env = new Environment();
   private static final Logger log = LoggerFactory.getLogger(IngestionTest.class);
-  private static final String DB_USERNAME = dotenv.get("SDA_DB_USERNAME");
-  private static final String DB_PASSWORD = dotenv.get("SDA_DB_PASSWORD");
-  private static final String EGA_BOX_USERNAME = dotenv.get("EGA_BOX_USERNAME");
-  private static final String EGA_BOX_PASSWORD = dotenv.get("EGA_BOX_PASSWORD");
-  private static final String CEGA_MQ_CONNECTION = dotenv.get("CEGA_MQ_CONNECTION_LOCAL");
-
-  private final KeyUtils keyUtils = KeyUtils.getInstance();
+  private static final KeyUtils keyUtils = KeyUtils.getInstance();
 
   private File rawFile;
   private File encFile;
@@ -139,16 +133,18 @@ public class IngestionTest {
   private void upload() throws Exception {
     log.info("Uploading a file through a proxy...");
     String token = generateVisaToken("upload");
-    log.info("Visa JWT token: {}", token);
+    log.info("Visa JWT token when uploading: {}", token);
     String md5Hex = DigestUtils.md5Hex(Files.newInputStream(encFile.toPath()));
     log.info("Encrypted MD5 checksum: {}", md5Hex);
-    log.info("EGA_BOX_USERNAME: {}", EGA_BOX_USERNAME);
+    log.info("EGA_BOX_USERNAME: {}", env.getEga_box_username());
     String uploadURL =
-        String.format("http://localhost:10443/stream/%s?md5=%s", encFile.getName(), md5Hex);
+        String.format(
+            "http://%s:%s/stream/%s?md5=%s",
+            env.getProxy_host(), env.getProxy_port(), encFile.getName(), md5Hex);
     JsonNode jsonResponse =
         Unirest.patch(uploadURL)
-            .basicAuth(EGA_BOX_USERNAME, EGA_BOX_PASSWORD)
-            .socketTimeout(100000000)
+            .socketTimeout(1000000000)
+            .basicAuth(env.getEga_box_username(), env.getEga_box_password())
             .header("Proxy-Authorization", "Bearer " + token)
             .body(FileUtils.readFileToByteArray(encFile))
             .asJson()
@@ -157,13 +153,18 @@ public class IngestionTest {
     log.info("Upload ID: {}", uploadId);
     String finalizeURL =
         String.format(
-            "http://localhost:10443/stream/%s?uploadId=%s&chunk=end&sha256=%s&fileSize=%s",
-            encFile.getName(), uploadId, encSHA256Checksum, FileUtils.sizeOf(encFile));
+            "http://%s:%s/stream/%s?uploadId=%s&chunk=end&sha256=%s&fileSize=%s",
+            env.getProxy_host(),
+            env.getProxy_port(),
+            encFile.getName(),
+            uploadId,
+            encSHA256Checksum,
+            FileUtils.sizeOf(encFile));
     HttpResponse<JsonNode> res =
         Unirest.patch(finalizeURL)
-            .basicAuth(EGA_BOX_USERNAME, EGA_BOX_PASSWORD)
+            .socketTimeout(1000000)
+            .basicAuth(env.getEga_box_username(), env.getEga_box_password())
             .header("Proxy-Authorization", "Bearer " + token)
-            .socketTimeout(100000000)
             .asJson();
     jsonResponse = res.getBody();
     assertEquals(201, jsonResponse.getObject().get("statusCode"));
@@ -177,7 +178,7 @@ public class IngestionTest {
           URISyntaxException {
     log.info("Publishing ingestion message to CentralEGA...");
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setUri(CEGA_MQ_CONNECTION);
+    factory.setUri(env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
     correlationId = UUID.randomUUID().toString();
@@ -191,15 +192,7 @@ public class IngestionTest {
             .correlationId(correlationId)
             .build();
 
-    String message =
-        """
-                          {
-                            "type": "ingest",
-                            "user": "%s",
-                            "filepath": "/p11-dummy@elixir-europe.org/files/%s"
-                          }
-                        """
-            .formatted(EGA_BOX_USERNAME, encFile.getName());
+    String message = Strings.INGEST_MESSAGE.formatted(env.getEga_box_username(), encFile.getName());
     log.info(message);
     channel.basicPublish("localega", "files", properties, message.getBytes());
 
@@ -215,7 +208,7 @@ public class IngestionTest {
           URISyntaxException {
     log.info("Publishing accession message on behalf of CEGA to CEGA RMQ...");
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setUri(CEGA_MQ_CONNECTION);
+    factory.setUri(env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
     AMQP.BasicProperties properties =
@@ -226,37 +219,17 @@ public class IngestionTest {
             .contentEncoding(StandardCharsets.UTF_8.displayName())
             .correlationId(correlationId)
             .build();
-
     String randomFileAccessionID = "EGAF5" + getRandomNumber(10);
-
     String message =
         String.format(
-            """
-                                {
-                                    "type": "accession",
-                                    "user": "%s",
-                                    "filepath": "/p11-dummy@elixir-europe.org/files/%s",
-                                    "accession_id": "%s",
-                                    "decrypted_checksums": [
-                                        {
-                                            "type": "sha256",
-                                            "value": "%s"
-                                        },
-                                        {
-                                            "type": "md5",
-                                            "value": "%s"
-                                        }
-                                    ]
-                                }""",
-            EGA_BOX_USERNAME,
+            Strings.ACCESSION_MESSAGE,
+            env.getEga_box_username(),
             encFile.getName(),
             randomFileAccessionID,
             rawSHA256Checksum,
             rawMD5Checksum);
-
     log.info(message);
     channel.basicPublish("localega", "files", properties, message.getBytes());
-
     channel.close();
     connectionFactory.close();
   }
@@ -264,19 +237,14 @@ public class IngestionTest {
   @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
   private void verifyAfterFinalizeAndLookUpAccessionID() throws SQLException {
     log.info("Starting verification of state after finalize step...");
-    String dbHost = "localhost";
-    String port = "5432";
-    String db = "sda";
-    String url = String.format("jdbc:postgresql://%s:%s/%s", dbHost, port, db);
+    String url =
+        String.format(
+            "jdbc:postgresql://%s:%s/%s",
+            env.getSda_db_host(), env.getSda_db_port(), env.getSda_db_database_name());
     Properties props = new Properties();
-    props.setProperty("user", DB_USERNAME);
-    props.setProperty("password", DB_PASSWORD);
+    props.setProperty("user", env.getSda_db_username());
+    props.setProperty("password", env.getSda_db_password());
     props.setProperty("application_name", "LocalEGA");
-    // props.setProperty("ssl", "true");
-    // props.setProperty("sslmode", "verify-ca");
-    // props.setProperty("sslrootcert", new File("rootCA.pem").getAbsolutePath());
-    // props.setProperty("sslcert", new File("localhost+5-client.pem").getAbsolutePath());
-    // props.setProperty("sslkey", new File("localhost+5-client-key.der").getAbsolutePath());
     java.sql.Connection conn = DriverManager.getConnection(url, props);
     String sql =
         "select archive_path,stable_id from local_ega.files where status = 'READY' AND inbox_path = ?";
@@ -302,7 +270,7 @@ public class IngestionTest {
     log.info("Mapping file to a dataset...");
     datasetId = "EGAD" + getRandomNumber(11);
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setUri(CEGA_MQ_CONNECTION);
+    factory.setUri(env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
     AMQP.BasicProperties properties =
@@ -313,18 +281,9 @@ public class IngestionTest {
             .contentEncoding(StandardCharsets.UTF_8.displayName())
             .correlationId(correlationId)
             .build();
-    String message =
-        String.format(
-            """
-                                {
-                                    "type": "mapping",
-                                    "accession_ids": ["%s"],
-                                    "dataset_id": "%s"
-                                }""",
-            stableId, datasetId);
+    String message = String.format(Strings.MAPPING_MESSAGE, stableId, datasetId);
     log.info(message);
     channel.basicPublish("localega", "files", properties, message.getBytes());
-
     channel.close();
     connectionFactory.close();
     log.info("Mapping file to dataset ID message sent successfully");
@@ -338,7 +297,7 @@ public class IngestionTest {
           TimeoutException {
     log.info("Releasing the dataset...");
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setUri(CEGA_MQ_CONNECTION);
+    factory.setUri(env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
     AMQP.BasicProperties properties =
@@ -349,12 +308,7 @@ public class IngestionTest {
             .contentEncoding(StandardCharsets.UTF_8.displayName())
             .correlationId(correlationId)
             .build();
-    String message =
-        String.format(
-            """
-                                    {"type":"release","dataset_id":"%s"}
-                                """,
-            datasetId);
+    String message = String.format(Strings.RELEASE_MESSAGE, datasetId);
     log.info(message);
     channel.basicPublish("localega", "files", properties, message.getBytes());
     channel.close();
@@ -363,57 +317,48 @@ public class IngestionTest {
   }
 
   private void downloadDatasetAndVerifyResults() throws Exception {
-
     String token = generateVisaToken(datasetId);
-    log.info("Visa JWT token: {}", token);
-
+    log.info("Visa JWT token when downloading: {}", token);
     String datasets =
-        Unirest.get("http://localhost:80/metadata/datasets")
+        Unirest.get(
+                String.format(
+                    "http://%s:%s/metadata/datasets", env.getSda_doa_host(), env.getSda_doa_port()))
             .header("Authorization", "Bearer " + token)
             .asString()
             .getBody();
     assertEquals(String.format("[\"%s\"]", datasetId).strip(), datasets.strip());
-
     // Meta data check
     String expected =
         toCompactJson(
             String.format(
-                    """
-                                        [{
-                                            "fileId": "%s",
-                                            "datasetId": "%s",
-                                            "displayFileName": "%s",
-                                            "fileName": "%s",
-                                            "fileSize": 10490240,
-                                            "unencryptedChecksum": null,
-                                            "unencryptedChecksumType": null,
-                                            "decryptedFileSize": 10485760,
-                                            "decryptedFileChecksum": "%s",
-                                            "decryptedFileChecksumType": "SHA256",
-                                            "fileStatus": "READY"
-                                        }]
-                                        """,
-                    stableId, datasetId, encFile.getName(), archivePath, rawSHA256Checksum)
+                    Strings.EXPECTED_DOWNLOAD_METADATA,
+                    stableId,
+                    datasetId,
+                    encFile.getName(),
+                    archivePath,
+                    rawSHA256Checksum)
                 .strip());
     String actual =
         toCompactJson(
-            Unirest.get(String.format("http://localhost/metadata/datasets/%s/files", datasetId))
+            Unirest.get(
+                    String.format(
+                        "http://%s:%s/metadata/datasets/%s/files",
+                        env.getSda_doa_host(), env.getSda_doa_port(), datasetId))
                 .header("Authorization", "Bearer " + token)
                 .asString()
                 .getBody()
                 .strip());
     log.info("Expected: {}", expected);
     log.info("Actual: {}", actual);
-
     JSONAssert.assertEquals(expected, actual, false);
-
     // Fetch the non-encrypted file
-
     HttpResponse<byte[]> response =
-        Unirest.get(String.format("http://localhost/files/%s", stableId))
+        Unirest.get(
+                String.format(
+                    "http://%s:%s/files/%s",
+                    env.getSda_doa_host(), env.getSda_doa_port(), stableId))
             .header("Authorization", "Bearer " + token)
             .asBytes();
-
     if (response.getStatus() == 200) { // Check if the response is OK
       byte[] file = response.getBody();
       String obtainedChecksum = Hex.encodeHexString(DigestUtils.sha256(file));
@@ -421,20 +366,19 @@ public class IngestionTest {
     } else {
       fail("Failed to fetch the file. Status: " + response.getStatus());
     }
-
     // Fetch the encrypted file
-
     KeyPair recipientKeyPair = keyUtils.generateKeyPair();
     StringWriter stringWriter = new StringWriter();
     keyUtils.writeCrypt4GHKey(stringWriter, recipientKeyPair.getPublic(), null);
     String key = stringWriter.toString();
-
     HttpResponse<byte[]> encFileRes =
-        Unirest.get(String.format("http://localhost/files/%s?destinationFormat=CRYPT4GH", stableId))
+        Unirest.get(
+                String.format(
+                    "http://%s:%s/files/%s?destinationFormat=CRYPT4GH",
+                    env.getSda_doa_host(), env.getSda_doa_port(), stableId))
             .header("Authorization", "Bearer " + token)
             .header("Public-Key", key)
             .asBytes();
-
     if (encFileRes.getStatus() == 200) { // Check if the response is OK
       byte[] file = encFileRes.getBody();
       ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -454,44 +398,15 @@ public class IngestionTest {
   private String generateVisaToken(String resource) throws Exception {
     RSAPublicKey publicKey = getPublicKey();
     RSAPrivateKey privateKey = getPrivateKey();
-    byte[] visaHeader =
-        Base64.getUrlEncoder()
-            .encode(
-                ("""
-                                        {
-                                          "jku": "https://login.elixir-czech.org/oidc/jwk",
-                                          "kid": "rsa1",
-                                          "typ": "JWT",
-                                          "alg": "RS256"
-                                        }""")
-                    .getBytes());
+    byte[] visaHeader = Base64.getUrlEncoder().encode(Strings.VISA_HEADER.getBytes());
     byte[] visaPayload =
-        Base64.getUrlEncoder()
-            .encode(
-                String.format(
-                        """
-                                                        {
-                                                          "sub": "dummy@elixir-europe.org",
-                                                          "ga4gh_visa_v1": {
-                                                            "asserted": 1583757401,
-                                                            "by": "dac",
-                                                            "source": "https://login.elixir-czech.org/google-idp/",
-                                                            "type": "ControlledAccessGrants",
-                                                            "value": "https://ega.tsd.usit.uio.no/datasets/%s/"
-                                                          },
-                                                          "iss": "https://login.elixir-czech.org/oidc/",
-                                                          "exp": 32503680000,
-                                                          "iat": 1583757671,
-                                                          "jti": "f520d56f-e51a-431c-94e1-2a3f9da8b0c9"
-                                                        }""",
-                        resource)
-                    .getBytes());
+        Base64.getUrlEncoder().encode(String.format(Strings.VISA_PAYLOAD, resource).getBytes());
     byte[] visaSignature = Algorithm.RSA256(publicKey, privateKey).sign(visaHeader, visaPayload);
-    return new String(visaHeader)
-        + "."
-        + new String(visaPayload)
-        + "."
-        + Base64.getUrlEncoder().encodeToString(visaSignature);
+    return "%s.%s.%s"
+        .formatted(
+            new String(visaHeader),
+            new String(visaPayload),
+            Base64.getUrlEncoder().encodeToString(visaSignature));
   }
 
   private RSAPublicKey getPublicKey() throws Exception {
@@ -500,8 +415,8 @@ public class IngestionTest {
         FileUtils.readFileToString(getCertificateFile("jwt.pub.pem"), Charset.defaultCharset());
     String encodedKey =
         jwtPublicKey
-            .replace(BEGIN_PUBLIC_KEY, "")
-            .replace(END_PUBLIC_KEY, "")
+            .replace(Strings.BEGIN_PUBLIC_KEY, "")
+            .replace(Strings.END_PUBLIC_KEY, "")
             .replace(System.lineSeparator(), "")
             .replace(" ", "")
             .trim();
@@ -515,8 +430,8 @@ public class IngestionTest {
         FileUtils.readFileToString(getCertificateFile("jwt.priv.pem"), Charset.defaultCharset());
     String encodedKey =
         jwtPublicKey
-            .replace(BEGIN_PRIVATE_KEY, "")
-            .replace(END_PRIVATE_KEY, "")
+            .replace(Strings.BEGIN_PRIVATE_KEY, "")
+            .replace(Strings.END_PRIVATE_KEY, "")
             .replace(System.lineSeparator(), "")
             .replace(" ", "")
             .trim();
@@ -533,9 +448,22 @@ public class IngestionTest {
     return sb.toString();
   }
 
+  /**
+   * Retrieves a file from either a local Docker container or directly from the mapped volume,
+   * depending on the test runtime environment.
+   *
+   * @param name The name of the certificate file.
+   * @return File instance of the certificate.
+   * @throws Exception If file retrieval fails.
+   */
   private File getCertificateFile(String name) throws Exception {
-    return CertificateUtils.getFileInContainer(
-        "file-orchestrator", "/storage/certs/%s".formatted(name));
+    if ("local".equalsIgnoreCase(env.getRuntime())) {
+      // Use getFileInContainer for local development
+      return CertificateUtils.getFileInContainer("file-orchestrator", "/storage/certs/" + name);
+    } else {
+      // Assuming this test code is run inside a docker container.
+      return CertificateUtils.getFileFromLocalFolder("/storage/certs/", name);
+    }
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
