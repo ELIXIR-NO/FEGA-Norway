@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("com.github.johnrengelman.shadow") version "8.1.1"
     id("formatting-conventions")
 }
 
@@ -12,7 +13,8 @@ repositories {
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-console-standalone:1.11.4")
     testImplementation("com.rabbitmq:amqp-client:5.20.0")
     testImplementation("com.konghq:unirest-java:3.14.5")
     testImplementation("org.postgresql:postgresql:42.7.2")
@@ -22,6 +24,8 @@ dependencies {
     testImplementation("org.slf4j:slf4j-api:2.0.12")
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
     implementation("io.github.cdimascio:java-dotenv:5.2.2")
+    testCompileOnly("org.projectlombok:lombok:1.18.36")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.36")
 }
 
 // Start setup scripts.
@@ -39,6 +43,7 @@ tasks.register<Exec>("assemble-binaries") {
     dependsOn("cleanup")
     commandLine(
         "../gradlew",
+        ":e2eTests:jar",
         ":cli:lega-commander:build",
         ":lib:crypt4gh:build",
         ":lib:clearinghouse:build",
@@ -84,4 +89,16 @@ tasks.test {
         ":services:localega-tsd-proxy:test"
     )
     testLogging.showStandardStreams = true
+}
+
+tasks.jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE // This will exclude duplicate files
+    manifest {
+        attributes(
+            "Main-Class" to "org.junit.platform.console.ConsoleLauncher"
+        )
+    }
+    from(sourceSets["test"].output)
+    from(configurations.testRuntimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
 }
