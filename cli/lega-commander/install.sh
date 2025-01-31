@@ -7,13 +7,15 @@ usage() {
   cat <<EOF
 $this: Download Go binaries for lega-commander from ELIXIR-NO/FEGA-Norway
 
-Usage: $this [-b] bindir [-d] [tag]
-  -b sets bindir or installation directory, Defaults to /usr/local/bin
-  -t sets a specific tag (e.g. "vX.Y.Z") to install
-  -d turns on debug logging
-   [tag] is a tag from
-   https://github.com/ELIXIR-NO/FEGA-Norway/releases
-   If tag is missing, then the latest will be used.
+Usage: $this [-b bindir] [-t tag] [-d] [-h]
+  -b  Sets bindir or installation directory (defaults to /usr/local/bin).
+  -t  Sets a specific tag (e.g., "vX.Y.Z") to install.
+  -d  Turns on debug logging.
+  -h  Displays this help message.
+
+If no tag is specified, the latest release from:
+  https://github.com/ELIXIR-NO/FEGA-Norway/releases
+will be installed.
 
 EOF
   exit 2
