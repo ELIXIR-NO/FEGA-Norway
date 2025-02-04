@@ -28,6 +28,7 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "21"
+          cache: "gradle"
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -49,11 +50,41 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build with Gradle
-        run: ./gradlew assemble
+        run: ./gradlew assemble --parallel
 
-      - name: Run tests
-        run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test
+      - name: Run unit tests
+        run: |
+          ./gradlew --no-daemon --parallel \
+            :lib:crypt4gh:test \
+            :lib:clearinghouse:test \
+            :lib:tsd-file-api-client:test \
+            :services:tsd-api-mock:test \
+            :services:mq-interceptor:test \
+            :services:localega-tsd-proxy:test \
+            :services:cega-mock:test \
+            :cli:lega-commander:test
 
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "gradle"
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
 
       - name: Run e2e tests
         run: |
