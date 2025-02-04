@@ -3,6 +3,7 @@ package no.elixir.fega.ltp.controllers.rest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import no.uio.ifi.tc.TSDFileAPIClient;
 import no.uio.ifi.tc.model.pojo.Chunk;
@@ -121,13 +122,31 @@ public class ProxyController {
    */
   @GetMapping("/files")
   public ResponseEntity<?> getFiles(
-      @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
-      @RequestParam(value = "inbox", defaultValue = "true") boolean inbox)
-      throws IOException {
+          @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
+          @RequestParam(value = "inbox", defaultValue = "true") boolean inbox,
+          @RequestParam(value = "page", defaultValue = "1") int page,
+          @RequestParam(value = "per_page", defaultValue = "10") int perPage)
+          throws IOException {
+
+    // Call TSD to get the full list
     Token token =
-        tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
-    return ResponseEntity.ok(
-        tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId));
+            tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
+    List<String> allFiles =
+            (List<String>) tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId);
+
+    // Slice the list
+    int startIndex = (page - 1) * perPage;
+    int endIndex = Math.min(startIndex + perPage, allFiles.size());
+
+    if (startIndex >= allFiles.size()) {
+      // No files on this page
+      return ResponseEntity.ok().body(List.of());
+    }
+
+    List<String> pageOfFiles = allFiles.subList(startIndex, endIndex);
+
+    // Return only a page
+    return ResponseEntity.ok(pageOfFiles);
   }
 
   /**
