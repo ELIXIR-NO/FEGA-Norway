@@ -1,3 +1,30 @@
+/*
+ This is an implementation of the "bcrypt-pbkdf" key derivation function.
+
+ The code is directly based on the "at.favre.lib.bcrypt" package by Patrick Favre.
+ Specifically this file:
+
+    https://github.com/patrickfav/bcrypt/blob/main/modules/bcrypt/src/main/java/at/favre/lib/crypto/bcrypt/BCryptOpenBSDProtocol.java
+
+ This file was in turn based on the "org.mindrot.jbcrypt" package by Damien Miller.
+ Both this package and the one by Patrick Favre are distributed under the Apache 2.0 license.
+ The original package by Damien Miller is distributed under the ISC/BSD licence (see below).
+
+ Changes from original Bcrypt code:
+
+   1. The length check for the salt is removed from the cryptRaw() function, since the salt can now be 512 bytes
+   2. Added alternative magic value for BCrypt: "OxychromaticBlowfishSwatDynamite" (used by bcrypt_pbkdf)
+   3. The order of the two calls to the ExpandKey function, here called "key(P,S,key)",
+      made inside the BCrypt setup loop has been reversed from the (incorrect) order used in the OpenBSD
+      implementation of BCrypt. The order in bcrypt_pbkdf is based on the original BCrypt paper.
+   4. Added new function "hashSHA512" to hash with SHA-512 (as required by bcrypt_pbkdf)
+   5. Added new function "bcrypt_hash" to generate a Bcrypt hash using the new magic value and a hardcoded cost factor.
+      The eight 32-bit words in the resulting hash are converted to little-endian format.
+   6. Added new function "bcrypt_pbkdf" that employs a modified version of PBKDF2 to derive a key
+      of arbitrary length from a provided input and salt
+
+*/
+
 // Copyright (c) 2006 Damien Miller <djm@mindrot.org>
 //
 // Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +39,10 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-package at.favre.lib.crypto.bcrypt;
+package no.elixir.crypt4gh.pojo.key.kdf;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * The basic protocol for the OpenBSD bcrypt password hashing schema which is based on Blowfish
@@ -38,7 +68,7 @@ package at.favre.lib.crypto.bcrypt;
  * using Blowfish. In bcrypt the usual Blowfish key setup function is replaced with an expensive key
  * setup (EksBlowfishSetup) function.
  */
-final class BCryptOpenBSDProtocol {
+public final class Bcrypt {
 
   // Blowfish parameters
   private static final int BLOWFISH_NUM_ROUNDS = 16;
@@ -318,7 +348,15 @@ final class BCryptOpenBSDProtocol {
     0x64657253, 0x63727944, 0x6f756274
   };
 
-  BCryptOpenBSDProtocol() {}
+  // This is the magic value "OxychromaticBlowfishSwatDynamite"
+  // which is used as the 32-byte plaintext input for bcrypt_pbkdf
+  private static final int[] bcrypt_pbkdf_ciphertext = {
+    0x4F787963, 0x68726F6D, 0x61746963,
+    0x426C6F77, 0x66697368, 0x53776174,
+    0x44796E61, 0x6D697465
+  };
+
+  Bcrypt() {}
 
   byte[] cryptRaw(long rounds, byte[] salt, byte[] password) {
     return cryptRaw(rounds, salt, password, bf_crypt_ciphertext.clone());
@@ -340,9 +378,9 @@ final class BCryptOpenBSDProtocol {
 
     int clen = cdata.length;
 
-    if (salt.length != BCrypt.SALT_LENGTH) {
-      throw new IllegalArgumentException("bad salt length");
-    }
+    // if (salt.length != BCrypt.SALT_LENGTH) {
+    //     throw new IllegalArgumentException("bad salt length");
+    // }
 
     int[] P = P_orig.clone();
     int[] S = S_orig.clone();
@@ -350,8 +388,12 @@ final class BCryptOpenBSDProtocol {
     enhancedKeySchedule(P, S, salt, password);
 
     for (long roundCount = 0; roundCount != rounds; roundCount++) {
-      key(P, S, password);
+      // NOTE: The OpenBSD implementation of BCrypt makes these
+      // two calls in reverse order compared to the description in
+      // the original Bcrypt paper. In the bcrypt_pbkdf algorithm,
+      // the "correct" order has been restored again
       key(P, S, salt);
+      key(P, S, password);
     }
 
     for (int i = 0; i < 64; i++) {
@@ -482,5 +524,103 @@ final class BCryptOpenBSDProtocol {
     }
     lr[off] = r ^ P[BLOWFISH_NUM_ROUNDS + 1];
     lr[off + 1] = l;
+  }
+
+  /**
+   * Hashes the given input with SHA-512
+   *
+   * @param input The array of bytes to be hashed
+   * @return A 64-byte long hash (512 bits)
+   * @throws RuntimeException if the SHA-512 algorithm is not available on the system
+   */
+  private static byte[] hashSHA512(byte[] input) {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-512");
+      return digest.digest(input);
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException("SHA-512 algorithm not available", e);
+    }
+  }
+
+  /**
+   * Hashes the given password and salt with BCrypt using the magic value for bcrypt_pbkdf. Returns
+   * the resulting hash in little-endian format (eight 32-bit words)
+   *
+   * @param salt The salt bytes (should be pre-hashed with SHA-512)
+   * @param password The password bytes (should be pre-hashed with SHA-512)
+   * @return A 32-byte BCrypt hash (hashed from "OxychromaticBlowfishSwatDynamite")
+   */
+  private static byte[] bcrypt_hash(byte[] salt, byte[] password) {
+    long rounds = 1 << 6; // bcrypt_pbkdf uses a hardcoded cost factor of 6 for bcrypt (64 rounds)
+
+    Bcrypt bcrypt = new Bcrypt();
+    byte[] hash = bcrypt.cryptRaw(rounds, salt, password, bcrypt_pbkdf_ciphertext.clone());
+
+    // convert 32-bit words (4 bytes) to little-endian
+    for (int i = 0; i < 32; i += 4) {
+      byte tmp0 = hash[i];
+      byte tmp1 = hash[i + 1];
+      byte tmp2 = hash[i + 2];
+      byte tmp3 = hash[i + 3];
+      hash[i] = tmp3;
+      hash[i + 1] = tmp2;
+      hash[i + 2] = tmp1;
+      hash[i + 3] = tmp0;
+    }
+
+    return hash;
+  }
+
+  /**
+   * Derives a new key of arbitrary length from the provided password and salt using the
+   * "bcrypt_pbkdf" key derivation function
+   *
+   * @param password The original password that should be stretched
+   * @param salt a 16-byte salt
+   * @param rounds The number of rounds to use for PBDKF2
+   * @param keyLength The desired length for the new key
+   * @return a hash of length specified by the keyLength parameter
+   * @see <a href="https://flak.tedunangst.com/post/bcrypt-pbkdf">bcrypt-pbkdf</a>
+   */
+  public static byte[] bcrypt_pbkdf(byte[] password, byte[] salt, int rounds, int keyLength) {
+    int BCRYPT_PBKDF_BLOCK_SIZE = 32; // length of new magic value: OxychromaticBlowfishSwatDynamite
+
+    int blocks = (keyLength + BCRYPT_PBKDF_BLOCK_SIZE - 1) / BCRYPT_PBKDF_BLOCK_SIZE;
+    byte[] keybuffer = new byte[BCRYPT_PBKDF_BLOCK_SIZE * blocks];
+
+    byte[] passwordSHA512 = hashSHA512(password);
+
+    for (int count = 1; count <= blocks; count++) {
+      // append 4-byte block counter to the end of the salt
+      byte[] blockSalt = new byte[salt.length + 4];
+      System.arraycopy(salt, 0, blockSalt, 0, salt.length);
+      blockSalt[blockSalt.length - 4] = (byte) ((count >> 24) & 0xff);
+      blockSalt[blockSalt.length - 3] = (byte) ((count >> 16) & 0xff);
+      blockSalt[blockSalt.length - 2] = (byte) ((count >> 8) & 0xff);
+      blockSalt[blockSalt.length - 1] = (byte) (count & 0xff);
+
+      byte[] saltSHA512 = hashSHA512(blockSalt);
+      byte[] hashValue = bcrypt_hash(saltSHA512, passwordSHA512); // hash from single round
+      byte[] blockHash = new byte[hashValue.length]; // running merger of hashes from all rounds
+      System.arraycopy(hashValue, 0, blockHash, 0, hashValue.length);
+
+      for (long i = 1; i < rounds; i++) {
+        saltSHA512 = hashSHA512(hashValue); // update salt based on previous hash
+        hashValue = bcrypt_hash(saltSHA512, passwordSHA512);
+        for (int j = 0; j < hashValue.length; j++) {
+          blockHash[j] ^= hashValue[j]; // combine running hash with new round-hash using XOR
+        }
+      }
+
+      // copy bytes from this hash block into the final key buffer
+      for (int i = 0; i < blockHash.length; i++) {
+        keybuffer[i * blocks + (count - 1)] = blockHash[i];
+      }
+    }
+    // truncate final buffer down to desired key length
+    byte[] finalKey = new byte[keyLength];
+    System.arraycopy(keybuffer, 0, finalKey, 0, keyLength);
+
+    return finalKey;
   }
 }
