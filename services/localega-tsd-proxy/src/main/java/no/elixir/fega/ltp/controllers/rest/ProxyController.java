@@ -121,17 +121,17 @@ public class ProxyController {
    */
   @GetMapping("/files")
   public ResponseEntity<?> getFiles(
-          @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
-          @RequestParam(value = "inbox", defaultValue = "true") boolean inbox,
-          @RequestParam(value = "page", defaultValue = "1") int page,
-          @RequestParam(value = "per_page", defaultValue = "10") int perPage)
-          throws IOException {
+      @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
+      @RequestParam(value = "inbox", defaultValue = "true") boolean inbox,
+      @RequestParam(value = "page", defaultValue = "1") int page,
+      @RequestParam(value = "per_page", defaultValue = "10") int perPage)
+      throws IOException {
 
     // Call TSD to get the full list
     Token token =
-            tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
+        tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
     List<String> allFiles =
-            tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId);
+        tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId);
 
     // Slice the list
     int startIndex = (page - 1) * perPage;
