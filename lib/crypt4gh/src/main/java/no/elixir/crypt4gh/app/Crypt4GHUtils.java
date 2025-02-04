@@ -27,6 +27,7 @@ class Crypt4GHUtils {
 
   private KeyUtils keyUtils = KeyUtils.getInstance();
   private ConsoleUtils consoleUtils = ConsoleUtils.getInstance();
+  private int minPwdLength = 3;
 
   private Crypt4GHUtils() {}
 
@@ -53,10 +54,10 @@ class Crypt4GHUtils {
       if (Format.CRYPT4GH.name().equalsIgnoreCase(keyFormat)) {
         char[] password;
         if (StringUtils.isEmpty(keyPassword)) {
-          password = consoleUtils.readPassword("Password for the private key: ", 4);
+          password = consoleUtils.readPassword("Password for the private key: ", minPwdLength);
         } else {
           if (keyPassword.length() < 4) {
-            password = consoleUtils.readPassword("Password for the private key: ", 4);
+            password = consoleUtils.readPassword("Password for the private key: ", minPwdLength);
           } else {
             password = keyPassword.toCharArray();
           }
@@ -125,7 +126,7 @@ class Crypt4GHUtils {
     try {
       privateKey = keyUtils.readPrivateKey(new File(privateKeyFilePath), null);
     } catch (IllegalArgumentException e) {
-      char[] password = consoleUtils.readPassword("Password for the private key: ", 4);
+      char[] password = consoleUtils.readPassword("Password for the private key: ", minPwdLength);
       privateKey = keyUtils.readPrivateKey(new File(privateKeyFilePath), password);
     }
     return privateKey;
