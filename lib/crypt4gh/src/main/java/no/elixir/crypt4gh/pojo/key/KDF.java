@@ -1,6 +1,5 @@
 package no.elixir.crypt4gh.pojo.key;
 
-import at.favre.lib.crypto.bkdf.BKDF;
 import com.lambdaworks.crypto.SCrypt;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -10,6 +9,7 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import no.elixir.crypt4gh.pojo.key.kdf.Bcrypt;
 
 /** Key Derivation Function. */
 public enum KDF {
@@ -35,8 +35,7 @@ public enum KDF {
       case SCRYPT:
         return SCrypt.scrypt(toBytes(password), salt, 1 << 14, 8, 1, KEY_LENGTH);
       case BCRYPT:
-        return BKDF.createKdf()
-            .derive(salt, password, (int) (Math.log(rounds) / Math.log(2)), null, KEY_LENGTH);
+        return Bcrypt.bcrypt_pbkdf(toBytes(password), salt, rounds, KEY_LENGTH);
       case PBKDF2_HMAC_SHA256:
         KeySpec spec = new PBEKeySpec(password, salt, rounds, KEY_LENGTH * 8);
         SecretKeyFactory factory = SecretKeyFactory.getInstance(PBKDF_2_WITH_HMAC_SHA_256);
