@@ -27,7 +27,7 @@ class Crypt4GHUtils {
 
   private KeyUtils keyUtils = KeyUtils.getInstance();
   private ConsoleUtils consoleUtils = ConsoleUtils.getInstance();
-  private int minPwdLength = 3;
+  private int minPwdLength = 8;
 
   private Crypt4GHUtils() {}
 
@@ -53,10 +53,14 @@ class Crypt4GHUtils {
                 "Private key file already exists: do you want to overwrite it?")) {
       if (Format.CRYPT4GH.name().equalsIgnoreCase(keyFormat)) {
         char[] password;
+        if (StringUtils.isNotEmpty(keyPassword) && keyPassword.length() < minPwdLength) {
+          System.out.println("Passphrase is too short: min length is " + minPwdLength);
+          keyPassword = null; // triggers new prompt below
+        }
         if (StringUtils.isEmpty(keyPassword)) {
           password = consoleUtils.readPassword("Password for the private key: ", minPwdLength);
         } else {
-          if (keyPassword.length() < 4) {
+          if (keyPassword.length() < minPwdLength) {
             password = consoleUtils.readPassword("Password for the private key: ", minPwdLength);
           } else {
             password = keyPassword.toCharArray();
@@ -126,7 +130,7 @@ class Crypt4GHUtils {
     try {
       privateKey = keyUtils.readPrivateKey(new File(privateKeyFilePath), null);
     } catch (IllegalArgumentException e) {
-      char[] password = consoleUtils.readPassword("Password for the private key: ", minPwdLength);
+      char[] password = consoleUtils.readPassword("Password for the private key: ", 0);
       privateKey = keyUtils.readPrivateKey(new File(privateKeyFilePath), password);
     }
     return privateKey;
