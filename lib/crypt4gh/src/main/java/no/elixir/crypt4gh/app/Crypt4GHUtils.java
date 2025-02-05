@@ -86,8 +86,22 @@ class Crypt4GHUtils {
             .promptForConfirmation(dataOutFile.getAbsolutePath() + " already exists. Overwrite?")) {
       return;
     }
-    PrivateKey privateKey = readPrivateKey(privateKeyFilePath);
-    PublicKey publicKey = keyUtils.readPublicKey(new File(publicKeyFilePath));
+    PrivateKey privateKey = null;
+    try {
+      privateKey = readPrivateKey(privateKeyFilePath);
+    } catch (java.nio.file.NoSuchFileException missingFileEx) {
+      throw new IllegalArgumentException(
+          "ERROR: Private key file not found: " + privateKeyFilePath);
+    } catch (javax.crypto.AEADBadTagException badTagEx) {
+      throw new IllegalArgumentException(
+          "ERROR: Unable to decrypt private key file. The password is probably wrong!");
+    }
+    PublicKey publicKey = null;
+    try {
+      publicKey = keyUtils.readPublicKey(new File(publicKeyFilePath));
+    } catch (java.nio.file.NoSuchFileException missingFileEx) {
+      throw new IllegalArgumentException("ERROR: Public key file not found: " + publicKeyFilePath);
+    }
     try (InputStream inputStream = new FileInputStream(dataInFile);
         OutputStream outputStream = new FileOutputStream(dataOutFile);
         Crypt4GHOutputStream crypt4GHOutputStream =
@@ -95,6 +109,8 @@ class Crypt4GHUtils {
       System.out.println("Encryption initialized...");
       IOUtils.copyLarge(inputStream, crypt4GHOutputStream);
       System.out.println("Done: " + dataOutFile.getAbsolutePath());
+    } catch (FileNotFoundException fileNotFoundEx) {
+      throw new IllegalArgumentException("ERROR: Input file not found: " + dataFilePath);
     } catch (GeneralSecurityException e) {
       System.err.println(e.getMessage());
       dataOutFile.delete();
@@ -110,7 +126,16 @@ class Crypt4GHUtils {
             .promptForConfirmation(dataOutFile.getAbsolutePath() + " already exists. Overwrite?")) {
       return;
     }
-    PrivateKey privateKey = readPrivateKey(privateKeyFilePath);
+    PrivateKey privateKey = null;
+    try {
+      privateKey = readPrivateKey(privateKeyFilePath);
+    } catch (java.nio.file.NoSuchFileException missingFileEx) {
+      throw new IllegalArgumentException(
+          "ERROR: Private key file not found: " + privateKeyFilePath);
+    } catch (javax.crypto.AEADBadTagException badTagEx) {
+      throw new IllegalArgumentException(
+          "ERROR: Unable to decrypt private key file. The password is probably wrong!");
+    }
     System.out.println("Decryption initialized...");
     try (FileInputStream inputStream = new FileInputStream(dataInFile);
         OutputStream outputStream = new FileOutputStream(dataOutFile);
@@ -118,6 +143,8 @@ class Crypt4GHUtils {
             new Crypt4GHInputStream(inputStream, privateKey)) {
       IOUtils.copyLarge(crypt4GHInputStream, outputStream);
       System.out.println("Done: " + dataOutFile.getAbsolutePath());
+    } catch (FileNotFoundException fileNotFoundEx) {
+      throw new IllegalArgumentException("ERROR: Input file not found: " + dataFilePath);
     } catch (GeneralSecurityException e) {
       System.err.println(e.getMessage());
       dataOutFile.delete();
