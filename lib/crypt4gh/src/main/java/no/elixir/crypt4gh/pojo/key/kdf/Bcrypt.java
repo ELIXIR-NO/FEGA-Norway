@@ -378,10 +378,6 @@ public final class Bcrypt {
 
     int clen = cdata.length;
 
-    // if (salt.length != BCrypt.SALT_LENGTH) {
-    //     throw new IllegalArgumentException("bad salt length");
-    // }
-
     int[] P = P_orig.clone();
     int[] S = S_orig.clone();
 
