@@ -11,6 +11,30 @@ updates:
     commit-message:
       prefix: "[GitHub Action]"
 
+  # e2eTests
+  - package-ecosystem: gradle
+    directory: "/e2eTests"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Oslo"
+    commit-message:
+      prefix: "[e2eTests]"
+  - package-ecosystem: docker
+    directory: "/e2eTests"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Oslo"
+    commit-message:
+      prefix: "[e2eTests]"
+
   # buildSrc
   - package-ecosystem: gradle
     directory: "/buildSrc"
@@ -89,6 +113,15 @@ updates:
       timezone: "Europe/Oslo"
     commit-message:
       prefix: "[TSD-API-mock]"
+  - package-ecosystem: docker
+    directory: "/services/tsd-api-mock"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Oslo"
+    commit-message:
+      prefix: "[TSD-API-mock]"
 
   ## localega-tsd-proxy
   - package-ecosystem: gradle
@@ -97,6 +130,15 @@ updates:
       all-modules:
         patterns:
           - "*"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Oslo"
+    commit-message:
+      prefix: "[Localega-TSD-Proxy]"
+  - package-ecosystem: docker
+    directory: "/services/localega-tsd-proxy"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -119,6 +161,15 @@ updates:
       timezone: "Europe/Oslo"
     commit-message:
       prefix: "[MQ-Interceptor]"
+  - package-ecosystem: docker
+    directory: "/services/mq-interceptor"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Oslo"
+    commit-message:
+      prefix: "[MQ-Interceptor]"
 
   ## CEGA-mock
   - package-ecosystem: gomod
@@ -127,6 +178,16 @@ updates:
       all-modules:
         patterns:
           - "*"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Oslo"
+    commit-message:
+      prefix: "[CEGA-mock]"
+
+  - package-ecosystem: docker
+    directory: "/services/cega-mock"
     schedule:
       interval: "weekly"
       day: "monday"
