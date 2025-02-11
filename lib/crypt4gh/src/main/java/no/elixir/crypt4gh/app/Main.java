@@ -94,6 +94,8 @@ public class Main {
       }
     } catch (ParseException exp) {
       System.err.println(exp.getMessage());
+    } catch (IllegalArgumentException ex) {
+      System.err.println(ex.getMessage());
     }
   }
 

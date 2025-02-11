@@ -1,6 +1,5 @@
 package no.elixir.crypt4gh.util;
 
-import static at.favre.lib.crypto.bcrypt.BCrypt.SALT_LENGTH;
 import static no.elixir.crypt4gh.pojo.header.X25519ChaCha20IETFPoly1305HeaderPacket.CHA_CHA_20_POLY_1305;
 import static no.elixir.crypt4gh.pojo.header.X25519ChaCha20IETFPoly1305HeaderPacket.NONCE_SIZE;
 
@@ -32,6 +31,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 /** A bunch of methods for generating/constructing/reading/writing/deriving keys. */
 public class KeyUtils {
+
+  public static final int SALT_LENGTH = 16;
 
   public static final String CHA_CHA_20 = "ChaCha20";
   public static final String X25519 = "X25519";
