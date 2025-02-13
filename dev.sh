@@ -171,7 +171,7 @@ function show_menu() {
       9) apply_all_spotless_checks; break;;
       10) rebuild_and_deploy_heartbeat_sub; break;;
       11) rebuild_and_deploy_heartbeat_pub; break;;
-      12) replace_root_ca; break;;
+      12) replace_root_ca file-orchestrator /storage/certs/rootCA.pem fega; break;;
       13) echo "Exiting..."; exit 0;;
       *) echo "Invalid option. Please try again.";;
     esac
