@@ -2,49 +2,73 @@
 
 cd confs || exit 1
 
+# proxy
+chmod -R 0640 /volumes/proxy-certs/*
+chmod 755 /volumes/proxy-certs/jwt /volumes/proxy-certs/ssl /volumes/proxy-certs/store
+echo "Inspecting /volumes/proxy-certs"
+ls -alh /volumes/proxy-certs
+echo
+
  # mq
 cp -R ./mq/* /volumes/mq-confs-and-certs/
 chmod -R 0640 /volumes/mq-confs-and-certs
 chown -R 100:101 /volumes/mq-confs-and-certs
 echo "Inspecting /volumes/mq-confs-and-certs/"
 ls -alh /volumes/mq-confs-and-certs/
-echo "\n\n"
+echo
 
 # heartbeat-pub
 cp -R ./heartbeat-pub/* /volumes/heartbeat-pub-confs
 echo "Inspecting /volumes/heartbeat-pub-confs"
 ls -alh /volumes/heartbeat-pub-confs
-echo "\n\n"
+echo
 
 # postgres
 cp -R ./postgres/* /volumes/postgres-confs/
 chown -R 999:999 /volumes/postgres-confs
+chmod 755 /volumes/postgres-confs
 find /volumes/postgres-confs/ -type f -name '*.sh' -exec chmod 700 {} \;
 echo "Inspecting /volumes/postgres-confs/"
 ls -alh /volumes/postgres-confs/
-echo "\n\n"
+echo
 
 # cegamq
 cp -R ./cegamq/* /volumes/cegamq-confs
-chmod -R 0640 /volumes/cegamq-confs/*
-chown -R 100:101 /volumes/cegamq-confs/*
-echo "Inspecting /volumes/cegamq-confs/"
+chmod -R 0640 /volumes/cegamq-certs/* /volumes/cegamq-confs/*
+chown -R 100:101 /volumes/cegamq-certs/* /volumes/cegamq-confs/*
+chmod 755 /volumes/cegamq-certs /volumes/cegamq-confs
+echo "Inspecting /volumes/cegamq-certs & /volumes/cegamq-confs/"
 ls -alh /volumes/cegamq-confs/
-echo "\n\n"
+ls -alh /volumes/cegamq-certs/
+echo
 
 # sda
-chmod -R 0644 /volumes/sda-certs
-chown -R nobody:nogroup /volumes/sda-certs/*
+chmod -R 0644 /volumes/sda-certs/
+chmod -R 0600 /volumes/db-client-certs/
+chown -R 65534:65534 /volumes/sda-certs/ /volumes/db-client-certs/
+chmod 755 /volumes/sda-certs
+chmod 755 /volumes/db-client-certs
 echo "Inspecting /volumes/sda-certs"
 ls -alh /volumes/sda-certs
-echo "\n\n"
+ls -alh /volumes/db-client-certs/
+echo
 
 # db
-chmod -R 0640 /volumes/db-data /volumes/db-certs
-echo "Inspecting /volumes/db-data AND /volumes/db-certs"
+chmod -R 600 /volumes/db-data /volumes/db-certs
+chown -R 70:70 /volumes/db-data /volumes/db-certs
+chmod 755 /volumes/db-certs
+echo "Inspecting /volumes/db-data & /volumes/db-certs"
 ls -alh /volumes/db-data
 ls -alh /volumes/db-certs
-echo "\n\n"
+echo
+
+# doa
+chmod -R 777 /volumes/doa-certs/
+chown -R 65534:65534 /volumes/doa-certs/
+chmod 755 /volumes/doa-certs/
+echo "Inspecting /volumes/db-data & /volumes/db-certs"
+ls -alh /volumes/doa-certs/
+echo
 
 cd .. # Go back to the working directory.
 

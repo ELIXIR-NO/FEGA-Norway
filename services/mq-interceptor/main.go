@@ -3,6 +3,7 @@ package main
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -17,15 +18,14 @@ import (
 
 // This interface serves as the supertype for both amqp.Channel and the MockChannel used for testing
 type MQChannel interface {
-        Ack(tag uint64, multiple bool) error
-        Nack(tag uint64, multiple bool, requeue bool) error
-        Reject(tag uint64, requeue bool) error
-        Publish(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error
+	Ack(tag uint64, multiple bool) error
+	Nack(tag uint64, multiple bool, requeue bool) error
+	Reject(tag uint64, requeue bool) error
+	Publish(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error
 }
 
 var db *sql.DB
 var publishMutex sync.Mutex
-
 
 // dialRabbitMQ attempts to connect to RabbitMQ up to 10 times
 // with a delay between retries. It returns a connection
@@ -39,8 +39,7 @@ func dialRabbitMQ(connectionString string) (*amqp.Connection, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Trying to dial host: %s [I will attempt to dial %d times with 2 seconds interval]", u.Hostname(), attempts)
-	log.Printf("Is TLS enabled? %t", os.Getenv("ENABLE_TLS") == "true")
+	log.Printf("Trying to dial host: %s [I will attempt to dial %d times with 10 seconds interval]", u.Hostname(), attempts)
 	for i := 0; i < attempts; i++ {
 		if os.Getenv("ENABLE_TLS") == "true" {
 			conn, err = amqp.DialTLS(connectionString, getTLSConfig())
@@ -52,7 +51,7 @@ func dialRabbitMQ(connectionString string) (*amqp.Connection, error) {
 			return conn, nil
 		}
 		log.Printf("Attempt %d: Failed to connect to RabbitMQ: %s\n", i+1, err)
-		time.Sleep(2 * time.Second) // Wait before retrying
+		time.Sleep(10 * time.Second) // Wait before retrying
 	}
 	// After all attempts, return the last error
 	return nil, err
@@ -65,9 +64,11 @@ func main() {
 	db, err = sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION"))
 	failOnError(err, "Failed to connect to DB")
 
+	log.Printf("Is TLS enabled? %t", os.Getenv("ENABLE_TLS") == "true")
+
 	legaMqConnString := os.Getenv("LEGA_MQ_CONNECTION")
 	legaMQ, err := dialRabbitMQ(legaMqConnString)
-    failOnError(err, "Failed to connect to LEGA queue after many attempts")
+	failOnError(err, "Failed to connect to LEGA queue after many attempts")
 	legaConsumeChannel, err := legaMQ.Channel()
 	failOnError(err, "Failed to create LEGA consume RabbitMQ channel")
 	legaPublishChannel, err := legaMQ.Channel()
@@ -80,7 +81,7 @@ func main() {
 
 	cegaMqConnString := os.Getenv("CEGA_MQ_CONNECTION")
 	cegaMQ, err := dialRabbitMQ(cegaMqConnString)
-    failOnError(err, "Failed to connect to CEGA queue after many attempts")
+	failOnError(err, "Failed to connect to CEGA queue after many attempts")
 	cegaConsumeChannel, err := cegaMQ.Channel()
 	failOnError(err, "Failed to create CEGA consume RabbitMQ channel")
 	cegaPublishChannel, err := cegaMQ.Channel()
@@ -254,13 +255,22 @@ func selectEgaIdByElixirId(elixirId string) (egaId string, err error) {
 }
 
 func getTLSConfig() *tls.Config {
-	tlsConfig := tls.Config{}
-	if os.Getenv("VERIFY_CERT") == "true" {
-		tlsConfig.InsecureSkipVerify = false
-	} else {
-		tlsConfig.InsecureSkipVerify = true
+	caCertPath := os.Getenv("CA_CERT_PATH")
+	if caCertPath == "" {
+		log.Fatal("CA_CERT_PATH environment variable not set")
 	}
-	return &tlsConfig
+	caCert, err := os.ReadFile(caCertPath)
+	if err != nil {
+		log.Fatalf("Failed to read CA certificate: %v", err)
+	}
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCert) {
+		log.Fatal("Failed to add CA certificate to pool")
+	}
+	return &tls.Config{
+		RootCAs:            caCertPool,
+		InsecureSkipVerify: false,
+	}
 }
 
 func failOnError(err error, msg string) {

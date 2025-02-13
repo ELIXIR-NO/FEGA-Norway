@@ -1,0 +1,647 @@
+name: fega-norway
+
+services:
+
+  # TSD
+
+  tsd:
+    container_name: tsd
+    hostname: tsd
+    image: tsd-api-mock:latest
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+    ports:
+      - "5006:5006" # This is the JDWP debug port. See command below.
+    build: ../services/tsd-api-mock
+    volumes:
+      - tsd-inbox:/tsd/p11/data/durable/apps/ega/
+      - tsd-certs:/etc/jwt/public_keys/
+      - tsd-certs:/etc/ega/ssl/
+    command: # See services/tsd-api-mock/Dockerfile
+      - "java"
+      - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
+      - "-XX:+UseG1GC"
+      - "-jar"
+      - "app.jar"
+
+  mq:
+    container_name: mq
+    hostname: mq
+    image: rabbitmq:3.12.13-management-alpine
+    ports:
+      - "5671:5671"
+      - "15671:15671"
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+    volumes:
+      - mq-confs-and-certs:/etc/rabbitmq
+    command: sh -c "rabbitmq-plugins enable --offline rabbitmq_federation rabbitmq_federation_management rabbitmq_shovel rabbitmq_shovel_management && rabbitmq-server"
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "5671" ]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+
+  # PROXY
+
+  proxy:
+    container_name: proxy
+    hostname: proxy
+    image: tsd-proxy:latest
+    build: ../services/localega-tsd-proxy
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+      tsd:
+        condition: service_started
+      mq:
+        condition: service_healthy
+      cegamq:
+        condition: service_started
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+    links:
+      - tsd
+      - mq
+      - cegamq
+      - postgres
+      - redis
+    ports:
+      - "10443:8080"
+      - "5005:5005" # This is the JDWP debug port. See command below.
+    environment:
+      - SSL_ENABLED=true
+      - TSD_SECURE=false
+      - DB_PORT=5432
+      - ROOT_CERT_PASSWORD=r00t_cert_passw0rd
+      - TSD_ROOT_CERT_PASSWORD=r00t_cert_passw0rd
+      - SERVER_CERT_PASSWORD=server_cert_passw0rd
+      - CLIENT_ID=test
+      - CLIENT_SECRET=test
+      - BROKER_HOST=cegamq
+      - BROKER_PORT=5673
+      - BROKER_USERNAME=test
+      - BROKER_PASSWORD=test
+      - BROKER_VHOST=lega
+      - BROKER_VALIDATE=
+      - BROKER_SSL_ENABLED=
+      - EXCHANGE=localega
+      - CEGA_AUTH_URL=http://cegaauth:8443/username/
+      - CEGA_USERNAME=dummy
+      - CEGA_PASSWORD=dummy
+      - TSD_HOST=tsd:8080
+      - TSD_ACCESS_KEY=s0me_key
+      - POSTGRES_PASSWORD=p0stgres_passw0rd
+      - ADMIN_USER=admin
+      - ADMIN_PASSWORD=aDm!n_01x.
+    volumes:
+      - proxy-certs:/etc/ega/
+      #- custom_path:/app/static/ # Serves from a directory
+    command: # See services/localega-tsd-proxy/Dockerfile
+      - "java"
+      - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+      - "-XX:+UseG1GC"
+      - "-jar"
+      - "app.jar"
+
+  interceptor:
+    container_name: interceptor
+    hostname: interceptor
+    image: mq-interceptor:latest
+    build: ../services/mq-interceptor
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+      cegamq:
+        condition: service_started
+      mq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+    environment:
+      - POSTGRES_CONNECTION=postgres://postgres:p0stgres_passw0rd@postgres:5432/postgres?sslmode=disable
+      - CEGA_MQ_CONNECTION=amqps://test:test@cegamq:5673/lega
+      - CEGA_MQ_EXCHANGE=localega
+      - CEGA_MQ_QUEUE=v1.files
+      - LEGA_MQ_CONNECTION=amqps://admin:guest@mq:5671/test
+      - LEGA_MQ_EXCHANGE=sda
+      - LEGA_MQ_QUEUE=files
+      - ENABLE_TLS=true
+      - CA_CERT_PATH=/certs/CA.cert
+    volumes:
+      - interceptor-certs:/certs
+
+  postgres:
+    container_name: postgres
+    hostname: postgres
+    image: postgres
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+    environment:
+      - POSTGRES_PASSWORD=p0stgres_passw0rd
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/
+      - postgres-confs:/docker-entrypoint-initdb.d/
+
+  # SDA
+
+  db:
+    container_name: db
+    hostname: db
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-35dea75105d52f45edf23cdefd81944f7272c8cc-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=sda
+      - PGDATA=/var/lib/postgresql/data
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=ro0tpasswd
+      - POSTGRES_SERVER_CERT=/etc/ega/pg.pem
+      - POSTGRES_SERVER_KEY=/etc/ega/pg-server.pem
+      - POSTGRES_SERVER_CACERT=/etc/ega/CA.pem
+      - POSTGRES_VERIFY_PEER=verify-ca
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - db-certs:/etc/ega/
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "postgres" ]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+
+  ingest:
+    container_name: ingest
+    hostname: ingest
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-35dea75105d52f45edf23cdefd81944f7272c8cc
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+      - db
+    environment:
+      - ARCHIVE_TYPE=posix
+      - ARCHIVE_LOCATION=/ega/archive
+      - BROKER_HOST=mq
+      - BROKER_PORT=5671
+      - BROKER_USER=admin
+      - BROKER_PASSWORD=guest
+      - BROKER_VHOST=test
+      - BROKER_QUEUE=ingest
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGKEY=archived
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - C4GH_PASSPHRASE=key_passw0rd
+      - C4GH_FILEPATH=/etc/ega/ega.sec
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=ro0tpasswd
+      - DB_DATABASE=sda
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/db-client-certs/client.cert
+      - DB_CLIENTKEY=/db-client-certs/client-key.cert
+      - INBOX_TYPE=posix
+      - INBOX_LOCATION=/ega/inbox
+      - LOG_LEVEL=debug
+    volumes:
+      - tsd-inbox:/ega/inbox/
+      - tsd-vault:/ega/archive/
+      - sda-certs:/etc/ega/
+      - db-client-certs:/db-client-certs
+    command: "sda-ingest"
+
+  verify:
+    container_name: verify
+    hostname: verify
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-35dea75105d52f45edf23cdefd81944f7272c8cc
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+      - db
+    environment:
+      - ARCHIVE_TYPE=posix
+      - ARCHIVE_LOCATION=/ega/archive
+      - BROKER_HOST=mq
+      - BROKER_PORT=5671
+      - BROKER_USER=admin
+      - BROKER_PASSWORD=guest
+      - BROKER_VHOST=test
+      - BROKER_QUEUE=archived
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGKEY=verified
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - C4GH_PASSPHRASE=key_passw0rd
+      - C4GH_FILEPATH=/etc/ega/ega.sec
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=ro0tpasswd
+      - DB_DATABASE=sda
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/db-client-certs/client.cert
+      - DB_CLIENTKEY=/db-client-certs/client-key.cert
+      - INBOX_LOCATION=/ega/inbox
+      - LOG_LEVEL=debug
+    volumes:
+      - tsd-inbox:/ega/inbox/
+      - tsd-vault:/ega/archive/
+      - sda-certs:/etc/ega/
+      - db-client-certs:/db-client-certs
+    command: "sda-verify"
+
+  finalize:
+    container_name: finalize
+    hostname: finalize
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-35dea75105d52f45edf23cdefd81944f7272c8cc
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+      - db
+    environment:
+      - BROKER_HOST=mq
+      - BROKER_PORT=5671
+      - BROKER_USER=admin
+      - BROKER_PASSWORD=guest
+      - BROKER_VHOST=test
+      - BROKER_QUEUE=accessionIDs
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGKEY=completed
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=ro0tpasswd
+      - DB_DATABASE=sda
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/db-client-certs/client.cert
+      - DB_CLIENTKEY=/db-client-certs/client-key.cert
+      - LOG_LEVEL=debug
+    command: "sda-finalize"
+    volumes:
+      - sda-certs:/etc/ega/
+      - db-client-certs:/db-client-certs
+
+  mapper:
+    container_name: mapper
+    hostname: mapper
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-35dea75105d52f45edf23cdefd81944f7272c8cc
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+      - db
+    environment:
+      - BROKER_HOST=mq
+      - BROKER_PORT=5671
+      - BROKER_USER=admin
+      - BROKER_PASSWORD=guest
+      - BROKER_VHOST=test
+      - BROKER_QUEUE=mappings
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=ro0tpasswd
+      - DB_DATABASE=sda
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/db-client-certs/client.cert
+      - DB_CLIENTKEY=/db-client-certs/client-key.cert
+      - LOG_LEVEL=debug
+      - INBOX_LOCATION=/ega/inbox
+    volumes:
+      - tsd-inbox:/ega/inbox
+      - sda-certs:/etc/ega/
+      - db-client-certs:/db-client-certs
+    command: "sda-mapper"
+
+  intercept:
+    container_name: intercept
+    hostname: intercept
+    image: ghcr.io/neicnordic/sensitive-data-archive:sha-35dea75105d52f45edf23cdefd81944f7272c8cc
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    environment:
+      - BROKER_HOST=mq
+      - BROKER_PORT=5671
+      - BROKER_USER=admin
+      - BROKER_PASSWORD=guest
+      - BROKER_QUEUE=files
+      - BROKER_VHOST=test
+      - BROKER_EXCHANGE=sda
+      - BROKER_ROUTINGERROR=error
+      - BROKER_SSL=true
+      - BROKER_VERIFYPEER=true
+      - BROKER_CACERT=/etc/ega/CA.cert
+      - BROKER_CLIENTCERT=/etc/ega/client.cert
+      - BROKER_CLIENTKEY=/etc/ega/client-key.cert
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=ro0tpasswd
+      - DB_DATABASE=sda
+      - DB_SSLMODE=require
+      - DB_CLIENTCERT=/db-client-certs/client.cert
+      - DB_CLIENTKEY=/db-client-certs/client-key.cert
+      - LOG_LEVEL=debug
+    links:
+      - mq
+      - db
+      - ingest
+      - verify
+      - finalize
+      - mapper
+    volumes:
+      - sda-certs:/etc/ega/
+      - db-client-certs:/db-client-certs
+    command: "sda-intercept"
+
+
+  # Out
+
+  doa:
+    container_name: doa
+    hostname: doa
+    image: ghcr.io/neicnordic/sda-doa:v1.6.175
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+      - db
+    ports:
+      - "80:8080"
+      - "8088:8088"
+    environment:
+      - SSL_MODE=require # PG SSL MODE
+      - SSL_ENABLED=true
+      - ARCHIVE_PATH=/ega/archive/
+      - DB_INSTANCE=db
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=sda
+      - POSTGRES_PASSWORD=ro0tpasswd
+      - OUTBOX_ENABLED=false
+      - KEYSTORE_PASSWORD=server_cert_passw0rd
+    volumes:
+      - tsd-vault:/ega/archive/
+      - doa-certs:/etc/ega/
+    command:
+      - "java"
+      - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8088"
+      - "-jar"
+      - "/localega-doa.jar"
+
+  # CEGA
+
+  cegamq:
+    container_name: cegamq
+    hostname: cegamq
+    image: rabbitmq:3.12.13-management-alpine
+    environment:
+      - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/conf/cega
+      - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/conf/cega.plugins
+      - RABBITMQ_NODE_PORT=5673
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+    ports:
+      - "5673:5673"
+      - "15672:15672"
+      - "25672:15672"
+    volumes:
+      - cegamq-confs:/etc/rabbitmq/conf
+      - cegamq-certs:/etc/rabbitmq/ssl
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bash",
+          "-c",
+          "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms"
+        ]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+    command: sh -c "rabbitmq-server"
+
+  cegaauth:
+    container_name: cegaauth
+    hostname: cegaauth
+    image: cega-mock:latest
+    build: ../services/cega-mock
+    command:
+      [
+        "/app/cega-mock",
+        "0.0.0.0",
+        "8443"
+      ]
+    environment:
+      - CEGA_USERS_PASSWORD=dummy
+      - CEGA_USERS_USER=dummy
+    ports:
+      - "8443:8443"
+
+
+  # Heartbeat
+
+  heartbeat-pub:
+    container_name: heartbeat-pub
+    hostname: heartbeat-pub
+    image: ghcr.io/elixir-no/pipeline-heartbeat:latest
+    environment:
+      - HEARTBEAT_MODE=publisher
+      - RABBITMQ_HOST=mq
+      - RABBITMQ_PORT=5671
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_VHOST=test
+      - RABBITMQ_EXCHANGE=sda
+      - RABBITMQ_QUEUE=heartbeat
+      - RABBITMQ_ROUTING_KEY=sda_heartbeat
+      - RABBITMQ_TLS=false
+      - RABBITMQ_CA_CERT_PATH=
+      - RABBITMQ_TLS_PORT=5671
+      - PUBLISH_INTERVAL=60
+      - RABBITMQ_MANAGEMENT_PORT=15671
+      - PUBLISHER_CONFIG_PATH=/app/publisher_config.json
+    volumes:
+      - heartbeat-pub-confs:/app/
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    links:
+      - mq
+
+  heartbeat-sub:
+    container_name: heartbeat-sub
+    hostname: heartbeat-sub
+    image: ghcr.io/elixir-no/pipeline-heartbeat:latest
+    environment:
+      - HEARTBEAT_MODE=subscriber
+      - RABBITMQ_HOST=mq
+      - RABBITMQ_PORT=5671
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_VHOST=test
+      - RABBITMQ_EXCHANGE=sda
+      - RABBITMQ_QUEUE=heartbeat
+      - RABBITMQ_ROUTING_KEY=sda_heartbeat
+      - RABBITMQ_TLS=false
+      - RABBITMQ_CA_CERT_PATH=
+      - RABBITMQ_TLS_PORT=5671
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    links:
+      - mq
+      - redis
+
+  redis:
+    container_name: redis
+    hostname: redis
+    image: redis:alpine
+    depends_on:
+      file-orchestrator:
+        condition: service_healthy
+    ports:
+      - "6379:6379"
+
+
+  # Local file orchestrator
+
+  file-orchestrator:
+    container_name: file-orchestrator
+    build:
+      context: .
+      dockerfile: file-orchestrator.Dockerfile
+    volumes:
+      - tsd-inbox:/volumes/tsd-inbox
+      - tsd-vault:/volumes/tsd-vault
+      - tsd-certs:/volumes/tsd-certs
+      - interceptor-certs:/volumes/interceptor-certs
+      - mq-confs-and-certs:/volumes/mq-confs-and-certs
+      - proxy-certs:/volumes/proxy-certs
+      - postgres-data:/volumes/postgres-data
+      - postgres-confs:/volumes/postgres-confs
+      - db-data:/volumes/db-data
+      - db-certs:/volumes/db-certs
+      - db-client-certs:/volumes/db-client-certs
+      - sda-certs:/volumes/sda-certs
+      - doa-certs:/volumes/doa-certs
+      - cegamq-certs:/volumes/cegamq-certs
+      - cegamq-confs:/volumes/cegamq-confs
+      - heartbeat-pub-confs:/volumes/heartbeat-pub-confs
+      - storage:/storage
+    healthcheck:
+      test: [ "CMD", "sh", "-c", "[ -f /storage/ready ]" ]  # Check for the ready file
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+
+  # E2E Setup
+
+  e2e-tests:
+    container_name: e2e-tests
+    hostname: e2e_tests
+    build:
+      context: .
+      dockerfile: e2e-tests.Dockerfile
+    depends_on:
+      proxy:
+        condition: service_started
+      doa:
+        condition: service_started
+      cegamq:
+        condition: service_started
+      db:
+        condition: service_started
+    volumes:
+      - storage:/storage
+
+volumes:
+  tsd-inbox:
+  tsd-vault:
+  tsd-certs:
+  interceptor-certs:
+  mq-confs-and-certs:
+  proxy-certs:
+  postgres-data:
+  postgres-confs:
+  db-client-certs:
+  db-certs:
+  db-data:
+  sda-certs:
+  doa-certs:
+  cegamq-certs:
+  cegamq-confs:
+  heartbeat-pub-confs:
+  storage:

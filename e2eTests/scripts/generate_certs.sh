@@ -10,31 +10,31 @@ echo "CAROOT is $(mkcert -CAROOT)"
 
 # Step 2: Generate SSL/TLS certificates for
 # localhost and other services
-mkcert localhost db vault mq tsd proxy
+mkcert localhost db vault mq tsd proxy cegamq
 
 # Step 3: Generate the client certificates for
 # localhost and other services
-mkcert -client localhost db vault mq tsd proxy
+mkcert -client localhost db vault mq tsd proxy cegamq
 
 # Step 4: Export SSL/TLS certificates and
 # private keys to PKCS#12 format
 openssl pkcs12 -export \
-  -out localhost+5.p12 \
-  -in localhost+5.pem \
-  -inkey localhost+5-key.pem -passout pass:"${SERVER_CERT_PASSWORD}"
+  -out localhost+6.p12 \
+  -in localhost+6.pem \
+  -inkey localhost+6-key.pem -passout pass:"${SERVER_CERT_PASSWORD}"
 openssl pkcs12 -export \
-  -out localhost+5-client.p12 \
-  -in localhost+5-client.pem \
-  -inkey localhost+5-client-key.pem \
+  -out localhost+6-client.p12 \
+  -in localhost+6-client.pem \
+  -inkey localhost+6-client-key.pem \
   -passout pass:"${CLIENT_CERT_PASSWORD}"
 
-# Step 5: Convert client key to DER format
+# Step 5: Convert client key to DER format openssl pkcs8 -topk8 -inform PEM -in client-key.pem -outform PEM -nocrypt -out client-key-pkcs8.pem
 openssl pkcs8 -topk8 \
   -inform PEM \
-  -in localhost+5-client-key.pem \
+  -in localhost+6-client-key.pem \
   -outform DER \
   -nocrypt \
-  -out localhost+5-client-key.der
+  -out localhost+6-client-key.der
 
 # Step 6: Generate JWT private and public keys
 openssl genpkey -algorithm RSA \
@@ -54,6 +54,13 @@ cp "$(mkcert -CAROOT)/rootCA.pem" rootCA.pem
 cp "$(mkcert -CAROOT)/rootCA-key.pem" rootCA-key.pem
 chmod 600 rootCA-key.pem
 
+keytool -importcert -trustcacerts -noprompt \
+  -alias rootCA \
+  -file rootCA.pem \
+  -keystore "truststore.p12" \
+  -storetype PKCS12 \
+  -storepass "changeit"
+
 # Step 10: Export root CA certificate to PKCS#12 format
 openssl pkcs12 -export \
   -out rootCA.p12 \
@@ -62,13 +69,13 @@ openssl pkcs12 -export \
   -passout pass:${ROOT_CERT_PASSWORD}
 
 # Step 11: Rename server and client certificates
-cp localhost+5.pem server.pem
-cp localhost+5-key.pem server-key.pem
-cp localhost+5.p12 server.p12
-cp localhost+5-client.pem client.pem
-cp localhost+5-client-key.pem client-key.pem
-cp localhost+5-client-key.der client-key.der
-cp localhost+5-client.p12 client.p12
+cp localhost+6.pem server.pem
+cp localhost+6-key.pem server-key.pem
+cp localhost+6.p12 server.p12
+cp localhost+6-client.pem client.pem
+cp localhost+6-client-key.pem client-key.pem
+cp localhost+6-client-key.der client-key.der
+cp localhost+6-client.p12 client.p12
 
 # Step 12: Move certificates to relevant folders
 
@@ -83,6 +90,10 @@ cp rootCA.pem /volumes/tsd-certs/CA.cert &&
   cp server.p12 /volumes/tsd-certs/server.cert &&
   cp jwt.pub.pem /volumes/tsd-certs/elixir_aai.pem
 
+# interceptor
+mkdir -p /volumes/interceptor-certs/ &&
+  cp rootCA.pem /volumes/interceptor-certs/CA.cert
+
 # mq
 #   /etc/rabbitmq/ssl/server.pem
 #   /etc/rabbitmq/ssl/server-key.pem
@@ -93,11 +104,12 @@ mkdir -p /volumes/mq-confs-and-certs/ssl &&
   cp rootCA.pem /volumes/mq-confs-and-certs/ssl/rootCA.pem
 
 # proxy
-mkdir -p /volumes/proxy-certs/ssl/ /volumes/proxy-certs/jwt/ &&
+mkdir -p /volumes/proxy-certs/ssl/ /volumes/proxy-certs/jwt/ /volumes/proxy-certs/store/ &&
   cp rootCA.p12 /volumes/proxy-certs/ssl/CA.cert &&
   cp server.p12 /volumes/proxy-certs/ssl/server.cert &&
   cp jwt.pub.pem /volumes/proxy-certs/jwt/passport.pem &&
-  cp jwt.pub.pem /volumes/proxy-certs/jwt/visa.pem
+  cp jwt.pub.pem /volumes/proxy-certs/jwt/visa.pem &&
+  cp truststore.p12 /volumes/proxy-certs/store/truststore.p12
 
 # db
 cp server.pem /volumes/db-certs/pg.pem &&
@@ -109,7 +121,10 @@ cp server.pem /volumes/db-certs/pg.pem &&
 cp rootCA.pem /volumes/sda-certs/CA.cert &&
   cp client.pem /volumes/sda-certs/client.cert &&
   cp client-key.pem /volumes/sda-certs/client-key.cert &&
-  cp ega.sec.pem /volumes/sda-certs/ega.sec
+  cp ega.sec.pem /volumes/sda-certs/ega.sec &&
+  mkdir -p /volumes/sda-certs/db &&
+  cp client.pem /volumes/db-client-certs/client.cert &&
+  cp client-key.pem /volumes/db-client-certs/client-key.cert
 
 # doa
 #      /etc/ega/ssl/CA.cert
@@ -121,6 +136,7 @@ cp rootCA.pem /volumes/sda-certs/CA.cert &&
 #      /etc/ega/crypt4gh/key.pass
 mkdir -p /volumes/doa-certs/ssl/ /volumes/doa-certs/jwt/ /volumes/doa-certs/crypt4gh/ &&
   cp rootCA.pem /volumes/doa-certs/ssl/CA.cert &&
+  cp server.p12 /volumes/doa-certs/ssl/server.cert &&
   cp client.pem /volumes/doa-certs/ssl/client.cert &&
   cp client-key.der /volumes/doa-certs/ssl/client.key &&
   cp jwt.pub.pem /volumes/doa-certs/jwt/passport.pem &&

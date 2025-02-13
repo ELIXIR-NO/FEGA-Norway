@@ -1,5 +1,5 @@
 # Use a lightweight base image with necessary tools
-FROM --platform=linux/amd64 ubuntu:latest
+FROM --platform=linux/amd64 eclipse-temurin:21-jdk-alpine
 
 # Specify the mkcert version you want to install
 ARG MKCERT_VERSION="v1.4.4"
@@ -8,11 +8,7 @@ ARG LOCAL_BIN="/usr/local/bin"
 WORKDIR /storage
 
 # Install required packages
-RUN apt-get update && apt-get install -y \
-    openssl \
-    bash \
-    curl \
-    && rm -rf /var/lib/apt/lists/*  # Clean up to reduce image size
+RUN apk update && apk add --no-cache openssl bash curl
 
 # Install mkcert
 RUN echo "Installing mkcert locally..." && \
