@@ -33,6 +33,17 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.jar {
+    manifest {
+        attributes(
+            "Implementation-Title" to project.name,
+            "Implementation-Version" to project.version,
+            "Implementation-Vendor" to "Elixir Norway",
+            "Main-Class" to "no.elixir.crypt4gh.app.Main"
+        )
+    }
+}
+
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
