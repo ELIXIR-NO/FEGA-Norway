@@ -22,17 +22,22 @@ public class CertificateUtils {
   public static File getFileInContainer(String containerNameOrId, String containerPath)
       throws Exception {
 
-    // Extract the file name and extension from the container path
+    // Extract the file name from the container path
     Path pathInContainer = Paths.get(containerPath);
-    String fileName =
-        pathInContainer
-            .getFileName()
-            .toString(); // Extracts "ega.pub.pem" from "/storage/certs/ega.pub.pem"
+    String fileName = pathInContainer.getFileName().toString();
 
-    // Create a temporary file with the extracted file name and extension
-    Path tempFilePath = Files.createTempFile(fileName, null);
+    // Define a tmp directory under the project root
+    Path projectTmpDir = Paths.get("tmp_2");
+    if (!Files.exists(projectTmpDir)) {
+      Files.createDirectories(projectTmpDir); // Ensure the directory exists
+    }
+
+    // Create a temporary file inside the project tmp directory
+    Path tempFilePath = projectTmpDir.resolve(fileName);
     File tempFile = tempFilePath.toFile();
-    tempFile.deleteOnExit(); // Ensure it gets deleted when JVM exits
+    tempFile.setReadable(true, true);
+    tempFile.setWritable(true, true);
+    // tempFile.deleteOnExit(); // Ensure it gets deleted when JVM exits
 
     // Define the Docker copy command
     String command =

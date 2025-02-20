@@ -22,7 +22,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Base64;
 import java.util.Properties;
 import java.util.Random;
@@ -139,7 +138,7 @@ public class IngestionTest {
     log.info("EGA_BOX_USERNAME: {}", env.getEga_box_username());
     String uploadURL =
         String.format(
-            "http://%s:%s/stream/%s?md5=%s",
+            "https://%s:%s/stream/%s?md5=%s",
             env.getProxy_host(), env.getProxy_port(), encFile.getName(), md5Hex);
     JsonNode jsonResponse =
         Unirest.patch(uploadURL)
@@ -153,7 +152,7 @@ public class IngestionTest {
     log.info("Upload ID: {}", uploadId);
     String finalizeURL =
         String.format(
-            "http://%s:%s/stream/%s?uploadId=%s&chunk=end&sha256=%s&fileSize=%s",
+            "https://%s:%s/stream/%s?uploadId=%s&chunk=end&sha256=%s&fileSize=%s",
             env.getProxy_host(),
             env.getProxy_port(),
             encFile.getName(),
@@ -235,8 +234,11 @@ public class IngestionTest {
   }
 
   @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
-  private void verifyAfterFinalizeAndLookUpAccessionID() throws SQLException {
+  private void verifyAfterFinalizeAndLookUpAccessionID() throws Exception {
     log.info("Starting verification of state after finalize step...");
+    File rootCA = getCertificateFile("rootCA.pem");
+    File client = getCertificateFile("client.pem");
+    File clientKey = getCertificateFile("client-key.der");
     String url =
         String.format(
             "jdbc:postgresql://%s:%s/%s",
@@ -245,6 +247,13 @@ public class IngestionTest {
     props.setProperty("user", env.getSda_db_username());
     props.setProperty("password", env.getSda_db_password());
     props.setProperty("application_name", "LocalEGA");
+    props.setProperty("sslmode", "verify-full");
+    props.setProperty("sslcert", client.getAbsolutePath());
+    //        props.setProperty("sslcert", "tmp/client.pem"/*client.getAbsolutePath()*/);
+    props.setProperty("sslkey", clientKey.getAbsolutePath());
+    //        props.setProperty("sslkey", "tmp/client-key.pem" /*clientKey.getAbsolutePath()*/);
+    props.setProperty("sslrootcert", rootCA.getAbsolutePath());
+    //        props.setProperty("sslrootcert", "tmp/rootCA.pem" /*rootCA.getAbsolutePath()*/);
     java.sql.Connection conn = DriverManager.getConnection(url, props);
     String sql =
         "select archive_path,stable_id from local_ega.files where status = 'READY' AND inbox_path = ?";
@@ -322,7 +331,8 @@ public class IngestionTest {
     String datasets =
         Unirest.get(
                 String.format(
-                    "http://%s:%s/metadata/datasets", env.getSda_doa_host(), env.getSda_doa_port()))
+                    "https://%s:%s/metadata/datasets",
+                    env.getSda_doa_host(), env.getSda_doa_port()))
             .header("Authorization", "Bearer " + token)
             .asString()
             .getBody();
@@ -342,7 +352,7 @@ public class IngestionTest {
         toCompactJson(
             Unirest.get(
                     String.format(
-                        "http://%s:%s/metadata/datasets/%s/files",
+                        "https://%s:%s/metadata/datasets/%s/files",
                         env.getSda_doa_host(), env.getSda_doa_port(), datasetId))
                 .header("Authorization", "Bearer " + token)
                 .asString()
@@ -355,7 +365,7 @@ public class IngestionTest {
     HttpResponse<byte[]> response =
         Unirest.get(
                 String.format(
-                    "http://%s:%s/files/%s",
+                    "https://%s:%s/files/%s",
                     env.getSda_doa_host(), env.getSda_doa_port(), stableId))
             .header("Authorization", "Bearer " + token)
             .asBytes();
@@ -374,7 +384,7 @@ public class IngestionTest {
     HttpResponse<byte[]> encFileRes =
         Unirest.get(
                 String.format(
-                    "http://%s:%s/files/%s?destinationFormat=CRYPT4GH",
+                    "https://%s:%s/files/%s?destinationFormat=CRYPT4GH",
                     env.getSda_doa_host(), env.getSda_doa_port(), stableId))
             .header("Authorization", "Bearer " + token)
             .header("Public-Key", key)
@@ -473,3 +483,10 @@ public class IngestionTest {
     encFile.delete();
   }
 }
+
+// keytool -list -v -keystore $JAVA_HOME/lib/security/cacerts
+// docker cp file-orchestrator:/storage/certs/rootCA.pem .
+// keytool -delete -alias fega -keystore $JAVA_HOME/lib/security/cacerts
+// keytool -import -trustcacerts -file rootCA.pem -alias fega -keystore
+// $JAVA_HOME/lib/security/cacerts
+// replace_rootca file-orchestrator /storage/certs/rootCA.pem fega

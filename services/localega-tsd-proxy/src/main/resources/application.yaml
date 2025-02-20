@@ -1,13 +1,44 @@
-server.ssl:
-  enabled: ${SSL_ENABLED:true}
-  key-store-type: PKCS12
-  key-store: file:${SERVER_KEYSTORE_PATH:/etc/ega/ssl/server.cert}
-  key-store-password: ${SERVER_CERT_PASSWORD}
+spring.rabbitmq:
+  host: ${BROKER_HOST:public-mq}
+  port: ${BROKER_PORT:5671}
+  virtual-host: ${BROKER_VHOST:/}
+  username: ${BROKER_USERNAME:admin}
+  password: ${BROKER_PASSWORD:guest}
+  ssl:
+    validate-server-certificate: true
+    enabled: true
+    algorithm: TLSv1.2
+    key-store: file:/etc/ega/ssl/server_with_ca.p12
+    key-store-password: ${SERVER_CERT_PASSWORD}
+    key-store-type: PKCS12
+    trust-store-type: PKCS12
+    trust-store: file:/etc/ega/ssl/truststore.p12
+    trust-store-password: changeit
+
+#logging:
+#  level:
+#    org.springframework.boot.autoconfigure.ssl: DEBUG
+#    org.apache.tomcat.util.net: DEBUG
 
 spring:
 
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+#  ssl:
+#    bundle:
+#      jks:
+#        default_bundle:
+#          key:
+#            alias: "1"
+##          truststore:
+##            location: file:/etc/ega/store/truststore.p12
+##            password: "changeit"
+##            type: "PKCS12"
+#          keystore:
+#            location: file:/etc/ega/store/keystore.jks
+#            password: ${SERVER_CERT_PASSWORD}
+#            type: "JKS"
+
+#  autoconfigure:
+#    exclude: org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
 
   main:
     allow-circular-references: true
@@ -39,24 +70,32 @@ spring:
   cache:
     type: simple
 
-  rabbitmq:
-    connections:
-      cega:
-        host: ${BROKER_HOST:public-mq}
-        port: ${BROKER_PORT:5671}
-        virtual-host: ${BROKER_VHOST:/}
-        username: ${BROKER_USERNAME:admin}
-        password: ${BROKER_PASSWORD:guest}
-        ssl:
-          validate-server-certificate: ${BROKER_VALIDATE:true}
-          enabled: ${BROKER_SSL_ENABLED:true}
-          algorithm: TLSv1.2
-      tsd:
-        host: ${TSD_MQ_HOST:mq}
-        port: ${TSD_MQ_PORT:5671}
-        virtual-host: ${TSD_MQ_VHOST:/}
-        username: ${TSD_MQ_USERNAME:admin}
-        password: ${TSD_MQ_PASSWORD:admin}
+#  rabbitmq:
+#    connections:
+#      cega:
+#        host: ${BROKER_HOST:public-mq}
+#        port: ${BROKER_PORT:5671}
+#        virtual-host: ${BROKER_VHOST:/}
+#        username: ${BROKER_USERNAME:admin}
+#        password: ${BROKER_PASSWORD:guest}
+#        ssl:
+#          validate-server-certificate: true
+#          enabled: true
+#          algorithm: TLSv1.3
+#          trust-store: file:/etc/ega/store/truststore.p12
+#          trust-store-password: changeit
+#      tsd:
+#        host: ${TSD_MQ_HOST:mq}
+#        port: ${TSD_MQ_PORT:5671}
+#        virtual-host: ${TSD_MQ_VHOST:/}
+#        username: ${TSD_MQ_USERNAME:admin}
+#        password: ${TSD_MQ_PASSWORD:admin}
+#        ssl:
+#          validate-server-certificate: true
+#          enabled: true
+#          algorithm: TLSv1.3
+#          trust-store: file:/etc/ega/store/truststore.p12
+#          trust-store-password: changeit
 
   security:
     user:
@@ -106,3 +145,12 @@ heartbeat:
   ok_if_ok_is_after_failed_and_diff_in_minutes_ge: 10
   not_ok_if_failed_is_after_ok_and_diff_in_minutes_ge: 3
 
+server.ssl:
+  enabled: ${SSL_ENABLED:true}
+  key-store-type: PKCS12
+  key-store: file:/etc/ega/ssl/server_with_ca.p12
+  key-store-password: ${SERVER_CERT_PASSWORD}
+  key-alias: myalias
+  trust-store-type: PKCS12
+  trust-store: file:/etc/ega/ssl/truststore.p12
+  trust-store-password: changeit
