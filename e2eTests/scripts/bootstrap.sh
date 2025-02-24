@@ -98,6 +98,7 @@ function apply_configs() {
   frepl "<<SDA_DB_HOST>>" "$SDA_DB_HOST" $f
   frepl "<<SDA_DB_DATABASE_NAME>>" "$SDA_DB_DATABASE_NAME" $f
   frepl "<<SDA_DB_PASSWORD>>" "$SDA_DB_PASSWORD" $f
+  frepl "<<KEYSTORE_PASSWORD>>" "$SERVER_CERT_PASSWORD" $f
 
 }
 

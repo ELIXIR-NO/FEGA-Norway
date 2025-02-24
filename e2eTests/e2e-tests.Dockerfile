@@ -8,6 +8,12 @@ WORKDIR /fega-norway
 COPY /build/libs/e2eTests.jar /fega-norway/e2eTests.jar
 COPY .env /fega-norway/.env
 
+#RUN keytool -importcert -file /storage/certs/rootCA.pem \
+#    -cacerts \
+#    -alias localhost-cert \
+#    -noprompt \
+#    -storepass changeit
+
 # Set the entry point to run the tests using java -cp for classpath
 # CMD ["java", "-cp", "/fega-norway/classes:/fega-norway/libs/*", "org.junit.platform.console.ConsoleLauncher", "--scan-classpath"]
 #java -jar e2eTests.jar --select-class no.elixir.e2eTests.IngestionTest

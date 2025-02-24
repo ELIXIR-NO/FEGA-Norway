@@ -68,8 +68,13 @@ tasks.register<Exec>("apply-configs") {
     commandLine("sh", "-c", "./scripts/bootstrap.sh check_requirements")
 }
 
-tasks.register<Exec>("start-docker-containers") {
+tasks.register<Exec>("generate-certificates") {
     dependsOn("apply-configs")
+    commandLine("sh", "-c", "./scripts/generate_certs.sh")
+}
+
+tasks.register<Exec>("start-docker-containers") {
+    dependsOn("generate-certificates")
     commandLine("docker", "compose", "up", "--pull", "always", "--build", "-d")
 }
 

@@ -112,10 +112,53 @@ function ask() {
     done
 }
 
+function replace_root_ca() {
+    local container_name="$1"
+    local cert_path_in_container="$2"
+    local alias_name="$3"
+    local keystore_path="$JAVA_HOME/lib/security/cacerts"
+    local keystore_password="changeit"
+    local temp_cert_file="temp_rootCA.pem"
+
+    # Check if required arguments are provided
+    if [[ -z "$container_name" || -z "$cert_path_in_container" || -z "$alias_name" ]]; then
+        echo "Usage: update_cert_in_keystore <container_name> <cert_path_in_container> <alias_name>"
+        return 1
+    fi
+
+    # Step 1: Copy the certificate from the Docker container
+    echo "Copying certificate from container..."
+    docker cp "$container_name:$cert_path_in_container" "$temp_cert_file"
+    if [[ $? -ne 0 ]]; then
+        echo "Failed to copy certificate from container."
+        return 1
+    fi
+
+    # Step 2: Delete the existing certificate alias if it exists
+    echo "Deleting existing certificate alias (if exists)..."
+    sudo keytool -delete -alias "$alias_name" -keystore "$keystore_path" -storepass "$keystore_password" 2>/dev/null
+
+    # Step 3: Import the new certificate
+    echo "Importing the new certificate..."
+    sudo keytool -import -trustcacerts -file "$temp_cert_file" -alias "$alias_name" -keystore "$keystore_path" -storepass "$keystore_password" -noprompt
+    if [[ $? -ne 0 ]]; then
+        echo "Failed to import the certificate."
+        rm -f "$temp_cert_file"
+        return 1
+    fi
+
+    # Step 4: Clean up temporary certificate file
+    echo "Cleaning up temporary files..."
+    rm -f "$temp_cert_file"
+
+    echo "Certificate updated successfully with alias '$alias_name'."
+    return 0
+}
+
 # Function to display the interactive menu
 function show_menu() {
   echo "Please choose an option:"
-  select option in "Start services" "Stop services" "Rebuild and deploy proxy" "Rebuild and deploy TSD" "Rebuild clearinghouse" "Rebuild TSD file API client" "Rebuild crypt4gh" "Restart Docker Daemon" "Apply all Spotless Checks" "Rebuild & deploy heartbeat-sub" "Rebuild & deploy heartbeat-pub" "Exit"; do
+  select option in "Start services" "Stop services" "Rebuild and deploy proxy" "Rebuild and deploy TSD" "Rebuild clearinghouse" "Rebuild TSD file API client" "Rebuild crypt4gh" "Restart Docker Daemon" "Apply all Spotless Checks" "Rebuild & deploy heartbeat-sub" "Rebuild & deploy heartbeat-pub" "Replace RootCA" "Exit"; do
     case $REPLY in
       1) start; break;;
       2) stop; break;;
@@ -128,7 +171,8 @@ function show_menu() {
       9) apply_all_spotless_checks; break;;
       10) rebuild_and_deploy_heartbeat_sub; break;;
       11) rebuild_and_deploy_heartbeat_pub; break;;
-      12) echo "Exiting..."; exit 0;;
+      12) replace_root_ca file-orchestrator /storage/certs/rootCA.pem fega; break;;
+      13) echo "Exiting..."; exit 0;;
       *) echo "Invalid option. Please try again.";;
     esac
   done
