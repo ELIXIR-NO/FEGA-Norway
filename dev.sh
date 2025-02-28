@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ./e2eTests/.env
+
 function start() {
   ./gradlew clean &&
     bash -c "./gradlew start-docker-containers"
@@ -117,7 +119,7 @@ function replace_root_ca() {
     local cert_path_in_container="$2"
     local alias_name="$3"
     local keystore_path="$JAVA_HOME/lib/security/cacerts"
-    local keystore_password="changeit"
+    local keystore_password="changeit" # This is the system default
     local temp_cert_file="temp_rootCA.pem"
 
     # Check if required arguments are provided

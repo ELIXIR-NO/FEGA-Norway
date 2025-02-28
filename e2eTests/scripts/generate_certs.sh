@@ -6,24 +6,45 @@ source .env
 # the .env config or load the expected env vars
 # before executing the script.
 
-mkdir -p "tmp_certs" && cd tmp_certs && mkdir -p "bin"
+mkdir -p "tmp" && cd tmp && mkdir -p "bin"
 
 export LOCAL_BIN=./bin
 export MKCERT_VERSION="v1.4.4"
+export mkcert="$LOCAL_BIN/mkcert"
+export crypt4gh="$LOCAL_BIN/crypt4gh"
 
-curl -fsSL "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64" \
-    -o "${LOCAL_BIN}/mkcert" && \
-    chmod +x "${LOCAL_BIN}/mkcert"
+function install_mkcert() {
+  echo "Installing mkcert locally..."
+  # Detect the operating system
+  OS="$(uname -s)"
+  case "${OS}" in
+  Linux*) BIN='linux-amd64' ;;
+  Darwin*) BIN='darwin-amd64' ;;
+  *)
+    echo "Unsupported OS: ${OS}" >&2
+    return 1
+    ;;
+  esac
+  echo "OS is $OS"
+  # Construct the download URL based on detected OS
+  URL="https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-${BIN}"
+  # Download and install mkcert
+  curl -sL "${URL}" -o "$LOCAL_BIN/mkcert"
+  chmod +x "$LOCAL_BIN/mkcert"
+  echo "mkcert installed successfully in $LOCAL_BIN."
+}
 
-curl -fsSL "https://raw.githubusercontent.com/neicnordic/crypt4gh/master/install.sh" \
-    | sh -s -- -b "$LOCAL_BIN" && \
-    chmod +x "$LOCAL_BIN/crypt4gh"
+function install_crypt4gh() {
+  echo "Installing crypt4gh locally..."
+  curl -fsSL https://raw.githubusercontent.com/neicnordic/crypt4gh/master/install.sh | sh -s -- -b "$LOCAL_BIN"
+  chmod +x "$LOCAL_BIN/crypt4gh"
+  echo "crypt4gh installed successfully for the current user."
+}
 
-export mkcert=./bin/mkcert
-export crypt4gh=./bin/crypt4gh
+# Install the dependencies first.
+install_mkcert && install_crypt4gh
 
-# Generate and install the root
-# certificate authority.
+# Generate and install the root certificate authority.
 $mkcert -install
 echo "CAROOT is $($mkcert -CAROOT)"
 
@@ -88,23 +109,43 @@ cp localhost+6-client-key.pem client-key.pem
 cp localhost+6-client-key.der client-key.der
 cp localhost+6-client.p12 client.p12
 
-#cat server.pem $(mkcert -CAROOT)/rootCA.pem > fullchain.pem
-#openssl pkcs12 -export \
-#  -out server_with_ca.p12 \
-#  -inkey server-key.pem \
-#  -in fullchain.pem \
-#  -name myalias \
-#  -password pass:"${SERVER_CERT_PASSWORD}"
-#
 #keytool -importcert -trustcacerts -noprompt \
-#  -alias fega-norway-rootca \
+#  -alias fega \
 #  -file rootCA.pem \
 #  -keystore "truststore.p12" \
 #  -storetype PKCS12 \
-#  -storepass "changeit"
-#
-##keytool -importkeystore -srckeystore localhost+6.p12 -srcstoretype PKCS12 -destkeystore keystore.jks -deststoretype JKS -srcstorepass "${SERVER_CERT_PASSWORD}" -deststorepass "${SERVER_CERT_PASSWORD}" -noprompt
-##keytool -importcert -trustcacerts -noprompt -alias rootCA -file rootCA.pem -keystore keystore.jks -storepass "${SERVER_CERT_PASSWORD}"
+#  -storepass ${TRUSTSTORE_PASSWORD}
+
+#cat server.pem $($mkcert -CAROOT)/rootCA.pem > fullchain.pem
+
+#openssl pkcs12 -export \
+#  -out server_with_fullchain.p12 \
+#  -inkey server-key.pem \
+#  -in fullchain.pem \
+#  -name fega \
+#  -password pass:"${SERVER_CERT_PASSWORD}"
+
+# keytool -importkeystore
+# -srckeystore localhost+6.p12 \
+# -srcstoretype PKCS12 \
+# -destkeystore keystore.jks -deststoretype JKS \
+# -srcstorepass "${SERVER_CERT_PASSWORD}" \
+# -deststorepass "${SERVER_CERT_PASSWORD}" \
+# -noprompt
+
+# keytool -importcert -trustcacerts
+# -noprompt \
+# -alias rootCA \
+# -file rootCA.pem \
+# -keystore keystore.jks \
+# -storepass "${SERVER_CERT_PASSWORD}"
+
+keytool -importcert -trustcacerts -noprompt \
+  -alias fega-root-ca \
+  -file rootCA.pem \
+  -keystore truststore.p12 \
+  -storetype PKCS12 \
+  -storepass "${TRUSTSTORE_PASSWORD}"
 
 cd .. # Go back to the working directory.
 

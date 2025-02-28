@@ -31,6 +31,8 @@ public class Environment {
   private final String sda_doa_port;
   private final String sda_db_database_name;
 
+  // COMMON
+  private final String truststore_password;
   private final String runtime;
 
   // Static Dotenv instance for accessing environment variables
@@ -75,6 +77,7 @@ public class Environment {
     this.ega_box_password = dotenv.get("EGA_BOX_PASSWORD");
     this.sda_db_port = dotenv.get("SDA_DB_PORT");
     this.sda_doa_port = dotenv.get("SDA_DOA_PORT");
+    this.truststore_password = dotenv.get("TRUSTSTORE_PASSWORD");
   }
 
   // Method to construct and return the broker connection string

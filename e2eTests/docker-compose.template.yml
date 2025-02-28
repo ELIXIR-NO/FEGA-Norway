@@ -99,9 +99,10 @@ services:
       - POSTGRES_PASSWORD=<<PROXY_POSTGRES_PASSWORD>>
       - ADMIN_USER=admin
       - ADMIN_PASSWORD=aDm!n_01x.
+      - TRUSTSTORE=/etc/ega/store/truststore.p12
+      - TRUSTSTORE_PASSWORD=trustst0re_passw0rd
     volumes:
       - proxy-certs:/etc/ega/
-      - proxy-keystore:/root/
       #- custom_path:/app/static/ # Serves from a directory
     command: # See services/localega-tsd-proxy/Dockerfile
       - "java"
@@ -442,6 +443,7 @@ services:
       - POSTGRES_DB=<<SDA_DB_DATABASE_NAME>>
       - POSTGRES_PASSWORD=<<SDA_DB_PASSWORD>>
       - OUTBOX_ENABLED=false
+      - KEYSTORE_PATH=/etc/ega/ssl/server.p12
       - KEYSTORE_PASSWORD=<<KEYSTORE_PASSWORD>>
     volumes:
       - tsd-vault:/ega/archive/
@@ -591,7 +593,6 @@ services:
       - interceptor-certs:/volumes/interceptor-certs
       - mq-confs-and-certs:/volumes/mq-confs-and-certs
       - proxy-certs:/volumes/proxy-certs
-      - proxy-keystore:/volumes/proxy-keystore
       - postgres-data:/volumes/postgres-data
       - postgres-confs:/volumes/postgres-confs
       - db-data:/volumes/db-data
@@ -637,7 +638,6 @@ volumes:
   interceptor-certs:
   mq-confs-and-certs:
   proxy-certs:
-  proxy-keystore:
   postgres-data:
   postgres-confs:
   db-client-certs:

@@ -49,6 +49,9 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+
 public class IngestionTest {
 
   private static final Environment env = new Environment();
@@ -170,13 +173,14 @@ public class IngestionTest {
   }
 
   private void triggerIngestMessageFromCEGA()
-      throws IOException,
+      throws Exception,
           TimeoutException,
           NoSuchAlgorithmException,
           KeyManagementException,
           URISyntaxException {
     log.info("Publishing ingestion message to CentralEGA...");
     ConnectionFactory factory = new ConnectionFactory();
+    factory.useSslProtocol(createSslContext());
     factory.setUri(env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
@@ -200,13 +204,10 @@ public class IngestionTest {
   }
 
   private void triggerAccessionMessageFromCEGA()
-      throws IOException,
-          TimeoutException,
-          NoSuchAlgorithmException,
-          KeyManagementException,
-          URISyntaxException {
+      throws Exception {
     log.info("Publishing accession message on behalf of CEGA to CEGA RMQ...");
     ConnectionFactory factory = new ConnectionFactory();
+    factory.useSslProtocol(createSslContext());
     factory.setUri(env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
@@ -476,12 +477,31 @@ public class IngestionTest {
     }
   }
 
+
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @AfterEach
   public void teardown() {
     rawFile.delete();
     encFile.delete();
   }
+
+  private SSLContext createSslContext() throws Exception {
+    // Load the PKCS12 trust store
+    File rootCA = getCertificateFile("truststore.p12");
+    KeyStore trustStore = KeyStore.getInstance("PKCS12");
+    trustStore.load(
+            new FileInputStream(rootCA), env.getTruststore_password().toCharArray());
+    // Create trust manager
+    TrustManagerFactory trustManagerFactory =
+            TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    trustManagerFactory.init(trustStore);
+    // Create and initialize the SSLContext
+    SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+    sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+
+    return sslContext;
+  }
+
 }
 
 // keytool -list -v -keystore $JAVA_HOME/lib/security/cacerts
