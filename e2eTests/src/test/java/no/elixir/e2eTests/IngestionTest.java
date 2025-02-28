@@ -27,6 +27,8 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
@@ -48,9 +50,6 @@ import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 
 public class IngestionTest {
 
@@ -203,8 +202,7 @@ public class IngestionTest {
     connectionFactory.close();
   }
 
-  private void triggerAccessionMessageFromCEGA()
-      throws Exception {
+  private void triggerAccessionMessageFromCEGA() throws Exception {
     log.info("Publishing accession message on behalf of CEGA to CEGA RMQ...");
     ConnectionFactory factory = new ConnectionFactory();
     factory.useSslProtocol(createSslContext());
@@ -271,15 +269,11 @@ public class IngestionTest {
     log.info("Verification completed successfully");
   }
 
-  private void triggerMappingMessageFromCEGA()
-      throws NoSuchAlgorithmException,
-          KeyManagementException,
-          URISyntaxException,
-          IOException,
-          TimeoutException {
+  private void triggerMappingMessageFromCEGA() throws Exception {
     log.info("Mapping file to a dataset...");
     datasetId = "EGAD" + getRandomNumber(11);
     ConnectionFactory factory = new ConnectionFactory();
+    factory.useSslProtocol(createSslContext());
     factory.setUri(env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
@@ -300,13 +294,10 @@ public class IngestionTest {
   }
 
   private void triggerReleaseMessageFromCEGA()
-      throws NoSuchAlgorithmException,
-          KeyManagementException,
-          URISyntaxException,
-          IOException,
-          TimeoutException {
+      throws Exception, KeyManagementException, URISyntaxException, IOException, TimeoutException {
     log.info("Releasing the dataset...");
     ConnectionFactory factory = new ConnectionFactory();
+    factory.useSslProtocol(createSslContext());
     factory.setUri(env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
@@ -477,7 +468,6 @@ public class IngestionTest {
     }
   }
 
-
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @AfterEach
   public void teardown() {
@@ -489,11 +479,10 @@ public class IngestionTest {
     // Load the PKCS12 trust store
     File rootCA = getCertificateFile("truststore.p12");
     KeyStore trustStore = KeyStore.getInstance("PKCS12");
-    trustStore.load(
-            new FileInputStream(rootCA), env.getTruststore_password().toCharArray());
+    trustStore.load(new FileInputStream(rootCA), env.getTruststore_password().toCharArray());
     // Create trust manager
     TrustManagerFactory trustManagerFactory =
-            TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
     trustManagerFactory.init(trustStore);
     // Create and initialize the SSLContext
     SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
@@ -501,7 +490,6 @@ public class IngestionTest {
 
     return sslContext;
   }
-
 }
 
 // keytool -list -v -keystore $JAVA_HOME/lib/security/cacerts

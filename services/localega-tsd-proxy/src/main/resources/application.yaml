@@ -1,8 +1,3 @@
-#logging:
-#  level:
-#    org.springframework.boot.autoconfigure.ssl: DEBUG
-#    org.apache.tomcat.util.net: DEBUG
-
 spring:
 
   autoconfigure:
@@ -110,8 +105,16 @@ mq:
     truststore: ${TRUSTSTORE}
     truststore-password: ${TRUSTSTORE_PASSWORD}
   tsd:
+    host: ${TSD_MQ_HOST:mq}
+    port: ${TSD_MQ_PORT:5671}
+    virtual-host: ${TSD_MQ_VHOST:/}
+    username: ${TSD_MQ_USERNAME:admin}
+    password: ${TSD_MQ_PASSWORD:admin}
     exchange: ${TSD_MQ_EXCHANGE:sda}
     routing-key: ${TSD_MQ_ROUTING_KEY:exportRequests}
+    tls: true
+    truststore: ${TRUSTSTORE}
+    truststore-password: ${TRUSTSTORE_PASSWORD}
 
 heartbeat:
   ok_if_ok_is_after_failed_and_diff_in_minutes_ge: 10
