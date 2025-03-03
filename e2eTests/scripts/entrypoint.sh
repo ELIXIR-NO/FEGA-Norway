@@ -6,6 +6,7 @@ chmod -R 777 /volumes &&
   echo "Current context: $(pwd)" &&
   ls -alh &&
   # Execute the scripts in this order.
+  ./generate_certs.sh &&
   ./copy_certificates_to_dest.sh &&
   ./copy_confs_to_dest.sh &&
   ./replace_template_variables.sh &&
