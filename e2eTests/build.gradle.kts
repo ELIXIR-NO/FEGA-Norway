@@ -19,7 +19,7 @@ dependencies {
     testImplementation("com.auth0:java-jwt:4.5.0") // FIXME: io.jsonwebtoken
     testImplementation("commons-io:commons-io:2.18.0")
     testImplementation(project(":lib:crypt4gh"))
-    testImplementation("org.slf4j:slf4j-api:2.0.16")
+    testImplementation("org.slf4j:slf4j-api:2.0.17")
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
     implementation("io.github.cdimascio:java-dotenv:5.2.2")
 }
