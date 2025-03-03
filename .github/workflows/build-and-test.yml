@@ -17,7 +17,7 @@ on:
 #      - "cli/**"
 
 jobs:
-  build-and-test:
+  build-and-unit-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -54,14 +54,30 @@ jobs:
       - name: Run tests
         run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test
 
+  build-and-e2etest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
 
       - name: Run e2e tests
         run: |
-          ./gradlew clean
           ./gradlew start-docker-containers
-          sleep 20
+          sleep 15
           ./gradlew :e2eTests:test --stacktrace
       - name: Containers status
         if: failure()
         run: |
           docker ps
+
