@@ -35,6 +35,18 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
+            pom {
+                name.set("Clearinghouse")
+                description.set("GA4GH passports validation and parsing")
+                url.set("https://github.com/ELIXIR-NO/FEGA-Norway/lib/clearinghouse")
+                scm {
+                    url.set("https://github.com/ELIXIR-NO/FEGA-Norway")
+                }
+                issueManagement {
+                    system.set("GitHub")
+                    url.set("https://github.com/ELIXIR-NO/FEGA-Norway/issues")
+                }
+            }
         }
     }
     repositories {
