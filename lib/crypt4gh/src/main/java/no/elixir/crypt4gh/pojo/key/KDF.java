@@ -1,6 +1,5 @@
 package no.elixir.crypt4gh.pojo.key;
 
-import com.lambdaworks.crypto.SCrypt;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +9,7 @@ import java.util.Arrays;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import no.elixir.crypt4gh.pojo.key.kdf.Bcrypt;
+import no.elixir.crypt4gh.pojo.key.kdf.SCrypt;
 
 /** Key Derivation Function. */
 public enum KDF {

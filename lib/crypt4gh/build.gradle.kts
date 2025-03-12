@@ -20,13 +20,8 @@ dependencies {
     implementation("commons-cli:commons-cli:1.9.0")
     implementation("commons-io:commons-io:2.18.0")
     implementation("com.rfksystems:blake2b:2.0.0")
-    implementation("com.lambdaworks:scrypt:1.4.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-extraJavaModuleInfo {
-    automaticModule("scrypt-1.4.0.jar", "scrypt")
 }
 
 tasks.test {
