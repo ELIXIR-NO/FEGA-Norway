@@ -13,7 +13,7 @@ dependencies {
     implementation("org.ow2.asm:asm:9.7.1")
     implementation("org.springframework.boot:spring-boot-gradle-plugin:3.4.3")
     implementation("io.spring.gradle:dependency-management-plugin:1.1.7")
-    implementation("org.hibernate.orm:hibernate-gradle-plugin:6.6.10.Final")
+    implementation("org.hibernate.orm:hibernate-gradle-plugin:6.6.11.Final")
 }
 
 gradlePlugin {
