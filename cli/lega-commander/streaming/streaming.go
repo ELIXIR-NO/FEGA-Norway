@@ -50,6 +50,15 @@ type ResponseJson struct {
 	Token      string `json:"token"`
 }
 
+type AlreadyUploadedError struct {
+	FileName string
+}
+
+func (e *AlreadyUploadedError) Error() string {
+	return fmt.Sprintf("file %s is already uploaded", e.FileName)
+}
+
+
 // NewStreamer method constructs Streamer structure.
 func NewStreamer(client *requests.Client, fileManager *files.FileManager, resumablesManager *resuming.ResumablesManager, straight bool) (Streamer, error) {
 	streamer := defaultStreamer{}
@@ -150,12 +159,11 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 	// List user's files already in inbox to avoid accidental overwrites
 	filesList, err := s.fileManager.ListFiles(true)
 	if err != nil {
-		fmt.Println("Could not read previous uploaded files, this is ok if it's your first upload")
-		//		return err
+		fmt.Println("Could not read previously uploaded files, this is ok if it's your first upload")
 	} else {
 		for _, uploadedFile := range *filesList {
 			if fileName == filepath.Base(uploadedFile.FileName) {
-				return errors.New("File " + file.Name() + " is already uploaded. Please, remove it from the Inbox first: lega-commander files -d " + filepath.Base(uploadedFile.FileName))
+				return &AlreadyUploadedError{FileName: file.Name()}
 			}
 		}
 	}
