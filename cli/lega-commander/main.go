@@ -209,42 +209,42 @@ func main() {
 		} else {
 			log.Fatal(aurora.Red("none of the flags are selected"))
 		}
-case uploadCommand:
-	_, err := uploadingOptionsParser.Parse()
-	if err != nil {
-		log.Fatal(aurora.Red(err))
-	}
-	streamer, err := streaming.NewStreamer(nil, nil, nil, uploadingOptions.Straight)
-	if err != nil {
-		log.Fatal(aurora.Red(err))
-	}
+    case uploadCommand:
+        _, err := uploadingOptionsParser.Parse()
+        if err != nil {
+            log.Fatal(aurora.Red(err))
+        }
+        streamer, err := streaming.NewStreamer(nil, nil, nil, uploadingOptions.Straight)
+        if err != nil {
+            log.Fatal(aurora.Red(err))
+        }
 
-	fi, err := os.Stat(uploadingOptions.FileName)
-	if err != nil {
-		log.Fatal(aurora.Red(err))
-	}
+        fi, err := os.Stat(uploadingOptions.FileName)
+        if err != nil {
+            log.Fatal(aurora.Red(err))
+        }
 
-	if fi.IsDir() {
-		entries, err := os.ReadDir(uploadingOptions.FileName)
-		if err != nil {
-			log.Fatal(aurora.Red(err))
-		}
+        if fi.IsDir() {
+            entries, err := os.ReadDir(uploadingOptions.FileName)
+            if err != nil {
+                log.Fatal(aurora.Red(err))
+            }
 
-		for _, entry := range entries {
-			if !entry.IsDir() {
-				filePath := filepath.Join(uploadingOptions.FileName, entry.Name())
-				err = streamer.Upload(filePath, uploadingOptions.Resume, uploadingOptions.Straight)
-				if err != nil {
-					var alreadyUploaded *streaming.AlreadyUploadedError
-					if errors.As(err, &alreadyUploaded) {
-						fmt.Println(aurora.Yellow("Skipping already uploaded file:"), filePath)
-						continue
-					} else {
-						log.Fatal(aurora.Red(err))
-					}
-				}
-			}
-		}
+            for _, entry := range entries {
+                if !entry.IsDir() {
+                    filePath := filepath.Join(uploadingOptions.FileName, entry.Name())
+                    err = streamer.Upload(filePath, uploadingOptions.Resume, uploadingOptions.Straight)
+                    if err != nil {
+                        var alreadyUploaded *streaming.AlreadyUploadedError
+                        if errors.As(err, &alreadyUploaded) {
+                            fmt.Println(aurora.Yellow("Skipping already uploaded file:"), filePath)
+                            continue
+                        } else {
+                            log.Fatal(aurora.Red(err))
+                        }
+                    }
+                }
+		    }
 	} else {
 		// If it's a single file, process it normally.
 		err = streamer.Upload(uploadingOptions.FileName, uploadingOptions.Resume, uploadingOptions.Straight)
