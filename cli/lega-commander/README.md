@@ -25,9 +25,13 @@
 **Note:** Ensure ~/.local/bin is in your PATH.
 
 ### Windows
-Go to the [releases page](https://github.com/ELIXIR-NO/FEGA-Norway/releases?q=lega-commander-*-assets) and manually download the latest binary.
-Double-click the .zip (if provided) to extract it, and then place lega-commander.exe in your desired location
-(for example, in C:\Program Files\ or another folder included in your PATH).
+1. Go to the [releases page](https://github.com/ELIXIR-NO/FEGA-Norway/releases).
+2. The latest **lega-commander** release should be at the top of the page.
+3. Under the release title, locate the **"Assets"** section.
+4. Click on **"Assets"** (or the small arrow next to it) to expand the list.
+5. In the expanded list, look for the file named **Windows_x86_64.zip** (or the version that matches your system).
+6. Click on the file to start the download.
+7. You can now execute `lega-commander.exe` from the extracted folder.
 
 ### Automated Installation
 #### Linux
