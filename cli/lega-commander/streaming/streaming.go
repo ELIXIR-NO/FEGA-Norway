@@ -89,59 +89,96 @@ func NewStreamer(client *requests.Client, fileManager *files.FileManager, resuma
 
 // Upload method uploads file or folder to LocalEGA.
 func (s defaultStreamer) Upload(path string, resume, straight bool) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	stat, err := file.Stat()
-	if err != nil {
-		return err
-	}
-	if stat.IsDir() {
-		return s.uploadFolder(file, resume, straight)
-	}
-	if resume {
-		fileName := filepath.Base(file.Name())
-		resumablesList, err := s.resumablesManager.ListResumables()
-		if err != nil {
-			return err
-		}
-		for _, resumable := range *resumablesList {
-			if resumable.Name == fileName {
-				if !straight {
-					return s.uploadFile(file, stat, &resumable.ID, resumable.Size, resumable.Chunk)
-				} else {
-					return s.uploadFileWithoutProxy(file, stat, &resumable.ID, resumable.Size, resumable.Chunk)
-				}
+    file, err := os.Open(path)
+    if err != nil {
+        return err
+    }
+    defer file.Close()
 
-			}
-		}
-		return nil
-	}
-	if !straight {
-		return s.uploadFile(file, stat, nil, 0, 1)
-	} else {
-		return s.uploadFileWithoutProxy(file, stat, nil, 0, 1)
-	}
+    stat, err := file.Stat()
+    if err != nil {
+        return err
+    }
+
+    if stat.IsDir() {
+        return s.uploadFolder(file, resume, straight)
+    }
+    if resume {
+        fileName := filepath.Base(file.Name())
+        resumablesList, err := s.resumablesManager.ListResumables()
+        if err != nil {
+            return err
+        }
+        for _, resumable := range *resumablesList {
+            if resumable.Name == fileName {
+                // Found a partially-uploaded file, then resume it.
+                if !straight {
+                    return s.uploadFile(file, stat, &resumable.ID, resumable.Size, resumable.Chunk)
+                } else {
+                    return s.uploadFileWithoutProxy(file, stat, &resumable.ID, resumable.Size, resumable.Chunk)
+                }
+            }
+        }
+    }
+
+    // Normal single-file upload
+    if !straight {
+        return s.uploadFile(file, stat, nil, 0, 1)
+    } else {
+        return s.uploadFileWithoutProxy(file, stat, nil, 0, 1)
+    }
 }
 
 func (s defaultStreamer) uploadFolder(folder *os.File, resume, straight bool) error {
-	readdir, err := folder.Readdir(-1)
-	if err != nil {
-		return err
-	}
-	for _, file := range readdir {
-		abs, err := filepath.Abs(filepath.Join(folder.Name(), file.Name()))
-		if err != nil {
-			return err
-		}
-		err = s.Upload(abs, resume, straight)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+    readdir, err := folder.Readdir(-1)
+    if err != nil {
+        return err
+    }
+    for _, f := range readdir {
+        absPath, err := filepath.Abs(filepath.Join(folder.Name(), f.Name()))
+        if err != nil {
+            return err
+        }
+        // Check if the path is a directory
+        if f.IsDir() {
+            err := s.Upload(absPath, resume, straight)
+            if err != nil {
+                return err
+            }
+            continue
+        }
+        // If the file is already in the inbox then skip
+       	alreadyInInbox, err := s.isFileFullyUploaded(absPath)
+        if err != nil {
+            return err
+        }
+        if alreadyInInbox {
+            fmt.Println(aurora.Blue("Skipping already-uploaded file in folder: " + f.Name()))
+            continue
+        }
+        // If the file is not in the inbox do the normal upload
+        err = s.Upload(absPath, resume, straight)
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func (s defaultStreamer) isFileFullyUploaded(localPath string) (bool, error) {
+    fileManager := s.fileManager
+    fileName := filepath.Base(localPath)
+
+    inboxFiles, err := fileManager.ListFiles(true)
+    if err != nil {
+        return false, err
+    }
+    for _, uploadedFile := range *inboxFiles {
+        if fileName == filepath.Base(uploadedFile.FileName) {
+            return true, nil
+        }
+    }
+    return false, nil
 }
 
 func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *string, offset, startChunk int64) error {
