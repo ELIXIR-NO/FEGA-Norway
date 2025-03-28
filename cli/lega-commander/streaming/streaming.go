@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega-commander/conf"
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega-commander/files"
@@ -127,21 +128,55 @@ func (s defaultStreamer) Upload(path string, resume, straight bool) error {
 }
 
 func (s defaultStreamer) uploadFolder(folder *os.File, resume, straight bool) error {
-	readdir, err := folder.Readdir(-1)
-	if err != nil {
-		return err
-	}
-	for _, file := range readdir {
-		abs, err := filepath.Abs(filepath.Join(folder.Name(), file.Name()))
-		if err != nil {
-			return err
-		}
-		err = s.Upload(abs, resume, straight)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+    var warnings []string
+
+    entries, err := folder.Readdir(-1)
+    if err != nil {
+        return err
+    }
+
+    for _, entry := range entries {
+        entryPath, err := filepath.Abs(filepath.Join(folder.Name(), entry.Name()))
+        if err != nil {
+            return err
+        }
+        if entry.IsDir() {
+            subdir, err := os.Open(entryPath)
+            if err != nil {
+                return err
+            }
+            defer subdir.Close()
+            err = s.uploadFolder(subdir, resume, straight)
+            if err != nil {
+                return err
+            }
+            continue
+        }
+
+        err = s.Upload(entryPath, resume, straight)
+        if err != nil {
+            if errMsg := err.Error();
+               containsIgnoreCase(errMsg, "is already uploaded.") {
+                warnings = append(
+                    warnings,
+                    fmt.Sprintf("Skipped %s: already in the inbox", entry.Name()),
+                )
+                continue
+            }
+            return err
+        }
+    }
+    if len(warnings) > 0 {
+        fmt.Println(aurora.Yellow("WARNING: Some files in the folder were skipped:"))
+        for _, w := range warnings {
+            fmt.Println(aurora.Yellow("  - " + w))
+        }
+    }
+    return nil
+}
+
+func containsIgnoreCase(haystack, needle string) bool {
+    return strings.Contains(strings.ToLower(haystack), strings.ToLower(needle))
 }
 
 func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *string, offset, startChunk int64) error {
@@ -155,7 +190,13 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 	} else {
 		for _, uploadedFile := range *filesList {
 			if fileName == filepath.Base(uploadedFile.FileName) {
-				return errors.New("File " + file.Name() + " is already uploaded. Please, remove it from the Inbox first: lega-commander files -d " + filepath.Base(uploadedFile.FileName))
+                return fmt.Errorf(
+                    "File %s is already in the inbox.\n"+
+                        "If you want to replace it, remove it first using:\n"+
+                        "  lega-commander files -d %s",
+                    file.Name(),
+                    filepath.Base(uploadedFile.FileName),
+                )
 			}
 		}
 	}
