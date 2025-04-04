@@ -22,6 +22,18 @@ function rebuild_and_deploy_proxy() {
   echo "Task done ✅ Built and redeployed proxy."
 }
 
+function rebuild_and_deploy_mq_interceptor() {
+  ./gradlew :service:mq-interceptor:clean > /dev/null &&
+  ./gradlew :service:mq-interceptor:assemble > /dev/null &&
+  docker rm interceptor -f > /dev/null &&
+  docker rmi mq-interceptor:latest -f > /dev/null &&
+  cd e2eTests &&
+  docker compose up -d interceptor > /dev/null &&
+  cd .. &&
+  echo "Task done ✅ Built and redeployed mq interceptor."
+}
+
+
 function rebuild_and_deploy_heartbeat_sub() {
   docker rm heartbeat-sub -f > /dev/null &&
   docker rmi ghcr.io/elixir-no/pipeline-heartbeat:latest -f > /dev/null &&
@@ -160,7 +172,7 @@ function replace_root_ca() {
 # Function to display the interactive menu
 function show_menu() {
   echo "Please choose an option:"
-  select option in "Start services" "Stop services" "Rebuild and deploy proxy" "Rebuild and deploy TSD" "Rebuild clearinghouse" "Rebuild TSD file API client" "Rebuild crypt4gh" "Restart Docker Daemon" "Apply all Spotless Checks" "Rebuild & deploy heartbeat-sub" "Rebuild & deploy heartbeat-pub" "Replace RootCA" "Exit"; do
+  select option in "Start services" "Stop services" "Rebuild and deploy proxy" "Rebuild and deploy TSD" "Rebuild clearinghouse" "Rebuild TSD file API client" "Rebuild crypt4gh" "Restart Docker Daemon" "Apply all Spotless Checks" "Rebuild & deploy heartbeat-sub" "Rebuild & deploy heartbeat-pub" "Rebuild & deploy mq-interceptor" "Replace RootCA" "Exit"; do
     case $REPLY in
       1) start; break;;
       2) stop; break;;
@@ -173,8 +185,9 @@ function show_menu() {
       9) apply_all_spotless_checks; break;;
       10) rebuild_and_deploy_heartbeat_sub; break;;
       11) rebuild_and_deploy_heartbeat_pub; break;;
-      12) replace_root_ca file-orchestrator /storage/certs/rootCA.pem fega; break;;
-      13) echo "Exiting..."; exit 0;;
+      12) rebuild_and_deploy_mq_interceptor; break;;
+      13) replace_root_ca file-orchestrator /storage/certs/rootCA.pem fega; break;;
+      14) echo "Exiting..."; exit 0;;
       *) echo "Invalid option. Please try again.";;
     esac
   done

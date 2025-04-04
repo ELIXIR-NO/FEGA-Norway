@@ -491,10 +491,3 @@ public class IngestionTest {
     return sslContext;
   }
 }
-
-// keytool -list -v -keystore $JAVA_HOME/lib/security/cacerts
-// docker cp file-orchestrator:/storage/certs/rootCA.pem .
-// keytool -delete -alias fega -keystore $JAVA_HOME/lib/security/cacerts
-// keytool -import -trustcacerts -file rootCA.pem -alias fega -keystore
-// $JAVA_HOME/lib/security/cacerts
-// replace_rootca file-orchestrator /storage/certs/rootCA.pem fega

@@ -32,7 +32,7 @@ public class PublishMQAspect {
 
   private final Gson gson;
 
-  private final RabbitTemplate cegaMqRabbitTemplate;
+  private final RabbitTemplate tsdRabbitTemplate;
 
   @Value("${tsd.project}")
   private String tsdProjectId;
@@ -40,18 +40,17 @@ public class PublishMQAspect {
   @Value("${tsd.inbox-location}")
   private String tsdInboxLocation;
 
-  @Value("${mq.cega.exchange}")
+  @Value("${mq.tsd.exchange}")
   private String exchange;
 
-  @Value("${mq.cega.routing-key}")
+  @Value("${mq.tsd.inbox-routing-key}")
   private String routingKey;
 
   @Autowired
-  public PublishMQAspect(
-      HttpServletRequest request, Gson gson, RabbitTemplate cegaMqRabbitTemplate) {
+  public PublishMQAspect(HttpServletRequest request, Gson gson, RabbitTemplate tsdRabbitTemplate) {
     this.request = request;
     this.gson = gson;
-    this.cegaMqRabbitTemplate = cegaMqRabbitTemplate;
+    this.tsdRabbitTemplate = tsdRabbitTemplate;
   }
 
   /**
@@ -98,7 +97,7 @@ public class PublishMQAspect {
         new EncryptedIntegrity[] {
           new EncryptedIntegrity(SHA256.toLowerCase(), request.getAttribute(SHA256).toString())
         });
-    publishMessage(fileDescriptor);
+    publishMessage(fileDescriptor, Operation.UPLOAD.name().toLowerCase());
   }
 
   /**
@@ -135,12 +134,12 @@ public class PublishMQAspect {
         String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
             + fileName);
     fileDescriptor.setOperation(Operation.REMOVE.name().toLowerCase());
-    publishMessage(fileDescriptor);
+    publishMessage(fileDescriptor, Operation.REMOVE.name().toLowerCase());
   }
 
-  private void publishMessage(FileDescriptor fileDescriptor) {
+  private void publishMessage(FileDescriptor fileDescriptor, String type) {
     String json = gson.toJson(fileDescriptor);
-    cegaMqRabbitTemplate.convertAndSend(
+    tsdRabbitTemplate.convertAndSend(
         exchange,
         routingKey,
         json,
@@ -150,6 +149,10 @@ public class PublishMQAspect {
           return m;
         });
     log.info(
-        "Message published to {} exchange with routing key {}: {}", exchange, routingKey, json);
+        "{} message published to {} exchange with routing key {}: {}",
+        type,
+        exchange,
+        routingKey,
+        json);
   }
 }

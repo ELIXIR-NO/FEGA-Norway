@@ -132,6 +132,15 @@
     {
       "source": "sda",
       "vhost": "<<VIRTUAL_HOST>>",
+      "destination": "inbox",
+      "destination_type": "queue",
+      "routing_key": "inbox",
+      "arguments": {
+      }
+    },
+    {
+      "source": "sda",
+      "vhost": "<<VIRTUAL_HOST>>",
       "destination": "archived",
       "destination_type": "queue",
       "routing_key": "archived",

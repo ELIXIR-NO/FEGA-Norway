@@ -27,7 +27,7 @@ public class ExportRequestService {
   @Value("${mq.tsd.exchange}")
   private String exchange;
 
-  @Value("${mq.tsd.routing-key}")
+  @Value("${mq.tsd.export-requests-routing-key}")
   private String routingKey;
 
   @Autowired

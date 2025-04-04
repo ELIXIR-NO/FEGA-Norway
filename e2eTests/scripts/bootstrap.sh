@@ -67,6 +67,15 @@ function apply_configs() {
   frepl "<<PROXY_TSD_HOST>>" "$TSD_HOST" $f
   frepl "<<PROXY_TSD_ACCESS_KEY>>" "$TSD_ACCESS_KEY" $f
   frepl "<<PROXY_POSTGRES_PASSWORD>>" "$POSTGRES_PASSWORD" $f
+  frepl "<<PROXY_TSD_MQ_HOST>>" "$MQ_HOST" $f
+  frepl "<<PROXY_TSD_MQ_PORT>>" "$MQ_PORT" $f
+  frepl "<<PROXY_TSD_MQ_VHOST>>" "$PRIVATE_BROKER_VHOST" $f
+  frepl "<<PROXY_TSD_MQ_USERNAME>>" "$PRIVATE_BROKER_USER" $f
+  frepl "<<PROXY_TSD_MQ_PASSWORD>>" "$PRIVATE_BROKER_PASSWORD" $f
+  frepl "<<PROXY_TSD_MQ_EXCHANGE>>" "sda" $f
+  frepl "<<PROXY_TSD_MQ_EXPORT_REQUEST_ROUTING_KEY>>" "exportRequests" $f
+  frepl "<<PROXY_TSD_MQ_INBOX_ROUTING_KEY>>" "inbox" $f
+  frepl "<<PROXY_TSD_MQ_ENABLE_TLS>>" "true" $f
 
   # interceptor
   frepl "<<INTERCEPTOR_POSTGRES_CONNECTION>>" "$POSTGRES_CONNECTION" $f

@@ -93,17 +93,6 @@ tsd:
   root-ca-password: ${TSD_ROOT_CERT_PASSWORD:}
 
 mq:
-  cega:
-    host: ${BROKER_HOST:public-mq}
-    port: ${BROKER_PORT:5671}
-    virtual-host: ${BROKER_VHOST:/}
-    username: ${BROKER_USERNAME:admin}
-    password: ${BROKER_PASSWORD:guest}
-    exchange: ${EXCHANGE:cega}
-    routing-key: ${ROUTING_KEY:files.inbox}
-    tls: true
-    truststore: ${TRUSTSTORE}
-    truststore-password: ${TRUSTSTORE_PASSWORD}
   tsd:
     host: ${TSD_MQ_HOST:mq}
     port: ${TSD_MQ_PORT:5671}
@@ -111,8 +100,9 @@ mq:
     username: ${TSD_MQ_USERNAME:admin}
     password: ${TSD_MQ_PASSWORD:admin}
     exchange: ${TSD_MQ_EXCHANGE:sda}
-    routing-key: ${TSD_MQ_ROUTING_KEY:exportRequests}
-    tls: true
+    export-requests-routing-key: ${TSD_MQ_EXPORT_REQUEST_ROUTING_KEY:exportRequests}
+    inbox-routing-key: ${TSD_MQ_INBOX_ROUTING_KEY:inbox}
+    tls: ${TSD_MQ_ENABLE_TLS:true}
     truststore: ${TRUSTSTORE}
     truststore-password: ${TRUSTSTORE_PASSWORD}
 

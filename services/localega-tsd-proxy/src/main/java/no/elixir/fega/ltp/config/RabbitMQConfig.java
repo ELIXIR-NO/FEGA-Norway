@@ -23,6 +23,7 @@ import org.springframework.core.io.Resource;
 public class RabbitMQConfig {
 
   @Bean
+  @Primary
   @Qualifier("tsdRabbitTemplate") public RabbitTemplate tsdRabbitTemplate(
       @Qualifier("tsdConnectionFactory") ConnectionFactory connectionFactory,
       MessageConverter messageConverter,
@@ -30,7 +31,6 @@ public class RabbitMQConfig {
     RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
     rabbitTemplate.setMessageConverter(messageConverter);
     rabbitTemplate.setExchange(tsdProps.getExchange());
-    rabbitTemplate.setRoutingKey(tsdProps.getRoutingKey());
     return rabbitTemplate;
   }
 
@@ -89,34 +89,9 @@ public class RabbitMQConfig {
   }
 
   @Bean
-  @Qualifier("cegaConnectionFactory") public ConnectionFactory cegaConnectionFactory(RabbitMQProperties.CegaProperties cegaProps)
-      throws Exception {
-    return createConnectionFactory(cegaProps);
-  }
-
-  @Bean
   @Qualifier("tsdConnectionFactory") public ConnectionFactory tsdConnectionFactory(RabbitMQProperties.TsdProperties tsdProps)
       throws Exception {
     return createConnectionFactory(tsdProps);
-  }
-
-  @Bean
-  @Primary
-  @Qualifier("cegaRabbitTemplate") public RabbitTemplate cegaRabbitTemplate(
-      @Qualifier("cegaConnectionFactory") ConnectionFactory connectionFactory,
-      MessageConverter messageConverter,
-      RabbitMQProperties.CegaProperties cegaProps) {
-    RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-    rabbitTemplate.setMessageConverter(messageConverter);
-    rabbitTemplate.setExchange(cegaProps.getExchange());
-    rabbitTemplate.setRoutingKey(cegaProps.getRoutingKey());
-    return rabbitTemplate;
-  }
-
-  @Bean
-  @ConfigurationProperties(prefix = "mq.cega")
-  public RabbitMQProperties.CegaProperties cegaProperties() {
-    return new RabbitMQProperties.CegaProperties();
   }
 
   @Bean
