@@ -1,7 +1,7 @@
 name: Publish
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
     types:
       - closed
 
@@ -43,8 +43,7 @@ jobs:
               - 'services/mq-interceptor/**'
             tsd-api-mock:
               - 'services/tsd-api-mock/**'
-  
-  
+
   get-new-tag-clearinghouse:
     needs: detect-changes
     if: needs.detect-changes.outputs.clearinghouse == 'true'
@@ -58,8 +57,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
       - name: Bump patch version for clearinghouse
         id: bump_clearinghouse_version
         run: echo "new_clearinghouse_version=${{ needs.get-new-tag-clearinghouse.outputs.new_version }}" >> $GITHUB_OUTPUT
@@ -68,12 +67,17 @@ jobs:
           ./gradlew :lib:clearinghouse:publish -Pversion=${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate changelog
+        run: |
+          mkdir -p /tmp/changelogs
+          ./gradlew :lib:clearinghouse:generateChangelog --outputDir=/tmp/changelogs
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "clearinghouse-${{ steps.bump_clearinghouse_version.outputs.new_clearinghouse_version }}"
+          body_path: /tmp/changelogs/clearinghouse.md
           prerelease: false
 
   get-new-tag-crypt4gh:
@@ -89,8 +93,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
       - name: Bump patch version for crypt4gh
         id: bump_crypt4gh_version
         run: echo "new_crypt4gh_version=${{ needs.get-new-tag-crypt4gh.outputs.new_version }}" >> $GITHUB_OUTPUT
@@ -99,12 +103,17 @@ jobs:
           ./gradlew :lib:crypt4gh:publish -Pversion=${{ steps.bump_crypt4gh_version.outputs.new_crypt4gh_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate changelog
+        run: |
+          mkdir -p /tmp/changelogs
+          ./gradlew :lib:crypt4gh:generateChangelog --outputDir=/tmp/changelogs
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "crypt4gh-${{ steps.bump_crypt4gh_version.outputs.new_crypt4gh_version }}"
+          body_path: /tmp/changelogs/crypt4gh.md
           prerelease: false
 
   get-new-tag-tsd-file-api-client:
@@ -120,8 +129,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
       - name: Bump patch version for tsd-file-api-client
         id: bump_tsd_file_api_client_version
         run: echo "new_tsd_file_api_client_version=${{ needs.get-new-tag-tsd-file-api-client.outputs.new_version }}" >> $GITHUB_OUTPUT
@@ -130,12 +139,17 @@ jobs:
           ./gradlew :lib:tsd-file-api-client:publish -Pversion=${{ steps.bump_tsd_file_api_client_version.outputs.new_tsd_file_api_client_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate changelog
+        run: |
+          mkdir -p /tmp/changelogs
+          ./gradlew :lib:tsd-file-api-client:generateChangelog --outputDir=/tmp/changelogs
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "tsd-file-api-client-${{ steps.bump_tsd_file_api_client_version.outputs.new_tsd_file_api_client_version }}"
+          body_path: /tmp/changelogs/tsd-file-api-client.md
           prerelease: false
 
   get-new-tag-localega-tsd-proxy:
@@ -167,12 +181,17 @@ jobs:
           docker pull ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ github.event.number }}
           docker tag ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ github.event.number }} ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}
           docker push ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}
+      - name: Generate changelog
+        run: |
+          mkdir -p /tmp/changelogs
+          ./gradlew :services:localega-tsd-proxy:generateChangelog --outputDir=/tmp/changelogs
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "localega-tsd-proxy-${{ steps.bump_localega_tsd_proxy_version.outputs.new_localega_tsd_proxy_version }}"
+          body_path: /tmp/changelogs/localega-tsd-proxy.md
           prerelease: false
 
   get-new-tag-tsd-api-mock:
@@ -188,8 +207,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
       - name: Bump patch version for tsd-api-mock
         id: bump_tsd_api_mock_version
         run: echo "new_tsd_api_mock_version=${{ needs.get-new-tag-tsd-api-mock.outputs.new_version }}" >> $GITHUB_OUTPUT
@@ -211,19 +230,24 @@ jobs:
         with:
           context: ./services/tsd-api-mock
           push: true
-          no-cache: 'true'
+          no-cache: "true"
           tags: |
             ghcr.io/${{ env.repo_name }}:tsd-api-mock-${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.clone_url }}
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             org.opencontainers.image.revision=${{ github.sha }}
+      - name: Generate changelog
+        run: |
+          mkdir -p /tmp/changelogs
+          ./gradlew :services:tsd-api-mock:generateChangelog --outputDir=/tmp/changelogs
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "tsd-api-mock-${{ steps.bump_tsd_api_mock_version.outputs.new_tsd_api_mock_version }}"
+          body_path: /tmp/changelogs/tsd-api-mock.md
           prerelease: false
 
   get-new-tag-cega-mock:
@@ -256,19 +280,24 @@ jobs:
         with:
           context: ./services/cega-mock
           push: true
-          no-cache: 'true'
+          no-cache: "true"
           tags: |
             ghcr.io/${{ env.repo_name }}:cega-mock-${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.clone_url }}
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             org.opencontainers.image.revision=${{ github.sha }}
+      - name: Generate changelog
+        run: |
+          mkdir -p /tmp/changelogs
+          ./gradlew :services:cega-mock:generateChangelog --outputDir=/tmp/changelogs
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "cega-mock-${{ steps.bump_cega_mock_version.outputs.new_cega_mock_version }}"
+          body_path: /tmp/changelogs/cega-mock.md
           prerelease: false
 
   get-new-tag-mq-interceptor:
@@ -301,12 +330,17 @@ jobs:
           docker pull ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ github.event.number }}
           docker tag ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ github.event.number }} ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}
           docker push ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}
+      - name: Generate changelog
+        run: |
+          mkdir -p /tmp/changelogs
+          ./gradlew :services:mq-interceptor:generateChangelog --outputDir=/tmp/changelogs
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "mq-interceptor-${{ steps.bump_mq_interceptor_version.outputs.new_mq_interceptor_version }}"
+          body_path: /tmp/changelogs/mq-interceptor.md
           prerelease: false
 
   get-new-tag-lega-commander:
@@ -339,18 +373,23 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
-          version: '~> v2'
+          version: "~> v2"
           args: release --clean
           workdir: cli/lega-commander
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CGO_ENABLED: "0"
+      - name: Generate changelog
+        run: |
+          mkdir -p /tmp/changelogs
+          ./gradlew :cli:lega-commander:generateChangelog --outputDir=/tmp/changelogs
       - name: Create GitHub release
         if: success()
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "lega-commander-${{ steps.bump_lega_commander_version.outputs.new_lega_commander_version }}"
+          body_path: /tmp/changelogs/lega-commander.md
           prerelease: false
 
   get-new-tag-e2eTests:
@@ -367,11 +406,16 @@ jobs:
       - name: Bump patch version for e2eTests
         id: bump_e2eTests_version
         run: echo "new_e2eTests_version=${{ needs.get-new-tag-e2eTests.outputs.new_version }}" >> $GITHUB_OUTPUT
+      - name: Generate changelog
+        run: |
+          mkdir -p /tmp/changelogs
+          ./gradlew :e2eTests:generateChangelog --outputDir=/tmp/changelogs
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: e2eTests-${{ steps.bump_e2eTests_version.outputs.new_e2eTests_version }}
+          body_path: /tmp/changelogs/e2eTests.md
           prerelease: false
 
   get-new-tag-fega-norway:
@@ -387,9 +431,14 @@ jobs:
       - name: Bump patch version for FEGA-Norway
         id: bump_fega_norway_version
         run: echo "new_fega_norway_version=${{ needs.get-new-tag-fega-norway.outputs.new_version }}" >> $GITHUB_OUTPUT
+      - name: Generate changelog
+        run: |
+          mkdir -p /tmp/changelogs
+          ./gradlew :FEGA-Norway:generateChangelog --outputDir=/tmp/changelogs
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: FEGA-Norway-${{ steps.bump_fega_norway_version.outputs.new_fega_norway_version }}
+          body_path: /tmp/changelogs/FEGA-Norway.md
           prerelease: false
