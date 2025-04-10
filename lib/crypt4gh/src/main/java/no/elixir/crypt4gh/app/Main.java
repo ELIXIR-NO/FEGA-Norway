@@ -64,7 +64,7 @@ public class Main {
             KEY_PASSWORD,
             "keypass",
             true,
-            "password for Crypt4GH private key (will be prompted afterwords if skipped)"));
+            "password for Crypt4GH private key (will be prompted afterwards if skipped)"));
     options.addOption(
         new Option(PUBLIC_KEY, "pubkey", true, "public key to use (specify key file)"));
     options.addOption(

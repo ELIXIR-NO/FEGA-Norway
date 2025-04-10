@@ -17,8 +17,7 @@ based on their own private key and the public key from the other party. For addi
 With the envelope encryption scheme used by Crypt4GH, it is not necessary to decrypt and re-encrypt the full dataset every time the data is to be shared with a new user.
 It is sufficient to simply encrypt a new header packet containing the data encryption key and ship that together with the encrypted data blocks. It is also possible to share the same encrypted file with multiple users by adding multiple header packets, each one encrypted for a specific target user.
 
-This Java implementation of Crypt4GH was developed for the [Norwegian node of Federated EGA](https://ega.elixir.no/). The package can be used both as a library and a command-line tool to encrypt and decrypt files, and also to generate new private/public key pairs.
-
+This Java implementation of Crypt4GH started out in the NeIC Nordic collaboration to establish the Nordic FEGA nodes, and is now developed further and maintained by the FEGA Norway team developing the [Norwegian node of Federated EGA](https://ega.elixir.no/). The package can be used both as a library and a command-line tool to encrypt and decrypt files, and also to generate new private/public key pairs.
 
 ![](https://www.ga4gh.org/wp-content/uploads/Crypt4GH_comic.png)
 
@@ -48,7 +47,7 @@ To build Crypt4GH with Gradle, run the following command in the root directory o
 ```
 ./gradlew lib:crypt4gh:build [-Pversion=<version>]
 ```
-This will create two JAR-files in the "lib/crypt4gh/build/libs" directory: one named `crypt4gh.jar` and another "fat" JAR named `crypt4gh-tool.jar` that includes all the external dependencies needed to run Crypt4GH as a stand-alone command-line tool. If the version number is specified, it will be appended to the filenames.
+This will create two JAR-files in the "lib/crypt4gh/build/libs" directory: one named `crypt4gh.jar` and another "fat" JAR named `crypt4gh-tool.jar` that includes all the external dependencies needed to run Crypt4GH as a stand-alone command-line tool. If the version number is specified, it will be appended to the filenames and also included in the Manifest file.
 
 ## Usage
 The `crypt4gh` command below is an alias for `java -jar path/to/crypt4gh-tool.jar`
