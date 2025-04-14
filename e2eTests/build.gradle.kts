@@ -11,15 +11,15 @@ repositories {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.12.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.12.1")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.12.1")
-    testRuntimeOnly("org.junit.platform:junit-platform-console-standalone:1.12.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.12.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.12.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.12.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-console-standalone:1.12.2")
     testImplementation("com.rabbitmq:amqp-client:5.25.0")
     testImplementation("com.konghq:unirest-java:3.14.5")
     testImplementation("org.postgresql:postgresql:42.7.5")
     testImplementation("com.auth0:java-jwt:4.5.0") // FIXME: io.jsonwebtoken
-    testImplementation("commons-io:commons-io:2.18.0")
+    testImplementation("commons-io:commons-io:2.19.0")
     testImplementation(project(":lib:crypt4gh"))
     testImplementation("org.slf4j:slf4j-api:2.0.17")
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
