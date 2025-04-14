@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.diffplug.spotless:spotless-plugin-gradle:7.0.2")
+    implementation("com.diffplug.spotless:spotless-plugin-gradle:7.0.3")
     implementation("org.ow2.asm:asm:9.8")
     implementation("org.springframework.boot:spring-boot-gradle-plugin:3.4.4")
     implementation("io.spring.gradle:dependency-management-plugin:1.1.7")
