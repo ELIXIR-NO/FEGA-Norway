@@ -4,10 +4,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.uio.ifi.tc.TSDFileAPIClient;
 import no.uio.ifi.tc.model.pojo.Chunk;
 import no.uio.ifi.tc.model.pojo.ResumableUpload;
+import no.uio.ifi.tc.model.pojo.TSDFile;
+import no.uio.ifi.tc.model.pojo.TSDFiles;
 import no.uio.ifi.tc.model.pojo.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -127,24 +130,19 @@ public class ProxyController {
       @RequestParam(value = "per_page", defaultValue = "10") int perPage)
       throws IOException {
 
-    // Call TSD to get the full list
     Token token =
         tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
-    List<String> allFiles =
+    TSDFiles tsdFiles =
         tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId);
-
-    // Slice the list
-    int startIndex = (page - 1) * perPage;
-    int endIndex = Math.min(startIndex + perPage, allFiles.size());
-
-    if (startIndex >= allFiles.size()) {
-      // No files on this page
-      return ResponseEntity.ok().body(List.of());
+    List<String> allFiles =
+        tsdFiles.getFiles().stream().map(TSDFile::getFileName).collect(Collectors.toList());
+    int start = (page - 1) * perPage;
+    if (start >= allFiles.size()) {
+      return ResponseEntity.ok(List.of());
     }
+    int end = Math.min(start + perPage, allFiles.size());
+    List<String> pageOfFiles = allFiles.subList(start, end);
 
-    List<String> pageOfFiles = allFiles.subList(startIndex, endIndex);
-
-    // Return only a page
     return ResponseEntity.ok(pageOfFiles);
   }
 
