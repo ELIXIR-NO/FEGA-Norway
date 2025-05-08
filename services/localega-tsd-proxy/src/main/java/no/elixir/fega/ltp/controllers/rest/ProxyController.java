@@ -3,10 +3,14 @@ package no.elixir.fega.ltp.controllers.rest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.uio.ifi.tc.TSDFileAPIClient;
 import no.uio.ifi.tc.model.pojo.Chunk;
 import no.uio.ifi.tc.model.pojo.ResumableUpload;
+import no.uio.ifi.tc.model.pojo.TSDFile;
+import no.uio.ifi.tc.model.pojo.TSDFiles;
 import no.uio.ifi.tc.model.pojo.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -121,12 +125,25 @@ public class ProxyController {
   @GetMapping("/files")
   public ResponseEntity<?> getFiles(
       @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
-      @RequestParam(value = "inbox", defaultValue = "true") boolean inbox)
+      @RequestParam(value = "inbox", defaultValue = "true") boolean inbox,
+      @RequestParam(value = "page", defaultValue = "1") int page,
+      @RequestParam(value = "per_page", defaultValue = "10") int perPage)
       throws IOException {
+
     Token token =
         tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
-    return ResponseEntity.ok(
-        tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId));
+    TSDFiles tsdFiles =
+        tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId);
+    List<String> allFiles =
+        tsdFiles.getFiles().stream().map(TSDFile::getFileName).collect(Collectors.toList());
+    int start = (page - 1) * perPage;
+    if (start >= allFiles.size()) {
+      return ResponseEntity.ok(List.of());
+    }
+    int end = Math.min(start + perPage, allFiles.size());
+    List<String> pageOfFiles = allFiles.subList(start, end);
+
+    return ResponseEntity.ok(pageOfFiles);
   }
 
   /**
