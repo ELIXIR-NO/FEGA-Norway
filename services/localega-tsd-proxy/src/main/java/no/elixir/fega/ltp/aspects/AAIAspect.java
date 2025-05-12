@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.elixir.fega.ltp.authentication.CEGACredentialsProvider;
 import no.elixir.fega.ltp.dto.Credentials;
 import no.elixir.fega.ltp.services.TokenService;
-import no.uio.ifi.clearinghouse.model.Visa;
+import no.elixir.clearinghouse.model.Visa;
 import org.apache.commons.codec.digest.Crypt;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.auth.AuthenticationException;
