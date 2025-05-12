@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Base64;
 import java.util.Date;
+import lombok.Getter;
 import no.uio.ifi.clearinghouse.model.Visa;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -19,11 +19,10 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 
 public class CredentialsProvider {
   private final PrivateKey privateKey;
-  private final PublicKey publicKey;
-  private final String accessToken;
-  private final String visaToken;
-  private final String passportJsonString;
-  private final String jwkJsonString;
+  @Getter private final PublicKey publicKey;
+  @Getter private final String accessToken;
+  @Getter private final String visaToken;
+  @Getter private final String passportJsonString;
 
   public CredentialsProvider(String url) throws Exception {
     File privateKeyFile = new File("src/test/resources/private.pem");
@@ -35,7 +34,6 @@ public class CredentialsProvider {
     this.visaToken = createVisaToken(url);
 
     this.passportJsonString = createPassportJsonString();
-    this.jwkJsonString = createJwkJsonString();
   }
 
   private String createAccessToken(String url) {
@@ -104,21 +102,7 @@ public class CredentialsProvider {
     }
   }
 
-  private String toPEM(PrivateKey privateKey) {
-    String encoded = Base64.getEncoder().encodeToString(privateKey.getEncoded());
-    StringBuilder pem = new StringBuilder();
-    pem.append("-----BEGIN PRIVATE KEY-----\n");
-    int len = encoded.length();
-    for (int i = 0; i < len; i += 64) {
-      pem.append(encoded, i, Math.min(len, i + 64));
-      pem.append("\n");
-    }
-    pem.append("-----END PRIVATE KEY-----\n");
-    return pem.toString();
-  }
-
   // create passport.json w/ the newly generated visaToken
-
   private String createPassportJsonString() {
     return "{\n"
         + "  \"sub\": \"test@elixir-europe.org\",\n"
@@ -128,40 +112,5 @@ public class CredentialsProvider {
         + "\""
         + "  ]\n"
         + "}";
-  }
-
-  private String createJwkJsonString() {
-    RSAPublicKey publicKey = (RSAPublicKey) this.publicKey;
-
-    return "{\n"
-        + "  \"keys\": [\n"
-        + "    {\n"
-        + "      \"kty\": \"RSA\",\n"
-        + "      \"e\":"
-        + publicKey.getPublicExponent().toString(16)
-        + ",\n"
-        + "      \"kid\": \"rsa1\",\n"
-        + "      \"n\": \""
-        + publicKey.getModulus().toString(16)
-        + "\"\n"
-        + "    }\n"
-        + "  ]\n"
-        + "}";
-  }
-
-  public PublicKey getPublicKey() {
-    return this.publicKey;
-  }
-
-  public String getAccessToken() {
-    return this.accessToken;
-  }
-
-  public String getVisaToken() {
-    return this.visaToken;
-  }
-
-  public String getPassportJsonString() {
-    return this.passportJsonString;
   }
 }
