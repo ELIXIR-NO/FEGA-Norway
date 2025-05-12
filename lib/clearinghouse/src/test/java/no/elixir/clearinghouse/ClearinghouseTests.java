@@ -1,4 +1,4 @@
-package no.uio.ifi.clearinghouse;
+package no.elixir.clearinghouse;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -6,9 +6,9 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Collection;
 import java.util.Optional;
 import lombok.SneakyThrows;
-import no.uio.ifi.clearinghouse.model.ByValue;
-import no.uio.ifi.clearinghouse.model.Visa;
-import no.uio.ifi.clearinghouse.model.VisaType;
+import no.elixir.clearinghouse.model.ByValue;
+import no.elixir.clearinghouse.model.Visa;
+import no.elixir.clearinghouse.model.VisaType;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;

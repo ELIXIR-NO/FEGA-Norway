@@ -1,4 +1,4 @@
-package no.uio.ifi.clearinghouse;
+package no.elixir.clearinghouse;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import no.uio.ifi.clearinghouse.model.Visa;
+import no.elixir.clearinghouse.model.Visa;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;

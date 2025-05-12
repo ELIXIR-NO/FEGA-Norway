@@ -1,4 +1,4 @@
-package no.uio.ifi.clearinghouse.model;
+package no.elixir.clearinghouse.model;
 
 import java.util.List;
 import java.util.Map;
