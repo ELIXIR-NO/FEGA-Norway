@@ -181,7 +181,11 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 	fileName := filepath.Base(file.Name())
 
 	// List user's files already in inbox to avoid accidental overwrites
-	filesList, err := s.fileManager.ListFiles(true)
+	filesList, err := s.fileManager.ListFiles(
+	true,
+    1,
+    50000,
+    true, )
 	if err != nil {
 		fmt.Println("Could not read previous uploaded files, this is ok if it's your first upload")
 		//		return err
@@ -313,7 +317,12 @@ func (s defaultStreamer) Download(fileName string) error {
 	if fileExists(fileName) {
 		return errors.New("File " + fileName + " exists locally, aborting.")
 	}
-	filesList, err := s.fileManager.ListFiles(false)
+	filesList, err := s.fileManager.ListFiles(
+    false,
+    1,
+    50000,
+    true,
+    )
 	if err != nil {
 		return err
 	}
@@ -409,7 +418,9 @@ func (s defaultStreamer) getTSDtoken(c conf.Configuration) (string, jwt.MapClaim
 
 func (s *defaultStreamer) uploadFileWithoutProxy(file *os.File, stat os.FileInfo, uploadID *string, offset, startChunk int64) error {
 	fileName := filepath.Base(file.Name())
-	filesList, err := s.fileManager.ListFiles(true)
+	filesList, err := s.fileManager.ListFiles(
+    true, 1, 50000, true,
+	)
 	if err != nil {
 		return err
 	}

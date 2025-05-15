@@ -22,7 +22,7 @@ type File struct {
 
 // FileManager interface provides method for managing uploaded files.
 type FileManager interface {
-	ListFiles(inbox bool) (*[]File, error)
+	ListFiles(inbox bool, page, perPage int, fetchAll bool) (*[]File, error)
 	DeleteFile(fileName string) error
 }
 
@@ -52,59 +52,88 @@ func NewFileManager(client *requests.Client) (FileManager, error) {
 }
 
 // ListFiles method lists uploaded files.
-func (rm defaultFileManager) ListFiles(inbox bool) (*[]File, error) {
-	configuration := conf.NewConfiguration()
-	username, password := "", ""
+func (fm defaultFileManager) ListFiles(
+	inbox bool,
+	page, perPage int,
+	fetchAll bool,
+) (*[]File, error) {
+
+	cfg := conf.NewConfiguration()
+
+	user, pass := "", ""
 	if inbox {
-		username = configuration.GetCentralEGAUsername()
-		password = configuration.GetCentralEGAPassword()
+		user = cfg.GetCentralEGAUsername()
+		pass = cfg.GetCentralEGAPassword()
 	}
-	response, err := rm.client.DoRequest(http.MethodGet,
-		configuration.GetLocalEGAInstanceURL()+"/files",
-		nil,
-		map[string]string{"Proxy-Authorization": "Bearer " + configuration.GetElixirAAIToken()},
-		map[string]string{"inbox": strconv.FormatBool(inbox),
-		"per_page": "1000", //This value controls the number of files displayed per request, max of 50,000.
-		},
-		username,
-		password)
-	if err != nil {
-		return nil, err
-	}
-	if response.StatusCode == 403 {
-		body, err := ioutil.ReadAll(response.Body)
+
+	var out []File
+	current := page
+
+	for {
+		params := map[string]string{
+			"inbox":    strconv.FormatBool(inbox),
+			"page":     strconv.Itoa(current),
+			"per_page": strconv.Itoa(perPage),
+		}
+		resp, err := fm.client.DoRequest(
+			http.MethodGet,
+			cfg.GetLocalEGAInstanceURL()+"/files",
+			nil,
+			map[string]string{"Proxy-Authorization": "Bearer " + cfg.GetElixirAAIToken()},
+			params,
+			user, pass,
+		)
 		if err != nil {
-			return nil, errors.New("Failed to read the server's response")
+			return nil, err
 		}
-		// Check if the response body contains the specific error message indicating
-		// that the folder is empty or doesn't exist yet.
-		if strings.Contains(string(body), `"tsdFiles" is null`) {
-			return nil, &FolderNotFoundError{}
+
+		if resp.StatusCode == http.StatusForbidden {
+			body, _ := ioutil.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			if strings.Contains(string(body), `"tsdFiles" is null`) {
+				return nil, &FolderNotFoundError{}
+			}
+			return nil, errors.New("authentication error")
 		}
-		// If it's not an empty folder, it's a genuine authentication error.
-		return nil, errors.New("Authentication error")
-	} else if response.StatusCode != 200 {
-		return nil, errors.New(response.Status)
+		if resp.StatusCode != http.StatusOK {
+			return nil, errors.New(resp.Status)
+		}
+
+		body, _ := ioutil.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+
+		pageFiles := make([]File, 0)
+
+		// Case 1: proxy returns simple string array ["fileA", "fileB"]
+		jsonparser.ArrayEach(body, func(v []byte, _ jsonparser.ValueType, _ int, _ error) {
+			if fname, err := jsonparser.ParseString(v); err == nil {
+				if fname == "statusCode" || fname == "statusText" {
+					// skip error wrapper fields that may appear
+					return
+				}
+				pageFiles = append(pageFiles, File{FileName: fname})
+			}
+		})
+
+		// Case 2: proxy returns wrapped objects {"files":[{...}, {...}]}
+		if len(pageFiles) == 0 {
+			jsonparser.ArrayEach(body, func(v []byte, _ jsonparser.ValueType, _ int, _ error) {
+				name, _ := jsonparser.GetString(v, "fileName")
+				size, _ := jsonparser.GetInt(v, "size")
+				date, _ := jsonparser.GetString(v, "modifiedDate")
+				pageFiles = append(pageFiles, File{name, size, date})
+			}, "files")
+		}
+
+		out = append(out, pageFiles...)
+
+		if !fetchAll || len(pageFiles) == 0 {
+			break
+		}
+		current++
 	}
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = response.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	files := make([]File, 0)
-	_, _ = jsonparser.ArrayEach(body,
-		func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-			fileName, _ := jsonparser.GetString(value, "fileName")
-			size, _ := jsonparser.GetInt(value, "size")
-			modifiedDate, _ := jsonparser.GetString(value, "modifiedDate")
-			file := File{fileName, size, modifiedDate}
-			files = append(files, file)
-		},
-		"files")
-	return &files, nil
+
+	return &out, nil
 }
 
 // DeleteFiles method deletes uploaded file by its name.
