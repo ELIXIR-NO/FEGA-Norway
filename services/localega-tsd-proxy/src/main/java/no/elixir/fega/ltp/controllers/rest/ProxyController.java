@@ -3,8 +3,8 @@ package no.elixir.fega.ltp.controllers.rest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.uio.ifi.tc.TSDFileAPIClient;
 import no.uio.ifi.tc.model.pojo.Chunk;
@@ -134,14 +134,13 @@ public class ProxyController {
         tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
     TSDFiles tsdFiles =
         tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId);
-    List<String> allFiles =
-        tsdFiles.getFiles().stream().map(TSDFile::getFileName).collect(Collectors.toList());
+    List<TSDFile> allFiles = new ArrayList<>(tsdFiles.getFiles());
     int start = (page - 1) * perPage;
     if (start >= allFiles.size()) {
       return ResponseEntity.ok(List.of());
     }
     int end = Math.min(start + perPage, allFiles.size());
-    List<String> pageOfFiles = allFiles.subList(start, end);
+    List<TSDFile> pageOfFiles = allFiles.subList(start, end);
 
     return ResponseEntity.ok(pageOfFiles);
   }
