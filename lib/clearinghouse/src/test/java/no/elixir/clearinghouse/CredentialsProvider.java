@@ -1,4 +1,4 @@
-package no.uio.ifi.clearinghouse;
+package no.elixir.clearinghouse;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SignatureAlgorithm;
@@ -10,7 +10,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 import java.util.Date;
-import no.uio.ifi.clearinghouse.model.Visa;
+import no.elixir.clearinghouse.model.Visa;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;

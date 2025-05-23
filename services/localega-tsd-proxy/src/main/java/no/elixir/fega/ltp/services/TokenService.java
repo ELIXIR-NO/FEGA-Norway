@@ -11,9 +11,9 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import no.uio.ifi.clearinghouse.Clearinghouse;
-import no.uio.ifi.clearinghouse.model.Visa;
-import no.uio.ifi.clearinghouse.model.VisaType;
+import no.elixir.clearinghouse.Clearinghouse;
+import no.elixir.clearinghouse.model.Visa;
+import no.elixir.clearinghouse.model.VisaType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

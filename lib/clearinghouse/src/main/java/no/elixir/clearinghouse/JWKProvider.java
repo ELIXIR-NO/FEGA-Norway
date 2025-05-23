@@ -1,4 +1,4 @@
-package no.uio.ifi.clearinghouse;
+package no.elixir.clearinghouse;
 
 import com.auth0.jwk.Jwk;
 import com.auth0.jwk.JwkException;
