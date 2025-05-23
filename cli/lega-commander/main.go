@@ -115,16 +115,24 @@ func main() {
 				log.Fatal(aurora.Red(err))
 			}
 			tw := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.TabIndent)
-			_, err = fmt.Fprintln(tw, aurora.Blue("File name\t File size"))
+			_, err = fmt.Fprintln(tw, aurora.Blue("File name\t File size\t Modified date"))
 			if err != nil {
 				log.Fatal(aurora.Red(err))
 			}
-			for _, file := range *fileList {
-				_, err = fmt.Fprintln(tw, aurora.Blue(file.FileName+"\t "+strconv.FormatInt(file.Size, 10)+" bytes"))
-				if err != nil {
-					log.Fatal(aurora.Red(err))
-				}
-			}
+            for _, file := range *fileList {
+                _, err = fmt.Fprintln(
+                    tw,
+                    aurora.Blue(
+                        file.FileName +
+                            "\t " + strconv.FormatInt(file.Size, 10) + " bytes" +
+                            "\t " + file.ModifiedDate,
+                    ),
+                )
+                if err != nil {
+                    log.Fatal(aurora.Red(err))
+                }
+            }
+
 			err = tw.Flush()
 			if err != nil {
 				log.Fatal(aurora.Red(err))
@@ -160,16 +168,23 @@ func main() {
 				log.Fatal(aurora.Red(err))
 			}
 			tw := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.TabIndent)
-			_, err = fmt.Fprintln(tw, aurora.Blue("File name\t File size"))
+			_, err = fmt.Fprintln(tw, aurora.Blue("File name\t File size\t Modified date"))
 			if err != nil {
 				log.Fatal(aurora.Red(err))
 			}
-			for _, file := range *fileList {
-				_, err = fmt.Fprintln(tw, aurora.Blue(file.FileName+"\t "+strconv.FormatInt(file.Size, 10)+" bytes"))
-				if err != nil {
-					log.Fatal(aurora.Red(err))
-				}
-			}
+            for _, file := range *fileList {
+                _, err = fmt.Fprintln(
+                    tw,
+                    aurora.Blue(
+                        file.FileName +
+                            "\t " + strconv.FormatInt(file.Size, 10) + " bytes" +
+                            "\t " + file.ModifiedDate,
+                    ),
+                )
+                if err != nil {
+                    log.Fatal(aurora.Red(err))
+                }
+            }
 			err = tw.Flush()
 			if err != nil {
 				log.Fatal(aurora.Red(err))

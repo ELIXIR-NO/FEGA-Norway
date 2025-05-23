@@ -29,6 +29,17 @@ import (
 	"github.com/neicnordic/crypt4gh/model/headers"
 )
 
+type FileEntry struct {
+    FileName     string  `json:"fileName"`
+    Size         int64   `json:"size"`
+    ModifiedDate string  `json:"modifiedDate"`
+    Href         string  `json:"href"`
+    Exportable   bool    `json:"exportable"`
+    Reason       *string `json:"reason"`
+    MimeType     string  `json:"mimeType"`
+    Owner        string  `json:"owner"`
+}
+
 // Streamer interface provides methods for uploading and downloading files from LocalEGA instance.
 type Streamer interface {
 	Upload(path string, resume, straight bool) error
