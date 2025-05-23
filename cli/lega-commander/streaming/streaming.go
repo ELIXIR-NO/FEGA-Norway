@@ -51,8 +51,7 @@ type ResponseJson struct {
 	Token      string `json:"token"`
 }
 
-// NewStreamer method constructs Streamer structure.
-func NewStreamer(client *requests.Client, fileManager *files.FileManager, resumablesManager *resuming.ResumablesManager, straight bool) (Streamer, error) {
+func NewStreamer(client *requests.Client, fileManager files.FileManager, resumablesManager resuming.ResumablesManager, straight bool) (Streamer, error) {
 	streamer := defaultStreamer{}
 	if client != nil {
 		streamer.client = *client
@@ -60,7 +59,7 @@ func NewStreamer(client *requests.Client, fileManager *files.FileManager, resuma
 		streamer.client = requests.NewClient(nil)
 	}
 	if fileManager != nil {
-		streamer.fileManager = *fileManager
+		streamer.fileManager = fileManager
 	} else {
 		newFileManager, err := files.NewFileManager(&streamer.client)
 		if err != nil {
@@ -69,7 +68,7 @@ func NewStreamer(client *requests.Client, fileManager *files.FileManager, resuma
 		streamer.fileManager = newFileManager
 	}
 	if resumablesManager != nil {
-		streamer.resumablesManager = *resumablesManager
+		streamer.resumablesManager = resumablesManager
 	} else {
 		newResumablesManager, err := resuming.NewResumablesManager(&streamer.client)
 		if err != nil {
@@ -235,7 +234,7 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 		params := map[string]string{
 			"chunk": strconv.FormatInt(i, 10),
 			"md5":   hex.EncodeToString(sum[:16])}
-		if i != 1 {
+		if i != 1 && uploadID != nil {
 			params["uploadId"] = *uploadID
 		}
 		response, err := s.client.DoRequest(http.MethodPatch,
@@ -271,6 +270,9 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 	bar.SetCurrent(totalSize)
 	checksum := hex.EncodeToString(hashFunction.Sum(nil))
 	fmt.Println("Assembling the uploaded parts of the file together in order to build it! Duration varies based on filesize.")
+	if uploadID == nil {
+        return errors.New("uploadID is nil at the finalization step")
+    }
 	response, err := s.client.DoRequest(http.MethodPatch,
 		configuration.GetLocalEGAInstanceURL()+"/stream/"+url.QueryEscape(fileName),
 		nil,

@@ -113,7 +113,7 @@ func (fm defaultFileManager) ListFiles(
 				}
 				pageFiles = append(pageFiles, File{FileName: fname})
 			}
-		})
+		}, "")
 
 		// Case 2: proxy returns wrapped objects {"files":[{...}, {...}]}
 		if len(pageFiles) == 0 {
