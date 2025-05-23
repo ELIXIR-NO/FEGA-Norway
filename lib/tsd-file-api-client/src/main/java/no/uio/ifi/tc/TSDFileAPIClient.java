@@ -52,10 +52,15 @@ public class TSDFileAPIClient {
    * @param token Auth token to use.
    * @param appId TSD application ID.
    * @return API response.
+   * @param page Page number (1-based).
+   * @param perPage Items per page.
+   * @return API response.
    */
-  public TSDFiles listFiles(String token, String appId) {
+  public TSDFiles listFiles(String token, String appId, int page, int perPage) {
     OkHttpClient client = new OkHttpClient();
-    String url = getURL(getEndpoint(token, appId, "/files"));
+    // Add page and per_page as query parameters
+    String url =
+        getURL(getEndpoint(token, appId, "/files")) + "?page=" + page + "&per_page=" + perPage;
 
     Request request =
         new Request.Builder().url(url).addHeader("Authorization", BEARER + token).build();
@@ -65,7 +70,6 @@ public class TSDFileAPIClient {
     try {
       Response response = client.newCall(request).execute();
 
-      // TODO: Ensure the response body is not null
       if (response.body() != null) {
         String responseBody = response.body().string();
         tsdFiles = gson.fromJson(responseBody, TSDFiles.class);
