@@ -61,6 +61,7 @@ public class TSDFileAPIClient {
     // Add page and per_page as query parameters
     String url =
         getURL(getEndpoint(token, appId, "/files")) + "?page=" + page + "&per_page=" + perPage;
+    log.info("TSDFileAPIClient making request: {}", url);
 
     Request request =
         new Request.Builder().url(url).addHeader("Authorization", BEARER + token).build();

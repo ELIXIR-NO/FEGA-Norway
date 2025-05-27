@@ -131,6 +131,9 @@ public class ProxyController {
         tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
     TSDFiles tsdFiles =
         tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId, page, perPage);
+    log.info(
+        "Files returned: {}, page: {}, perPage: {}", tsdFiles.getFiles().size(), page, perPage);
+
     return ResponseEntity.ok(tsdFiles.getFiles());
   }
 
