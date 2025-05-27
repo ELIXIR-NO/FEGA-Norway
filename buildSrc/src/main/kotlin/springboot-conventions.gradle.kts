@@ -2,7 +2,6 @@ plugins {
     java
     id("org.springframework.boot")
     id("io.spring.dependency-management")
-    id("org.hibernate.orm")
     id("formatting-conventions")
 }
 
@@ -30,12 +29,7 @@ dependencies {
 
 tasks.withType<Test> { useJUnitPlatform() }
 
-hibernate {
-    enhancement {
-        enableAssociationManagement.set(true)
-    }
-}
-
 tasks.getByName<Jar>("jar") {
     enabled = false
 }
+
