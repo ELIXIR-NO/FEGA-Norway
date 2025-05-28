@@ -125,8 +125,7 @@ if err == nil && vt == jsonparser.Array {
 }
 
 		out = append(out, pageFiles...)
-
-		if !fetchAll || len(pageFiles) == 0 {
+		if !fetchAll || len(pageFiles) < perPage {
 			break
 		}
 		current++

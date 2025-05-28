@@ -34,8 +34,8 @@ const (
 var inboxOptions struct {
 	List   bool   `short:"l" long:"list" description:"Lists uploaded files"`
 	Delete string `short:"d" long:"delete" description:"Deletes uploaded file by name"`
-	PerPage  int    `short:"p" long:"per-page" default:"50"  description:"Items per page (max 50000)"`
-    Page     int    `long:"page"             default:"1"    description:"Page number"`
+	PerPage  int    `short:"p" long:"per-page" default:"100"  description:"Items per page (max 50000)"`
+    Page     int    `long:"page"             default:"0"    description:"Page number"`
     All      bool   `long:"all"                          description:"Fetch *every* page. Ignores --page."`
 }
 
