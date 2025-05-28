@@ -13,6 +13,10 @@ plugins {
 
 group = "no.elixir"
 
+// The target Java version can be overriden on the command-line with the argument "-PjavaVersion=<version>"
+// A JDK of this version must be available on your system
+val javaVersion = (project.findProperty("javaVersion") as String?)?.toInt() ?: 21
+
 repositories {
     mavenCentral()
 }
@@ -34,6 +38,9 @@ tasks.test {
 }
 
 java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
+    }
     // Make javadoc and sources JARs
     withJavadocJar()
     withSourcesJar()
@@ -75,9 +82,9 @@ tasks.build {
 fun MavenPom.setupPomDetails() {
     name.set("Crypt4GH")
     description.set("Crypt4GH standard implementation")
-//    properties.put("maven.compiler.source", javaVersion.toString())
-//    properties.put("maven.compiler.target", javaVersion.toString())
-//    properties.put("maven.compiler.release", javaVersion.toString())
+    properties.put("maven.compiler.source", javaVersion.toString())
+    properties.put("maven.compiler.target", javaVersion.toString())
+    properties.put("maven.compiler.release", javaVersion.toString())
     url.set("https://github.com/ELIXIR-NO/FEGA-Norway/tree/main/lib/crypt4gh")
     organization {
         name.set("Elixir Norway")
