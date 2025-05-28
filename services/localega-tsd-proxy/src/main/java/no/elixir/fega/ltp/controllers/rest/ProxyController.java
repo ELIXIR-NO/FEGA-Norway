@@ -124,7 +124,7 @@ public class ProxyController {
       @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
       @RequestParam(value = "inbox", defaultValue = "true") boolean inbox,
       @RequestParam(value = "page", defaultValue = "1") int page,
-      @RequestParam(value = "per_page", defaultValue = "10") int perPage)
+      @RequestParam(value = "per_page", defaultValue = "100") int perPage)
       throws IOException {
 
     Token token =
@@ -134,7 +134,7 @@ public class ProxyController {
     log.info(
         "Files returned: {}, page: {}, perPage: {}", tsdFiles.getFiles().size(), page, perPage);
 
-    return ResponseEntity.ok(tsdFiles.getFiles());
+    return ResponseEntity.ok(tsdFiles);
   }
 
   /**
