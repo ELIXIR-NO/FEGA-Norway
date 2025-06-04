@@ -1,4 +1,4 @@
-name: Build Changed Components
+name: Build Changed Components Matrix
 
 on:
   workflow_call:
