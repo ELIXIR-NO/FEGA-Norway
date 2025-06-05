@@ -55,7 +55,9 @@ jobs:
           [[ "${{ steps.changes.outputs.tsd-api-mock }}" == "true" ]] && components+=("tsd-api-mock")
 
           json_matrix=$(jq -n --argjson arr "$(printf '%s\n' "${components[@]}" | jq -R . | jq -s .)" '{component: $arr}')
-          echo "matrix<<EOF" >> $GITHUB_OUTPUT
-          echo "${json_matrix}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "matrix<<EOF"
+            echo "${json_matrix}"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
         shell: bash
