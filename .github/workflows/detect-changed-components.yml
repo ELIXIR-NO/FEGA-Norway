@@ -1,0 +1,63 @@
+name: Build Changed Components Matrix
+
+on:
+  workflow_call:
+    outputs:
+      changed-components:
+        description: "The changed components matrix"
+        value: ${{ jobs.detect-changes.outputs.matrix }}
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Detect path changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            lega-commander:
+              - 'cli/lega-commander/**'
+            e2eTests:
+              - 'e2eTests/**'
+            clearinghouse:
+              - 'lib/clearinghouse/**'
+            crypt4gh:
+              - 'lib/crypt4gh/**'
+            tsd-file-api-client:
+              - 'lib/tsd-file-api-client/**'
+            cega-mock:
+              - 'services/cega-mock/**'
+            localega-tsd-proxy:
+              - 'services/localega-tsd-proxy/**'
+            mq-interceptor:
+              - 'services/mq-interceptor/**'
+            tsd-api-mock:
+              - 'services/tsd-api-mock/**'
+
+      - name: Set matrix based on changes
+        id: set-matrix
+        run: |
+          components=("FEGA-Norway")
+          [[ "${{ steps.changes.outputs.lega-commander }}" == "true" ]] && components+=("lega-commander")
+          [[ "${{ steps.changes.outputs.e2eTests }}" == "true" ]] && components+=("e2eTests")
+          [[ "${{ steps.changes.outputs.clearinghouse }}" == "true" ]] && components+=("clearinghouse")
+          [[ "${{ steps.changes.outputs.crypt4gh }}" == "true" ]] && components+=("crypt4gh")
+          [[ "${{ steps.changes.outputs.tsd-file-api-client }}" == "true" ]] && components+=("tsd-file-api-client")
+          [[ "${{ steps.changes.outputs.cega-mock }}" == "true" ]] && components+=("cega-mock")
+          [[ "${{ steps.changes.outputs.localega-tsd-proxy }}" == "true" ]] && components+=("localega-tsd-proxy")
+          [[ "${{ steps.changes.outputs.mq-interceptor }}" == "true" ]] && components+=("mq-interceptor")
+          [[ "${{ steps.changes.outputs.tsd-api-mock }}" == "true" ]] && components+=("tsd-api-mock")
+
+          json_matrix=$(jq -n --argjson arr "$(printf '%s\n' "${components[@]}" | jq -R . | jq -s .)" '{component: $arr}')
+          {
+            echo "matrix<<EOF"
+            echo "${json_matrix}"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+        shell: bash

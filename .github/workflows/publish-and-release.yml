@@ -1,0 +1,100 @@
+name: Publish and Release
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  detect:
+    if: github.event.pull_request.merged == true
+    uses: ./.github/workflows/detect-changed-components.yml
+
+  publish_and_release:
+    needs: detect
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: ${{ fromJson(needs.detect.outputs.changed-components).component }}
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get New Version
+        id: generate-new-tag
+        uses: anothrNick/github-tag-action@1.73.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_PREFIX: ${{matrix.component}}-
+          DRY_RUN: true
+          DEFAULT_BUMP: patch
+          MAJOR_STRING_TOKEN: '#major_${{ matrix.component }}'
+          MINOR_STRING_TOKEN: '#minor_${{ matrix.component }}'
+          PATCH_STRING_TOKEN: '#patch_${{ matrix.component }}'
+      - name: Extract New Version
+        id: new-tag
+        run: |
+          full_version="${{ steps.generate-new-tag.outputs.new_tag }}"
+          component="${{ matrix.component }}"
+          version="${full_version#"$component"-}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          
+      - name: Setup Java
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Publish Jar Files
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' }}
+        run: |
+          ./gradlew :lib:${{matrix.component}}:publish -Pversion=${{ steps.new-tag.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Repository Name
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
+      - name: Log in to the Github Container registry
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Retag and Push Docker Image
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        run: |
+          docker pull ghcr.io/${{ env.repo_name }}:${{matrix.component}}-${{ github.event.number }}
+          docker tag ghcr.io/${{ env.repo_name }}:${{matrix.component}}-${{ github.event.number }} ghcr.io/${{ env.repo_name }}:${{matrix.component}}-${{ steps.new-tag.outputs.version }}
+          docker push ghcr.io/${{ env.repo_name }}:${{matrix.component}}-${{ steps.new-tag.outputs.version }}
+
+      - name: Create and Push New Tag
+        if: ${{matrix.component == 'lega-commander'}}
+        run: |
+          git tag v${{ steps.new-tag.outputs.version }} ${{ github.sha }}
+
+      - name: Publish Go Binaries
+        if: ${{matrix.component == 'lega-commander'}}
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: release --clean
+          workdir: cli/lega-commander
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CGO_ENABLED: "0"
+
+      - name: Create GitHub Release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "${{matrix.component}}-${{ steps.new-tag.outputs.version }}"
+          prerelease: false
