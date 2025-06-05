@@ -43,7 +43,7 @@ jobs:
       - name: Set matrix based on changes
         id: set-matrix
         run: |
-          components=()
+          components=("FEGA-Norway")
           [[ "${{ steps.changes.outputs.lega-commander }}" == "true" ]] && components+=("lega-commander")
           [[ "${{ steps.changes.outputs.e2eTests }}" == "true" ]] && components+=("e2eTests")
           [[ "${{ steps.changes.outputs.clearinghouse }}" == "true" ]] && components+=("clearinghouse")
