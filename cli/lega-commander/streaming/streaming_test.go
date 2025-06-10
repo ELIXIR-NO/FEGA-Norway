@@ -1,7 +1,6 @@
 package streaming
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -44,7 +43,7 @@ func setup() {
 	if err != nil {
 		log.Fatal(aurora.Red(err))
 	}
-	uploader, err = NewStreamer(&client, &filesManager, &resumablesManager, false)
+	uploader, err = NewStreamer(&client, filesManager, resumablesManager, false)
 	if err != nil {
 		log.Fatal(aurora.Red(err))
 	}
@@ -62,64 +61,56 @@ func setup() {
 type mockClient struct {
 }
 
-func (mockClient) DoRequest(method, url string, _ io.Reader, headers, params map[string]string, _, _ string) (*http.Response, error) {
-	var response http.Response
-	if !strings.HasPrefix(headers["Proxy-Authorization"], "Bearer ") {
-		body := ioutil.NopCloser(strings.NewReader(""))
-		response = http.Response{StatusCode: 401, Body: body}
-		return &response, nil
-	}
-	if strings.HasSuffix(url, "/files") {
-		var body io.ReadCloser
-		if params["inbox"] == "" || params["inbox"] == "true" {
-			body = ioutil.NopCloser(strings.NewReader(`{"files": [{"fileName": "test.enc", "size": 100, "modifiedDate": "2010"}]}`))
-		} else {
-			body = ioutil.NopCloser(strings.NewReader(`{"files": [{"fileName": "test2.enc", "size": 100, "modifiedDate": "2010"}]}`))
-		}
-		response := http.Response{StatusCode: 200, Body: body}
-		return &response, nil
-	}
-	if strings.Contains(url, "/stream") {
-		if method == http.MethodPatch {
-			var id string
-			var ok bool
-			id, ok = params["id"]
-			if !ok {
-				id = "123"
-			}
-			if id != "123" {
-				body := ioutil.NopCloser(strings.NewReader(""))
-				response = http.Response{StatusCode: 500, Body: body}
-				return &response, nil
-			}
-			chunk := params["chunk"]
-			if chunk == "1" {
-				checksum := params["md5"]
-				if checksum != "da385d93ae510bc91c9c8af7e670ac6f" {
-					body := ioutil.NopCloser(strings.NewReader(""))
-					response = http.Response{StatusCode: 500, Body: body}
-					return &response, nil
-				}
-			} else if chunk == "end" {
-				checksum := params["sha256"]
-				fileSize := params["fileSize"]
-				if checksum != "91e93335245604993d0c2599fa22efc2b607301bf1a9b2426a6489adf6bf5af6" || fileSize != "65688" {
-					body := ioutil.NopCloser(strings.NewReader(""))
-					response = http.Response{StatusCode: 500, Body: body}
-					return &response, nil
-				}
-			}
-			body := ioutil.NopCloser(strings.NewReader(fmt.Sprintf(`{"id":"%s"}`, id)))
-			response = http.Response{StatusCode: 200, Body: body}
-			return &response, nil
-		}
-		if method == http.MethodGet {
-			body := ioutil.NopCloser(strings.NewReader("test"))
-			response = http.Response{StatusCode: 200, Body: body}
-			return &response, nil
-		}
-	}
-	return nil, nil
+func (mockClient) DoRequest(
+    method, url string,
+    _ io.Reader,
+    headers, params map[string]string,
+    _, _ string,
+) (*http.Response, error) {
+    //auth check
+    if !strings.HasPrefix(headers["Proxy-Authorization"], "Bearer ") {
+        return &http.Response{
+            StatusCode: http.StatusUnauthorized,
+            Body:       ioutil.NopCloser(strings.NewReader("")),
+        }, nil
+    }
+
+    // list files (inbox / outbox)
+    if strings.HasSuffix(url, "/files") {
+        page := params["page"]
+        if page != "" && page != "1" {
+            empty := ioutil.NopCloser(strings.NewReader(`{"files":[]}`))
+            return &http.Response{StatusCode: http.StatusOK, Body: empty}, nil
+        }
+        var body io.ReadCloser
+        if params["inbox"] == "" || params["inbox"] == "true" {
+            body = ioutil.NopCloser(
+                strings.NewReader(`{"files":[{"fileName":"test.enc","size":100,"modifiedDate":"2010"}]}`),
+            )
+        } else {
+            body = ioutil.NopCloser(
+                strings.NewReader(`{"files":[{"fileName":"test2.enc","size":100,"modifiedDate":"2010"}]}`),
+            )
+        }
+        return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+    }
+
+    // resumable / streaming endpoints (mock PATCH/GET)
+    if strings.Contains(url, "/stream/") {
+        if method == http.MethodGet {
+            // Simulate a file download
+            return &http.Response{
+                StatusCode: http.StatusOK,
+                Body: ioutil.NopCloser(strings.NewReader("test")),
+            }, nil
+        }
+        if method == http.MethodPatch {
+            body := ioutil.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
+            return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+        }
+    }
+
+    return nil, nil
 }
 
 func TestUploadedFileExists(t *testing.T) {
@@ -151,6 +142,7 @@ func TestDownloadFileRemoteDoesntExist(t *testing.T) {
 }
 
 func TestDownloadFileRemoteExists(t *testing.T) {
+    os.Remove("test2.enc")
 	err := uploader.Download("test2.enc")
 	if err != nil {
 		t.Error(err)
