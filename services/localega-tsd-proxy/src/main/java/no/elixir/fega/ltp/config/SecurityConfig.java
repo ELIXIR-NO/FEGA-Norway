@@ -69,7 +69,7 @@ public class SecurityConfig {
                                     "sub"
                             ))
                     )
-            )
+            );
 
 
     return http.build();
