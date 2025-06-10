@@ -80,3 +80,15 @@ public class SecurityConfig {
       throw new IllegalArgumentException("Password must be at least 10 characters long.");
   }
 }
+
+@Bean
+@Order(2)
+public SecurityFilterChain oauth2SecurityFilterChain(HttpSecurity http) throws Exception {
+  http
+          .authorizeHttpRequests(auth -> auth
+                  .requestMatchers("/oidc-protected", "/oauth2/**").permitAll()
+                  .anyRequest().permitAll())
+          .csrf(AbstractHttpConfigurer::disable)
+          .oauth2Login(Customizer.withDefaults());
+  return http.build();
+}
