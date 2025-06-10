@@ -89,6 +89,7 @@ public class LocalEGATSDProxyApplication {
 
   @Value("${token.redirect-uri:{baseUrl}/oidc-protected}")
   private String redirectUri;
+
   @Bean
   public ClientRegistrationRepository clientRegistrationRepository(
       @Value("${elixir.client.id}") String elixirAAIClientId,

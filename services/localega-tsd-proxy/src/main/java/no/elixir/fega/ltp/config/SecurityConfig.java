@@ -4,6 +4,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Base64;
+import java.util.Collections;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,12 +13,14 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.util.SerializationUtils;
@@ -56,10 +60,17 @@ public class SecurityConfig {
                     .anyRequest()
                     .authenticated())
         .csrf(AbstractHttpConfigurer::disable)
-        .oauth2Login(
-            oauth2 ->
-                oauth2.authorizationEndpoint(
-                    cfg -> cfg.authorizationRequestRepository(cookieRepo)));
+            .oauth2Login(oauth2 -> oauth2
+                    .authorizationEndpoint(cfg -> cfg.authorizationRequestRepository(cookieRepo))
+                    .userInfoEndpoint(userInfo -> userInfo
+                            .userService(userRequest -> new DefaultOAuth2User(
+                                    Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
+                                    Collections.singletonMap("sub", "anonymous"),
+                                    "sub"
+                            ))
+                    )
+            )
+
 
     return http.build();
   }
