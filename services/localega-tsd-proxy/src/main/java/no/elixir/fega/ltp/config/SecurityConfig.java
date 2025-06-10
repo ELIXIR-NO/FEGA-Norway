@@ -85,7 +85,8 @@ public class SecurityConfig {
   @Bean
   @Order(2)
   public SecurityFilterChain oauth2SecurityFilterChain(HttpSecurity http) throws Exception {
-    http.authorizeHttpRequests(
+    http.securityMatcher("/oidc-protected", "/oauth2/**")
+        .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers("/oidc-protected", "/oauth2/**")
                     .permitAll()
