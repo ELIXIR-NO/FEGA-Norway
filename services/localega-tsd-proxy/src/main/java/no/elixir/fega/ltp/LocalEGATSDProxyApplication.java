@@ -87,6 +87,8 @@ public class LocalEGATSDProxyApplication {
     return http.build();
   }
 
+  @Value("${token.redirect-uri:{baseUrl}/oidc-protected}")
+  private String redirectUri;
   @Bean
   public ClientRegistrationRepository clientRegistrationRepository(
       @Value("${elixir.client.id}") String elixirAAIClientId,
@@ -97,7 +99,7 @@ public class LocalEGATSDProxyApplication {
             .clientSecret(elixirAAIClientSecret)
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-            .redirectUri("{baseUrl}/oidc-protected")
+            .redirectUri(redirectUri)
             .scope("openid", "ga4gh_passport_v1")
             .authorizationUri("https://login.elixir-czech.org/oidc/authorize")
             .tokenUri("https://login.elixir-czech.org/oidc/token")
