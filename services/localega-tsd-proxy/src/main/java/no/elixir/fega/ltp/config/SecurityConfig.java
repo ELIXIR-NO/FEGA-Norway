@@ -1,5 +1,9 @@
 package no.elixir.fega.ltp.config;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,16 +15,11 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.SecurityFilterChain;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.util.SerializationUtils;
-import java.util.Base64;
-
 
 @Configuration
 public class SecurityConfig {
@@ -33,36 +32,46 @@ public class SecurityConfig {
   @Value("${spring.security.user.password}")
   private String password;
 
-
   @Bean
   public SecurityFilterChain oauth2FilterChain(
-          HttpSecurity http, AuthorizationRequestRepository<OAuth2AuthorizationRequest> cookieRepo)
-          throws Exception {
+      HttpSecurity http, AuthorizationRequestRepository<OAuth2AuthorizationRequest> cookieRepo)
+      throws Exception {
 
     http.authorizeHttpRequests(
-                    auth -> auth
-                            .requestMatchers(
-                                    "/", "/index.html", "/favicon.ico", "/static/**",
-                                    "/token.html", "/token", "/user", "/oauth2/**", "/oidc-protected")
-                            .permitAll()
-                            .anyRequest()
-                            .authenticated())
-            .csrf(AbstractHttpConfigurer::disable)
-            .oauth2Login(
-                    oauth2 ->
-                            oauth2.authorizationEndpoint(
-                                    cfg -> cfg.authorizationRequestRepository(cookieRepo)));
+            auth ->
+                auth.requestMatchers(
+                        "/",
+                        "/index.html",
+                        "/favicon.ico",
+                        "/static/**",
+                        "/css/**",
+                        "/js/**",
+                        "/img/**",
+                        "/token.html",
+                        "/token",
+                        "/user",
+                        "/oauth2/**",
+                        "/oidc-protected")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
+        .csrf(AbstractHttpConfigurer::disable)
+        .oauth2Login(
+            oauth2 ->
+                oauth2.authorizationEndpoint(
+                    cfg -> cfg.authorizationRequestRepository(cookieRepo)));
 
     return http.build();
   }
+
   @Bean
-  public AuthorizationRequestRepository<OAuth2AuthorizationRequest> cookieAuthorizationRequestRepository() {
+  public AuthorizationRequestRepository<OAuth2AuthorizationRequest>
+      cookieAuthorizationRequestRepository() {
     return new HttpCookieOAuth2AuthorizationRequestRepository();
   }
 
-
   static class HttpCookieOAuth2AuthorizationRequestRepository
-          implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
+      implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final String COOKIE_NAME = "OAUTH2_AUTH_REQUEST";
     private static final int EXPIRE_SEC = 180;
@@ -74,7 +83,7 @@ public class SecurityConfig {
 
     @Override
     public void saveAuthorizationRequest(
-            OAuth2AuthorizationRequest req, HttpServletRequest request, HttpServletResponse response) {
+        OAuth2AuthorizationRequest req, HttpServletRequest request, HttpServletResponse response) {
       if (req == null) {
         deleteCookie(request, response);
         return;
@@ -84,7 +93,7 @@ public class SecurityConfig {
 
     @Override
     public OAuth2AuthorizationRequest removeAuthorizationRequest(
-            HttpServletRequest request, HttpServletResponse response) {
+        HttpServletRequest request, HttpServletResponse response) {
       OAuth2AuthorizationRequest req = loadAuthorizationRequest(request);
       deleteCookie(request, response);
       return req;
@@ -109,7 +118,8 @@ public class SecurityConfig {
 
     private void deleteCookie(HttpServletRequest request, HttpServletResponse response) {
       getCookie(request)
-              .ifPresent(c -> {
+          .ifPresent(
+              c -> {
                 c.setValue("");
                 c.setPath("/");
                 c.setMaxAge(0);
@@ -123,7 +133,7 @@ public class SecurityConfig {
 
     private OAuth2AuthorizationRequest deserialize(Cookie cookie) {
       return (OAuth2AuthorizationRequest)
-              SerializationUtils.deserialize(Base64.getUrlDecoder().decode(cookie.getValue()));
+          SerializationUtils.deserialize(Base64.getUrlDecoder().decode(cookie.getValue()));
     }
   }
 
