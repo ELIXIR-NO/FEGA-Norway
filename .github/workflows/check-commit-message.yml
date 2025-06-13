@@ -1,0 +1,60 @@
+name: Check Commit Messages
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - main
+
+env:
+  BUMPS: "major minor patch"
+  COMPONENTS: "lega-commander e2eTests clearinghouse crypt4gh tsd-file-api-client cega-mock localega-tsd-proxy mq-interceptor tsd-api-mock FEGA-Norway"
+
+jobs:
+  check-commit-message:
+    runs-on: ubuntu-latest
+    env:
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+      HEAD_REF: ${{ github.head_ref }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find commit messages with bumps
+        id: check-commit-messages
+        run: |
+          read -r -a bumps <<< "$BUMPS"
+          bumps_pattern=$(IFS='|'; echo "${bumps[*]}")
+          all_matches=$(git log origin/"$BASE_REF"..origin/"$HEAD_REF" --pretty=format:"%s" | grep -E "#(${bumps_pattern})_" || true)
+          {
+            echo "all_matches<<EOF"
+            echo "$all_matches"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Check typo in component names
+        id: check-typos
+        if: steps.check-commit-messages.outputs.all_matches != ''
+        run: |
+          read -r -a components <<< "$COMPONENTS"
+          read -r -a bumps <<< "$BUMPS"
+          bumps_pattern=$(IFS='|'; echo "${bumps[*]}")
+          components_pattern=$(IFS='|'; echo "${components[*]}")
+          pattern="#(${bumps_pattern})_(${components_pattern})([^a-zA-Z0-9_]|$)"
+          wrong_matches=$(echo "${{ steps.check-commit-messages.outputs.all_matches }}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -Ev "$pattern" || true)
+          {
+            echo "wrong_matches<<EOF"
+            echo "$wrong_matches"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Fail if typos found
+        if: steps.check-typos.outputs.wrong_matches != ''
+        run: |
+          echo "Typos found in commit messages:"
+          echo "${{ steps.check-typos.outputs.wrong_matches }}"
+          exit 1
