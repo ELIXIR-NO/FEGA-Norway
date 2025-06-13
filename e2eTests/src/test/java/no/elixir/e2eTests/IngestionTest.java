@@ -395,6 +395,8 @@ public class IngestionTest {
     }
   }
 
+  //
+
   private String generateVisaToken(String resource) throws Exception {
     RSAPublicKey publicKey = getPublicKey();
     RSAPrivateKey privateKey = getPrivateKey();
