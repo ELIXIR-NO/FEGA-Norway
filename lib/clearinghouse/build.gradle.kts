@@ -3,8 +3,6 @@ plugins {
     id("maven-publish")
     id("io.freefair.lombok") version "8.13.1"
     id("formatting-conventions")
-    id("jsonwebtoken")
-    id("okhttp")
 }
 
 group = "no.elixir"
@@ -19,16 +17,22 @@ java {
 }
 
 dependencies {
-    implementation("org.apache.commons:commons-collections4:4.5.0")
-    implementation("org.apache.commons:commons-lang3:3.17.0")
-    implementation("com.google.code.gson:gson:2.13.1")
+    implementation(libs.commons.collections4)
+    implementation(libs.commons.lang3)
+    implementation(libs.gson)
     implementation("com.auth0:jwks-rsa:0.22.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
-    implementation("org.slf4j:slf4j-jdk14:2.0.17")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.13.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation(libs.slf4j.jdk14)
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation("org.bouncycastle:bcprov-jdk15to18:1.80")
     testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.80")
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
+    implementation(libs.okhttp)
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }
 
 publishing {

@@ -1,27 +1,40 @@
 plugins {
     id("java")
-    id("springboot-conventions")
-    id("jsonwebtoken")
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.lombok)
 }
 
 group = "no.elixir.fega"
 
+repositories {
+    mavenCentral()
+    gradlePluginPortal()
+}
+
 dependencies {
+    implementation(platform(libs.spring.boot.dependencies))
     implementation(project(":lib:clearinghouse"))
     implementation(project(":lib:tsd-file-api-client"))
     implementation("org.apache.httpcomponents:httpclient:4.5.14")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("org.apache.commons:commons-lang3:3.17.0")
-    implementation("org.apache.commons:commons-collections4:4.5.0")
-    implementation("com.google.code.gson:gson:2.13.1")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-    implementation("org.springframework.boot:spring-boot-starter-cache")
-    implementation("org.springframework.boot:spring-boot-starter-amqp")
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation(libs.okhttp)
+    implementation(libs.commons.collections4)
+    implementation(libs.commons.lang3)
+    implementation(libs.gson)
+    implementation(libs.spring.boot.starter.security)
+    implementation(libs.spring.boot.starter.oauth2.client)
+    implementation(libs.spring.boot.starter.cache)
+    implementation(libs.spring.boot.starter.amqp)
+    implementation(libs.spring.boot.starter.data.redis)
+    implementation(libs.spring.boot.starter.aop)
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.spring.boot.starter.validation)
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
-    runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly(libs.postgresql)
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
 }
 
 configurations {
