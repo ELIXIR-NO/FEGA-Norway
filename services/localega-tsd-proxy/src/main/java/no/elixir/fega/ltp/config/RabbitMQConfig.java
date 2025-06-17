@@ -52,9 +52,11 @@ public class RabbitMQConfig {
       if (props.getTruststore() != null && !props.getTruststore().isEmpty()) {
         // Configure SSL on the underlying factory
         rabbitConnectionFactory.useSslProtocol(createSslContext(props));
+        rabbitConnectionFactory.enableHostnameVerification();
       } else {
         // Use the defaults
         rabbitConnectionFactory.useSslProtocol();
+        rabbitConnectionFactory.enableHostnameVerification();
       }
     }
 
