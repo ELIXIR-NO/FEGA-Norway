@@ -8,31 +8,31 @@ import no.elixir.e2eTests.constants.Strings;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
-public class IngestMessageTest extends BaseE2ETest {
+public class MappingTest extends BaseE2ETest {
 
     @Test
-    public void testTriggerIngestMessage() throws Exception {
+    public void triggerMappingMessageFromCEGA() throws Exception {
         setupTestEnvironment();
         try {
-            triggerIngestMessageFromCEGA();
-            // Wait for the LEGA ingest and verify services to complete and update DB
-            waitForProcessing(5000);
+            // Trigger the process further,
+            // with retrieved information from earlier steps
+            test();
+            // Wait for LEGA mapper service to store mapping
+            waitForProcessing(1000);
         } finally {
             cleanupTestEnvironment();
         }
     }
 
-    private void triggerIngestMessageFromCEGA() throws Exception {
-        log.info("Publishing ingestion message to CentralEGA...");
+    private void test() throws Exception {
+        log.info("Mapping file to a dataset...");
+        datasetId = "EGAD" + getRandomNumber(11);
         ConnectionFactory factory = new ConnectionFactory();
         factory.useSslProtocol(createSslContext());
         factory.setUri(env.getBrokerConnectionString());
         Connection connectionFactory = factory.newConnection();
         Channel channel = connectionFactory.createChannel();
-        correlationId = UUID.randomUUID().toString();
-
         AMQP.BasicProperties properties =
                 new AMQP.BasicProperties()
                         .builder()
@@ -41,13 +41,12 @@ public class IngestMessageTest extends BaseE2ETest {
                         .contentEncoding(StandardCharsets.UTF_8.displayName())
                         .correlationId(correlationId)
                         .build();
-
-        String message = Strings.INGEST_MESSAGE.formatted(env.getCegaAuthUsername(), encFile.getName());
+        String message = String.format(Strings.MAPPING_MESSAGE, stableId, datasetId);
         log.info(message);
         channel.basicPublish("localega", "files", properties, message.getBytes());
-
         channel.close();
         connectionFactory.close();
+        log.info("Mapping file to dataset ID message sent successfully");
     }
 
 }

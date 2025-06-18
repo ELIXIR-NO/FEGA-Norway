@@ -19,21 +19,21 @@ import static no.elixir.e2eTests.utils.JsonUtils.toCompactJson;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class DownloadVerificationTest extends BaseE2ETest {
+public class DownloadHackTest extends BaseE2ETest {
 
     @Test
-    public void testDownloadDatasetAndVerifyResults() throws Exception {
+    public void downloadDatasetAndVerifyResults() throws Exception {
         setupTestEnvironment();
         try {
             // Test and check that what we get out match
             // the original inserted data at the top
-            downloadDatasetAndVerifyResults();
+            test();
         } finally {
             cleanupTestEnvironment();
         }
     }
 
-    private void downloadDatasetAndVerifyResults() throws Exception {
+    private void test() throws Exception {
         String token = generateVisaToken(datasetId);
         log.info("Visa JWT token when downloading: {}", token);
         String datasets =

@@ -10,20 +10,20 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class FinalizeVerificationTest extends BaseE2ETest {
+public class FinalizeTest extends BaseE2ETest {
 
     @Test
-    public void testVerifyAfterFinalizeAndLookUpAccessionID() throws Exception {
+    public void verifyAfterFinalizeAndLookUpAccessionID() throws Exception {
         setupTestEnvironment();
         try {
             // Verify that everything is ok so far
-            verifyAfterFinalizeAndLookUpAccessionID();
+            test();
         } finally {
             cleanupTestEnvironment();
         }
     }
 
-    private void verifyAfterFinalizeAndLookUpAccessionID() throws Exception {
+    private void test() throws Exception {
         log.info("Starting verification of state after finalize step...");
         File rootCA = getCertificateFile("rootCA.pem");
         File client = getCertificateFile("client.pem");

@@ -9,25 +9,22 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
-public class MappingMessageTest extends BaseE2ETest {
+public class ReleaseTest extends BaseE2ETest {
 
     @Test
-    public void testTriggerMappingMessage() throws Exception {
+    public void triggerReleaseMessageFromCEGA() throws Exception {
         setupTestEnvironment();
         try {
-            // Trigger the process further,
-            // with retrieved information from earlier steps
-            triggerMappingMessageFromCEGA();
-            // Wait for LEGA mapper service to store mapping
+            test();
+            // Wait for LEGA mapper service to update dataset status
             waitForProcessing(1000);
         } finally {
             cleanupTestEnvironment();
         }
     }
 
-    private void triggerMappingMessageFromCEGA() throws Exception {
-        log.info("Mapping file to a dataset...");
-        datasetId = "EGAD" + getRandomNumber(11);
+    private void test() throws Exception {
+        log.info("Releasing the dataset...");
         ConnectionFactory factory = new ConnectionFactory();
         factory.useSslProtocol(createSslContext());
         factory.setUri(env.getBrokerConnectionString());
@@ -41,12 +38,12 @@ public class MappingMessageTest extends BaseE2ETest {
                         .contentEncoding(StandardCharsets.UTF_8.displayName())
                         .correlationId(correlationId)
                         .build();
-        String message = String.format(Strings.MAPPING_MESSAGE, stableId, datasetId);
+        String message = String.format(Strings.RELEASE_MESSAGE, datasetId);
         log.info(message);
         channel.basicPublish("localega", "files", properties, message.getBytes());
         channel.close();
         connectionFactory.close();
-        log.info("Mapping file to dataset ID message sent successfully");
+        log.info("Dataset release message sent successfully");
     }
 
 }
