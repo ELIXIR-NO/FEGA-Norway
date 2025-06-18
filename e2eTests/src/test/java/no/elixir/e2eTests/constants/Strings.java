@@ -91,4 +91,14 @@ public class Strings {
                 "fileStatus": "READY"
             }]
             """;
+
+  public static final String EXPORT_REQ_BODY = """
+          {
+              "id": "%s",
+              "accessToken": "%s",
+              "userPublicKey": "%s",
+              "type": "%s"
+          }
+          """;
+
 }
