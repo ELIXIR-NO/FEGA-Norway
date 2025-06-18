@@ -61,7 +61,7 @@ public abstract class BaseE2ETest {
         }
     }
 
-    @BeforeAll
+    @BeforeEach
     protected void setupTestEnvironment() throws Exception {
 
         String basePath = "./";
@@ -185,17 +185,19 @@ public abstract class BaseE2ETest {
 
     protected RSAPublicKey getPublicKey() throws Exception {
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        byte[] decodedKey = Base64.getDecoder().decode(encodedPublicKey());
+        return (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(decodedKey));
+    }
+
+    protected String encodedPublicKey() throws Exception {
         String jwtPublicKey =
                 FileUtils.readFileToString(getCertificateFile("jwt.pub.pem"), Charset.defaultCharset());
-        String encodedKey =
-                jwtPublicKey
-                        .replace(Strings.BEGIN_PUBLIC_KEY, "")
-                        .replace(Strings.END_PUBLIC_KEY, "")
-                        .replace(System.lineSeparator(), "")
-                        .replace(" ", "")
-                        .trim();
-        byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
-        return (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(decodedKey));
+        return jwtPublicKey
+                .replace(Strings.BEGIN_PUBLIC_KEY, "")
+                .replace(Strings.END_PUBLIC_KEY, "")
+                .replace(System.lineSeparator(), "")
+                .replace(" ", "")
+                .trim();
     }
 
     protected RSAPrivateKey getPrivateKey() throws Exception {

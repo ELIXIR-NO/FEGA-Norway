@@ -14,3 +14,4 @@ else
 fi
 
 exec java -jar e2eTests.jar --select-class no.elixir.e2eTests.IngestionTest
+#exec java -jar e2eTests.jar --scan-classpath --include-classname  no.elixir.e2eTests.FEGATestsSuite

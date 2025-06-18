@@ -15,11 +15,9 @@ public class UploadTest extends BaseE2ETest {
 
     @Test
     public void testUpload() throws Exception {
-
-        // java launcher "" "
         setupTestEnvironment();
         try {
-            upload();
+            test();
             // Wait for triggers to be set up at CEGA.
             // Not really needed if using local CEGA container.
             waitForProcessing(5000);
@@ -28,7 +26,7 @@ public class UploadTest extends BaseE2ETest {
         }
     }
 
-    private void upload() throws Exception {
+    private void test() throws Exception {
         log.info("Uploading a file through a proxy...");
         String token = generateVisaToken("upload");
         log.info("Visa JWT token when uploading: {}", token);

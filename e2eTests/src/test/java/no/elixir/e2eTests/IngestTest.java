@@ -8,28 +8,31 @@ import no.elixir.e2eTests.constants.Strings;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
-public class ReleaseMessageTest extends BaseE2ETest {
+public class IngestTest extends BaseE2ETest {
 
     @Test
-    public void testTriggerReleaseMessage() throws Exception {
+    public void triggerIngestMessageFromCEGA() throws Exception {
         setupTestEnvironment();
         try {
-            triggerReleaseMessageFromCEGA();
-            // Wait for LEGA mapper service to update dataset status
-            waitForProcessing(1000);
+            test();
+            // Wait for the LEGA ingest and verify services to complete and update DB
+            waitForProcessing(5000);
         } finally {
             cleanupTestEnvironment();
         }
     }
 
-    private void triggerReleaseMessageFromCEGA() throws Exception {
-        log.info("Releasing the dataset...");
+    private void test() throws Exception {
+        log.info("Publishing ingestion message to CentralEGA...");
         ConnectionFactory factory = new ConnectionFactory();
         factory.useSslProtocol(createSslContext());
         factory.setUri(env.getBrokerConnectionString());
         Connection connectionFactory = factory.newConnection();
         Channel channel = connectionFactory.createChannel();
+        correlationId = UUID.randomUUID().toString();
+
         AMQP.BasicProperties properties =
                 new AMQP.BasicProperties()
                         .builder()
@@ -38,12 +41,13 @@ public class ReleaseMessageTest extends BaseE2ETest {
                         .contentEncoding(StandardCharsets.UTF_8.displayName())
                         .correlationId(correlationId)
                         .build();
-        String message = String.format(Strings.RELEASE_MESSAGE, datasetId);
+
+        String message = Strings.INGEST_MESSAGE.formatted(env.getCegaAuthUsername(), encFile.getName());
         log.info(message);
         channel.basicPublish("localega", "files", properties, message.getBytes());
+
         channel.close();
         connectionFactory.close();
-        log.info("Dataset release message sent successfully");
     }
 
 }

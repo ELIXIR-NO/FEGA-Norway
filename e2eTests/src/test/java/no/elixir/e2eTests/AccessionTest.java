@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
-public class AccessionMessageTest extends BaseE2ETest {
+public class AccessionTest extends BaseE2ETest {
 
     @Test
-    public void testTriggerAccessionMessage() throws Exception {
+    public void triggerAccessionMessageFromCEGA() throws Exception {
         setupTestEnvironment();
         try {
-            triggerAccessionMessageFromCEGA();
+            test();
             // Wait for LEGA finalize service to complete and update DB
             waitForProcessing(5000);
         } finally {
@@ -23,7 +23,7 @@ public class AccessionMessageTest extends BaseE2ETest {
         }
     }
 
-    private void triggerAccessionMessageFromCEGA() throws Exception {
+    private void test() throws Exception {
         log.info("Publishing accession message on behalf of CEGA to CEGA RMQ...");
         ConnectionFactory factory = new ConnectionFactory();
         factory.useSslProtocol(createSslContext());
