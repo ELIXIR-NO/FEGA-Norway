@@ -35,7 +35,7 @@ var inboxOptions struct {
 	List   bool   `short:"l" long:"list" description:"Lists uploaded files"`
 	Delete string `short:"d" long:"delete" description:"Deletes uploaded file by name"`
 	PerPage  int    `short:"p" long:"per-page" default:"100"  description:"Items per page (max 50000)"`
-    Page     int    `long:"page"             default:"0"    description:"Page number"`
+    Page     int    `long:"page"             default:"1"    description:"Page number"`
     All      bool   `long:"all"                          description:"Fetch *every* page. Ignores --page."`
 }
 
@@ -43,7 +43,7 @@ var inboxOptionsParser = flags.NewParser(&inboxOptions, flags.None)
 
 var outboxOptions struct {
 	List bool `short:"l" long:"list" description:"Lists exported files"`
-    PerPage  int    `short:"p" long:"per-page" default:"50"  description:"Items per page (max 50000)"`
+    PerPage  int    `short:"p" long:"per-page" default:"100"  description:"Items per page (max 50000)"`
     Page     int    `long:"page"             default:"1"    description:"Page number"`
     All      bool   `long:"all"                          description:"Fetch *every* page. Ignores --page."`
 }
@@ -102,7 +102,7 @@ func main() {
 		if inboxOptions.List {
 			fileList, err := fileManager.ListFiles(
                 true,
-                inboxOptions.Page,
+                inboxOptions.Page-1,
                 inboxOptions.PerPage,
                 inboxOptions.All,
             )
@@ -152,12 +152,12 @@ func main() {
 		if err != nil {
 			log.Fatal(aurora.Red(err))
 		}
-		if inboxOptions.List {
+		if outboxOptions.List {
 			fileList, err := fileManager.ListFiles(
                 false,
-                inboxOptions.Page,
-                inboxOptions.PerPage,
-                inboxOptions.All,
+                outboxOptions.Page-1,
+                outboxOptions.PerPage,
+                outboxOptions.All,
             )
 			if err != nil {
 				if _, ok := err.(*files.FolderNotFoundError); ok {
@@ -189,8 +189,8 @@ func main() {
 			if err != nil {
 				log.Fatal(aurora.Red(err))
 			}
-		} else if inboxOptions.Delete != "" {
-			err = fileManager.DeleteFile(inboxOptions.Delete)
+		} else if outboxOptions.Delete != "" {
+			err = fileManager.DeleteFile(outboxOptions.Delete)
 			if err != nil {
 				log.Fatal(aurora.Red(err))
 			} else {
@@ -264,7 +264,7 @@ func main() {
 			fmt.Println(aurora.Blue("File to export is not specified. Downloading the whole outbox folder."))
 			fileList, err := fileManager.ListFiles(
 			    false,
-                outboxOptions.Page,
+                outboxOptions.Page-1,
                 outboxOptions.PerPage,
                 outboxOptions.All,
             )
