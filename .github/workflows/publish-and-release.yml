@@ -63,6 +63,28 @@ jobs:
           REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
 
+      - name: Set component path
+        id: set_path
+        run: |
+          declare -A component_paths=(
+            [lega-commander]="cli/lega-commander"
+            [e2eTests]="e2eTests"
+            [clearinghouse]="lib/clearinghouse"
+            [crypt4gh]="lib/crypt4gh"
+            [tsd-file-api-client]="lib/tsd-file-api-client"
+            [cega-mock]="services/cega-mock"
+            [localega-tsd-proxy]="services/localega-tsd-proxy"
+            [mq-interceptor]="services/mq-interceptor"
+            [tsd-api-mock]="services/tsd-api-mock"
+          )
+          echo "component_path=${component_paths[${{ matrix.component }}]}" >> $GITHUB_ENV
+
+      - name: Generate Fancy Changelog
+        run: |
+          ./gradlew :${{ env.component_path }}:generateChangelog \
+            -Pversion=${{ steps.new-tag.outputs.version }} \
+            -PprTitle="${{ github.event.pull_request.title }}"
+
       - name: Log in to the Github Container registry
         if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
         uses: docker/login-action@v3
@@ -101,3 +123,4 @@ jobs:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "${{matrix.component}}-${{ steps.new-tag.outputs.version }}"
           prerelease: false
+          body_path: ${{ env.component_path }}/CHANGELOG.md
