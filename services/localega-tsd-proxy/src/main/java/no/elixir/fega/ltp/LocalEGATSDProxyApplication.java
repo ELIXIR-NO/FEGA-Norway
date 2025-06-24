@@ -53,6 +53,9 @@ public class LocalEGATSDProxyApplication {
   @Value("${token.redirect-uri:{baseUrl}/oidc-protected}")
   private String redirectUri;
 
+  @Value("${aai.service-base-url:https://login.elixir-czech.org}")
+  private String aaiBase;
+
   public static void main(String[] args) {
     SpringApplication.run(LocalEGATSDProxyApplication.class, args);
   }
@@ -102,11 +105,11 @@ public class LocalEGATSDProxyApplication {
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .redirectUri(redirectUri)
             .scope("openid", "ga4gh_passport_v1")
-            .authorizationUri("https://login.elixir-czech.org/oidc/authorize")
-            .tokenUri("https://login.elixir-czech.org/oidc/token")
-            .userInfoUri("https://login.elixir-czech.org/oidc/userinfo")
+            .authorizationUri(aaiBase + "/oidc/authorize")
+            .tokenUri(aaiBase + "/oidc/token")
+            .userInfoUri(aaiBase + "/oidc/userinfo")
             .userNameAttributeName(IdTokenClaimNames.SUB)
-            .jwkSetUri("https://login.elixir-czech.org/oidc/jwk")
+            .jwkSetUri(aaiBase + "/oidc/jwk")
             .clientName("elixir-aai")
             .build());
   }
