@@ -66,6 +66,12 @@ elixir:
     id: ${CLIENT_ID}
     secret: ${CLIENT_SECRET}
 
+token:
+  redirect-uri: "{baseUrl}/oidc-protected"
+
+aai:
+  service-base-url: "https://login.elixir-czech.org"
+
 ga4gh:
   passport:
     # First, the public key is checked. If present, it's used for validating the token and openid-configuration-url is not used.
