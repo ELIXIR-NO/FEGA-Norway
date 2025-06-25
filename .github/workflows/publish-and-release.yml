@@ -31,9 +31,9 @@ jobs:
           TAG_PREFIX: ${{matrix.component}}-
           DRY_RUN: true
           DEFAULT_BUMP: patch
-          MAJOR_STRING_TOKEN: '#major_${{ matrix.component }}'
-          MINOR_STRING_TOKEN: '#minor_${{ matrix.component }}'
-          PATCH_STRING_TOKEN: '#patch_${{ matrix.component }}'
+          MAJOR_STRING_TOKEN: "#major_${{ matrix.component }}"
+          MINOR_STRING_TOKEN: "#minor_${{ matrix.component }}"
+          PATCH_STRING_TOKEN: "#patch_${{ matrix.component }}"
       - name: Extract New Version
         id: new-tag
         run: |
@@ -46,8 +46,8 @@ jobs:
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' }}
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
 
       - name: Publish Jar Files
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' }}
@@ -77,6 +77,8 @@ jobs:
             [mq-interceptor]="services/mq-interceptor"
             [tsd-api-mock]="services/tsd-api-mock"
           )
+          path="${component_paths[${{ matrix.component }}]:-.}"
+          echo "changelog_path=$path" >> $GITHUB_ENV
           echo "component_path=${component_paths[${{ matrix.component }}]}" >> $GITHUB_ENV
 
       - name: Set PR title
@@ -86,7 +88,6 @@ jobs:
         run: |
           CLEAN_TITLE="${TITLE//[\"\'\`]/ }"
           echo "pr_title=$CLEAN_TITLE" >> $GITHUB_ENV
-
 
       - name: Generate Fancy Changelog
         run: |
@@ -118,7 +119,7 @@ jobs:
         if: ${{matrix.component == 'lega-commander'}}
         uses: goreleaser/goreleaser-action@v6
         with:
-          version: '~> v2'
+          version: "~> v2"
           args: release --clean
           workdir: cli/lega-commander
         env:
@@ -132,4 +133,4 @@ jobs:
           token: "${{ secrets.GITHUB_TOKEN }}"
           tag_name: "${{matrix.component}}-${{ steps.new-tag.outputs.version }}"
           prerelease: false
-          body_path: ${{ env.component_path }}/CHANGELOG.md
+          body_path: ${{ env.changelog_path }}/CHANGELOG.md
