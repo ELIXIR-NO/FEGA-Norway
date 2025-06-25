@@ -257,7 +257,10 @@ func selectEgaIdByElixirId(elixirId string) (egaId string, err error) {
 func getTLSConfig() *tls.Config {
 	caCertPath := os.Getenv("CA_CERT_PATH")
 	if caCertPath == "" {
-		log.Fatal("CA_CERT_PATH environment variable not set")
+		log.Println("CA_CERT_PATH environment variable not set, using default TLS configurations")
+		return &tls.Config{
+			InsecureSkipVerify: false,
+		}
 	}
 	caCert, err := os.ReadFile(caCertPath)
 	if err != nil {
