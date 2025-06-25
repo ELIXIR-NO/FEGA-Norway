@@ -1,4 +1,4 @@
-FROM golang:1.24 as builder
+FROM docker.io/library/golang:1.24 AS builder
 
 ENV GOPATH=$PWD
 ENV CGO_ENABLED=0
