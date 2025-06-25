@@ -84,7 +84,7 @@ jobs:
         env:
           TITLE: ${{ github.event.pull_request.title }}
         run: |
-          CLEAN_TITLE=$(echo $TITLE | sed 's/["'\''`]/ /g')
+          CLEAN_TITLE="${TITLE//[\"\'\`]/ }"
           echo "pr_title=$CLEAN_TITLE" >> $GITHUB_ENV
 
 
