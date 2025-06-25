@@ -90,7 +90,7 @@ jobs:
 
       - name: Generate Fancy Changelog
         run: |
-          ./gradlew :${{ env.component_path }}:generateChangelog \
+          ./gradlew ${{ env.component_path }}:generateChangelog \
             -Pversion=${{ steps.new-tag.outputs.version }} \
             -PprTitle="${{ env.pr_title }}"
 
