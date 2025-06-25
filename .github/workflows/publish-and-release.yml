@@ -79,11 +79,20 @@ jobs:
           )
           echo "component_path=${component_paths[${{ matrix.component }}]}" >> $GITHUB_ENV
 
+      - name: Set PR title
+        id: set_pr_title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          CLEAN_TITLE=$(echo $TITLE | sed 's/["'\''`]/ /g')
+          echo "pr_title=$CLEAN_TITLE" >> $GITHUB_ENV
+
+
       - name: Generate Fancy Changelog
         run: |
           ./gradlew :${{ env.component_path }}:generateChangelog \
             -Pversion=${{ steps.new-tag.outputs.version }} \
-            -PprTitle="${{ github.event.pull_request.title }}"
+            -PprTitle="${{ env.pr_title }}"
 
       - name: Log in to the Github Container registry
         if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
