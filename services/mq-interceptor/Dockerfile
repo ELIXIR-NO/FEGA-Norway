@@ -7,11 +7,9 @@ WORKDIR /app
 COPY . .
 
 RUN go build -o mq-interceptor ./main.go
-
-# Optional: create passwd for non-root user
 RUN echo "nobody:x:65534:65534:nobody:/:" > /app/passwd
 
-# ---- Final stage ----
+# Final stage
 FROM gcr.io/distroless/static:nonroot
 
 COPY --from=builder /app/mq-interceptor /
