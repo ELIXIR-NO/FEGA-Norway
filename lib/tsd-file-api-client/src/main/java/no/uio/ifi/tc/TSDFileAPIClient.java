@@ -142,13 +142,12 @@ public class TSDFileAPIClient {
     Message message = new Message();
 
     try (Response response = client.newCall(request).execute()) {
-      message.setStatusCode(response.code());
-      message.setStatusText(response.message());
-
       if (response.isSuccessful() && response.body() != null) {
         String responseBody = response.body().string();
         message = gson.fromJson(responseBody, Message.class);
       }
+      message.setStatusCode(response.code());
+      message.setStatusText(response.message());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
