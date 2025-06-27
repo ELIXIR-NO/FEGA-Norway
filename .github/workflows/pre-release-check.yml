@@ -1,0 +1,100 @@
+name: Release Pre Check
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  detect:
+    if: github.event.pull_request.merged == true
+    uses: ./.github/workflows/detect-changed-components.yml
+
+  check_publish:
+    needs: detect
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: ${{ fromJson(needs.detect.outputs.changed-components).component }}
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Publish Jar Files
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' }}
+        run: |
+          ./gradlew :lib:${{matrix.component}}:publish --dry-run
+
+      - name: Set Repository Name
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
+          
+      - name: Log in to the Github Container registry
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/${{ matrix.component }}
+          push: true
+          no-cache: 'true'
+          tags: |
+            ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ github.event.number }}
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
+            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Set up Go
+        if: ${{ matrix.component == 'lega-commander' }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+      - name: Run GoReleaser
+        if: ${{ matrix.component == 'lega-commander' }}
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: release --clean --snapshot
+          workdir: cli/lega-commander
+
+      - name: Set component path
+        id: set_path
+        run: |
+          declare -A component_paths=(
+            [lega-commander]="cli/lega-commander"
+            [e2eTests]="e2eTests"
+            [clearinghouse]="lib/clearinghouse"
+            [crypt4gh]="lib/crypt4gh"
+            [tsd-file-api-client]="lib/tsd-file-api-client"
+            [cega-mock]="services/cega-mock"
+            [localega-tsd-proxy]="services/localega-tsd-proxy"
+            [mq-interceptor]="services/mq-interceptor"
+            [tsd-api-mock]="services/tsd-api-mock"
+          )
+          path="${component_paths[${{ matrix.component }}]:-.}"
+          echo "changelog_path=$path" >> $GITHUB_ENV
+          echo "component_path=${component_paths[${{ matrix.component }}]}" >> $GITHUB_ENV
+
+      - name: Generate Fancy Changelog
+        run: |
+          ./gradlew ${{ env.component_path }}:generateChangelog \
+            -Pversion=v1.0.0 \
+            -PprTitle="pre-release-check"
