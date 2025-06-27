@@ -64,7 +64,6 @@ jobs:
           echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
 
       - name: Set component path
-        id: set_path
         run: |
           declare -A component_paths=(
             [lega-commander]="cli:lega-commander"
@@ -80,7 +79,6 @@ jobs:
           echo "component_path=${component_paths[${{ matrix.component }}]}" >> $GITHUB_ENV
 
       - name: Set changelog path
-        id: set_path
         run: |
           declare -A component_paths=(
             [lega-commander]="cli/lega-commander"
