@@ -7,10 +7,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
-public class State {
+public class E2EState {
 
     public static final Environment env = new Environment();
-    public static final Logger log = LoggerFactory.getLogger(State.class);
+    public static final Logger log = LoggerFactory.getLogger(E2EState.class);
     public static final KeyUtils keyUtils = KeyUtils.getInstance();
 
     public static File rawFile;

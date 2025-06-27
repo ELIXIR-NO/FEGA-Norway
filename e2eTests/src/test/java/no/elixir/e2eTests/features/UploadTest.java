@@ -3,8 +3,7 @@ package no.elixir.e2eTests.features;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
-import no.elixir.e2eTests.core.State;
-import no.elixir.e2eTests.utils.CommonUtils;
+import no.elixir.e2eTests.core.E2EState;
 import no.elixir.e2eTests.utils.TokenUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -16,39 +15,39 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class UploadTest {
 
     public static void uploadThroughProxy() throws Exception {
-        State.log.info("Uploading a file through a proxy...");
+        E2EState.log.info("Uploading a file through a proxy...");
         String token = TokenUtils.generateVisaToken("upload");
-        State.log.info("Visa JWT token when uploading: {}", token);
-        String md5Hex = DigestUtils.md5Hex(Files.newInputStream(State.encFile.toPath()));
-        State.log.info("Encrypted MD5 checksum: {}", md5Hex);
-        State.log.info("Cega Auth Username: {}", State.env.getCegaAuthUsername());
+        E2EState.log.info("Visa JWT token when uploading: {}", token);
+        String md5Hex = DigestUtils.md5Hex(Files.newInputStream(E2EState.encFile.toPath()));
+        E2EState.log.info("Encrypted MD5 checksum: {}", md5Hex);
+        E2EState.log.info("Cega Auth Username: {}", E2EState.env.getCegaAuthUsername());
         String uploadURL =
                 String.format(
                         "https://%s:%s/stream/%s?md5=%s",
-                        State.env.getProxyHost(), State.env.getProxyPort(), State.encFile.getName(), md5Hex);
+                        E2EState.env.getProxyHost(), E2EState.env.getProxyPort(), E2EState.encFile.getName(), md5Hex);
         JsonNode jsonResponse =
                 Unirest.patch(uploadURL)
                         .socketTimeout(1000000000)
-                        .basicAuth(State.env.getCegaAuthUsername(), State.env.getCegaAuthPassword())
+                        .basicAuth(E2EState.env.getCegaAuthUsername(), E2EState.env.getCegaAuthPassword())
                         .header("Proxy-Authorization", "Bearer " + token)
-                        .body(FileUtils.readFileToByteArray(State.encFile))
+                        .body(FileUtils.readFileToByteArray(E2EState.encFile))
                         .asJson()
                         .getBody();
         String uploadId = jsonResponse.getObject().getString("id");
-        State.log.info("Upload ID: {}", uploadId);
+        E2EState.log.info("Upload ID: {}", uploadId);
         String finalizeURL =
                 String.format(
                         "https://%s:%s/stream/%s?uploadId=%s&chunk=end&sha256=%s&fileSize=%s",
-                        State.env.getProxyHost(),
-                        State.env.getProxyPort(),
-                        State.encFile.getName(),
+                        E2EState.env.getProxyHost(),
+                        E2EState.env.getProxyPort(),
+                        E2EState.encFile.getName(),
                         uploadId,
-                        State.encSHA256Checksum,
-                        FileUtils.sizeOf(State.encFile));
+                        E2EState.encSHA256Checksum,
+                        FileUtils.sizeOf(E2EState.encFile));
         HttpResponse<JsonNode> res =
                 Unirest.patch(finalizeURL)
                         .socketTimeout(1000000)
-                        .basicAuth(State.env.getCegaAuthUsername(), State.env.getCegaAuthPassword())
+                        .basicAuth(E2EState.env.getCegaAuthUsername(), E2EState.env.getCegaAuthPassword())
                         .header("Proxy-Authorization", "Bearer " + token)
                         .asJson();
         jsonResponse = res.getBody();
