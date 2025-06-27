@@ -142,6 +142,7 @@ services:
       - LEGA_MQ_QUEUE=<<INTERCEPTOR_LEGA_MQ_QUEUE>>
       - ENABLE_TLS=<<INTERCEPTOR_ENABLE_TLS>>
       - CA_CERT_PATH=<<INTERCEPTOR_CA_CERT_PATH>>
+      - DEBUG=true
     volumes:
       - interceptor-certs:/certs
 
