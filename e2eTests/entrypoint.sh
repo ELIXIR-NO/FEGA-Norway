@@ -16,7 +16,7 @@ fi
 # Decide which test to run based on INTEGRATION variable
 if [ "$INTEGRATION" = "FEGA" ]; then
     echo "Running FEGA integration tests"
-    exec java -jar e2eTests.jar --select-class no.elixir.e2eTests.FegaIntegrationTest
+    exec java -jar e2eTests.jar --select-class no.elixir.e2eTests.FEGAIntegrationTest
 elif [ "$INTEGRATION" = "GDI" ]; then
     echo "Running GDI integration tests"
     exec java -jar e2eTests.jar --select-class no.elixir.e2eTests.GDIIntegrationTest
