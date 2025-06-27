@@ -142,14 +142,13 @@ public class TSDFileAPIClient {
     Message message = new Message();
 
     try (Response response = client.newCall(request).execute()) {
-      message.setStatusCode(response.code());
-      message.setStatusText(response.message());
-
       if (response.isSuccessful() && response.body() != null) {
         String responseBody = response.body().string();
         message = gson.fromJson(responseBody, Message.class);
       }
-    } catch (JsonSyntaxException e) {
+      message.setStatusCode(response.code());
+      message.setStatusText(response.message());
+    } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
 
@@ -233,13 +232,14 @@ public class TSDFileAPIClient {
     Chunk chunkResponse = new Chunk();
 
     try (Response response = client.newCall(request).execute()) {
-      chunkResponse.setStatusCode(response.code());
-      chunkResponse.setStatusText(response.message());
+      log.info(response.toString());
       String _body = Objects.requireNonNull(response.body()).string();
       if (response.isSuccessful() && _body != null) {
         chunkResponse = gson.fromJson(_body, Chunk.class);
       }
-    } catch (JsonSyntaxException e) {
+      chunkResponse.setStatusCode(response.code());
+      chunkResponse.setStatusText(response.message());
+    } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
 
