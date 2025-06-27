@@ -87,6 +87,8 @@ public class PublishMQAspect {
     FileDescriptor fileDescriptor = new FileDescriptor();
     fileDescriptor.setUser(request.getAttribute(EGA_USERNAME).toString());
     String fileName = request.getAttribute(FILE_NAME).toString();
+    String elixirId = String.valueOf(request.getAttribute(ELIXIR_ID));
+    log.info("Using ELIXIR_ID '{}' for inbox path", elixirId);
     fileDescriptor.setFilePath(
         String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
             + fileName); // absolute path to the file
