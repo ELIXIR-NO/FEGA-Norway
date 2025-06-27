@@ -69,19 +69,27 @@ public class PublishMQAspect {
             returning = "result")
     public void publishUpload(Object result) {
         try {
+            log.info("upload result: {}", result.toString());
+
             ResponseEntity genericResponseEntity = (ResponseEntity) result;
             if (!String.valueOf(Objects.requireNonNull(genericResponseEntity).getStatusCode())
                     .startsWith("20")) {
-                log.error(String.valueOf(genericResponseEntity.getStatusCode()));
-                log.error(String.valueOf(genericResponseEntity.getBody()));
+                log.error(String.valueOf("upload-TEST-1: " +genericResponseEntity.getStatusCode()));
+                log.error(String.valueOf("upload-TEST-2: " +genericResponseEntity.getBody()));
                 return;
             }
+            log.info("upload - genericResponseEntity {} {} ", genericResponseEntity.getStatusCode(), genericResponseEntity.getBody());
+
+
             ResponseEntity<TSDFileAPIResponse> tsdResponseEntity =
                     (ResponseEntity<TSDFileAPIResponse>) result;
             TSDFileAPIResponse body = tsdResponseEntity.getBody();
+
+            log.info("upload -  tsdResponseEntity {} {} ", tsdResponseEntity.getStatusCode(), tsdResponseEntity.getBody());
+
             if (!String.valueOf(Objects.requireNonNull(body).getStatusCode()).startsWith("20")) {
-                log.error(String.valueOf(body.getStatusCode()));
-                log.error(String.valueOf(body.getStatusText()));
+                log.error(String.valueOf("upload-TEST-3: " +body.getStatusCode()));
+                log.error(String.valueOf("upload-TEST-4: " +body.getStatusText()));
                 return;
             }
 
@@ -103,8 +111,8 @@ public class PublishMQAspect {
                     });
             publishMessage(fileDescriptor, Operation.UPLOAD.name().toLowerCase());
         } catch (Exception e) {
-            log.error(e.getMessage());
-            log.error(Arrays.toString(e.getStackTrace()));
+            log.error(String.valueOf("upload-TEST-5: " +e.getMessage()));
+            log.error(String.valueOf("upload-TEST-6: " +Arrays.toString(e.getStackTrace())));
         }
     }
 
@@ -120,21 +128,26 @@ public class PublishMQAspect {
             returning = "result")
     public void publishRemove(Object result) {
         try {
+            log.info("remove result: {}", result.toString());
             ResponseEntity genericResponseEntity = (ResponseEntity) result;
             if (!String.valueOf(Objects.requireNonNull(genericResponseEntity).getStatusCode())
                     .startsWith("20")) {
-                log.error(String.valueOf("TEST-1: " + genericResponseEntity.getStatusCode()));
-                log.error(String.valueOf("TEST-2: " + genericResponseEntity.getBody()));
+                log.error(String.valueOf("remove-TEST-1: " + genericResponseEntity.getStatusCode()));
+                log.error(String.valueOf("remove-TEST-2: " + genericResponseEntity.getBody()));
                 return;
             }
+            log.info("remove - genericResponseEntity {} {} ", genericResponseEntity.getStatusCode(), genericResponseEntity.getBody());
+
             ResponseEntity<TSDFileAPIResponse> tsdResponseEntity =
                     (ResponseEntity<TSDFileAPIResponse>) result;
             TSDFileAPIResponse body = tsdResponseEntity.getBody();
             if (!String.valueOf(Objects.requireNonNull(body).getStatusCode()).startsWith("20")) {
-                log.error(String.valueOf("TEST-3: " + body.getStatusCode()));
-                log.error(String.valueOf("TEST-4: " + body.getStatusText()));
+                log.error(String.valueOf("remove-TEST-3: " + body.getStatusCode()));
+                log.error(String.valueOf("remove-TEST-4: " + body.getStatusText()));
                 return;
             }
+            log.info("remove - tsdResponseEntity {} {} ", tsdResponseEntity.getStatusCode(), tsdResponseEntity.getBody());
+
 
             FileDescriptor fileDescriptor = new FileDescriptor();
             fileDescriptor.setUser(request.getAttribute(EGA_USERNAME).toString());
@@ -145,8 +158,8 @@ public class PublishMQAspect {
             fileDescriptor.setOperation(Operation.REMOVE.name().toLowerCase());
             publishMessage(fileDescriptor, Operation.REMOVE.name().toLowerCase());
         } catch (Exception e) {
-            log.error(String.valueOf("TEST-5: " +e.getMessage()));
-            log.error(String.valueOf("TEST-6: " + Arrays.toString(e.getStackTrace())));
+            log.error(String.valueOf("remove-TEST-5: " +e.getMessage()));
+            log.error(String.valueOf("remove-TEST-6: " + Arrays.toString(e.getStackTrace())));
         }
     }
 
