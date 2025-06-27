@@ -71,6 +71,7 @@ token:
 
 aai:
   service-base-url: ${AAI_SERVICE_BASE_URL:'https://login.elixir-czech.org'}
+  oidc-type: ${OIDC_TYPE:elixir}
 
 ga4gh:
   passport:
