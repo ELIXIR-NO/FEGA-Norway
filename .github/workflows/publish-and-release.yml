@@ -67,18 +67,17 @@ jobs:
         id: set_path
         run: |
           declare -A component_paths=(
-            [lega-commander]="cli/lega-commander"
+            [lega-commander]="cli:lega-commander"
             [e2eTests]="e2eTests"
-            [clearinghouse]="lib/clearinghouse"
-            [crypt4gh]="lib/crypt4gh"
-            [tsd-file-api-client]="lib/tsd-file-api-client"
-            [cega-mock]="services/cega-mock"
-            [localega-tsd-proxy]="services/localega-tsd-proxy"
-            [mq-interceptor]="services/mq-interceptor"
-            [tsd-api-mock]="services/tsd-api-mock"
+            [clearinghouse]="lib:clearinghouse"
+            [crypt4gh]="lib:crypt4gh"
+            [tsd-file-api-client]="lib:tsd-file-api-client"
+            [cega-mock]="services:cega-mock"
+            [localega-tsd-proxy]="services:localega-tsd-proxy"
+            [mq-interceptor]="services:mq-interceptor"
+            [tsd-api-mock]="services:tsd-api-mock"
           )
           path="${component_paths[${{ matrix.component }}]:-.}"
-          echo "changelog_path=$path" >> $GITHUB_ENV
           echo "component_path=${component_paths[${{ matrix.component }}]}" >> $GITHUB_ENV
 
       - name: Set PR title
@@ -90,6 +89,7 @@ jobs:
           echo "pr_title=$CLEAN_TITLE" >> $GITHUB_ENV
 
       - name: Generate Fancy Changelog
+        continue-on-error: true
         run: |
           ./gradlew ${{ env.component_path }}:generateChangelog \
             -Pversion=${{ steps.new-tag.outputs.version }} \
