@@ -68,40 +68,44 @@ public class PublishMQAspect {
                     "execution(@org.springframework.web.bind.annotation.PatchMapping public * no.elixir.fega.ltp.controllers.rest.ProxyController.stream(..))",
             returning = "result")
     public void publishUpload(Object result) {
-        ResponseEntity genericResponseEntity = (ResponseEntity) result;
-        if (!String.valueOf(Objects.requireNonNull(genericResponseEntity).getStatusCode())
-                .startsWith("20")) {
-            log.error(String.valueOf(genericResponseEntity.getStatusCode()));
-            log.error(String.valueOf(genericResponseEntity.getBody()));
-            return;
-        }
-        ResponseEntity<TSDFileAPIResponse> tsdResponseEntity =
-                (ResponseEntity<TSDFileAPIResponse>) result;
-        TSDFileAPIResponse body = tsdResponseEntity.getBody();
-        if (!String.valueOf(Objects.requireNonNull(body).getStatusCode()).startsWith("20")) {
-            log.error(String.valueOf(body.getStatusCode()));
-            log.error(String.valueOf(body.getStatusText()));
-            return;
-        }
+        try {
+            ResponseEntity genericResponseEntity = (ResponseEntity) result;
+            if (!String.valueOf(Objects.requireNonNull(genericResponseEntity).getStatusCode())
+                    .startsWith("20")) {
+                log.error(String.valueOf(genericResponseEntity.getStatusCode()));
+                log.error(String.valueOf(genericResponseEntity.getBody()));
+                return;
+            }
+            ResponseEntity<TSDFileAPIResponse> tsdResponseEntity =
+                    (ResponseEntity<TSDFileAPIResponse>) result;
+            TSDFileAPIResponse body = tsdResponseEntity.getBody();
+            if (!String.valueOf(Objects.requireNonNull(body).getStatusCode()).startsWith("20")) {
+                log.error(String.valueOf(body.getStatusCode()));
+                log.error(String.valueOf(body.getStatusText()));
+                return;
+            }
 
-        if (!"end".equalsIgnoreCase(String.valueOf(request.getAttribute(CHUNK)))) {
-            return;
+            if (!"end".equalsIgnoreCase(String.valueOf(request.getAttribute(CHUNK)))) {
+                return;
+            }
+            FileDescriptor fileDescriptor = new FileDescriptor();
+            fileDescriptor.setUser(request.getAttribute(EGA_USERNAME).toString());
+            String fileName = request.getAttribute(FILE_NAME).toString();
+            fileDescriptor.setFilePath(
+                    String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
+                            + fileName); // absolute path to the file
+            fileDescriptor.setFileSize(Long.parseLong(request.getAttribute(FILE_SIZE).toString()));
+            fileDescriptor.setFileLastModified(System.currentTimeMillis() / 1000);
+            fileDescriptor.setOperation(Operation.UPLOAD.name().toLowerCase());
+            fileDescriptor.setEncryptedIntegrity(
+                    new EncryptedIntegrity[]{
+                            new EncryptedIntegrity(SHA256.toLowerCase(), request.getAttribute(SHA256).toString())
+                    });
+            publishMessage(fileDescriptor, Operation.UPLOAD.name().toLowerCase());
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            log.error(Arrays.toString(e.getStackTrace()));
         }
-
-        FileDescriptor fileDescriptor = new FileDescriptor();
-        fileDescriptor.setUser(request.getAttribute(EGA_USERNAME).toString());
-        String fileName = request.getAttribute(FILE_NAME).toString();
-        fileDescriptor.setFilePath(
-                String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
-                        + fileName); // absolute path to the file
-        fileDescriptor.setFileSize(Long.parseLong(request.getAttribute(FILE_SIZE).toString()));
-        fileDescriptor.setFileLastModified(System.currentTimeMillis() / 1000);
-        fileDescriptor.setOperation(Operation.UPLOAD.name().toLowerCase());
-        fileDescriptor.setEncryptedIntegrity(
-                new EncryptedIntegrity[]{
-                        new EncryptedIntegrity(SHA256.toLowerCase(), request.getAttribute(SHA256).toString())
-                });
-        publishMessage(fileDescriptor, Operation.UPLOAD.name().toLowerCase());
     }
 
     /**
