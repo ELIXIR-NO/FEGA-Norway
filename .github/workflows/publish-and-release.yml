@@ -77,7 +77,6 @@ jobs:
             [mq-interceptor]="services:mq-interceptor"
             [tsd-api-mock]="services:tsd-api-mock"
           )
-          path="${component_paths[${{ matrix.component }}]:-.}"
           echo "component_path=${component_paths[${{ matrix.component }}]}" >> $GITHUB_ENV
 
       - name: Set PR title
