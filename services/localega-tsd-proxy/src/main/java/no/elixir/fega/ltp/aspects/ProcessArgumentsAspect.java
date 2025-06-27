@@ -12,6 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.Map;
+
 /** AOP aspect that processes HTTP request parameters. */
 @Slf4j
 @Aspect
@@ -46,6 +49,17 @@ public class ProcessArgumentsAspect {
       MethodSignature signature = (MethodSignature) joinPoint.getSignature();
       String[] parameterNames = signature.getParameterNames();
       Class[] parameterTypes = signature.getParameterTypes();
+
+      log.info("Method parameters");
+        for (int i = 0; i < arguments.length; i++) {
+          log.info("{} ({}): {}", parameterNames[i], parameterTypes[i].getSimpleName(), arguments[i]);
+        }
+
+      log.info("HTTP parameters");
+        for (Map.Entry<String, String[]> e : request.getParameterMap().entrySet()) {
+          log.info("{} -> {}", e.getKey(), Arrays.toString(e.getValue()));
+        }
+
       for (int i = 0; i < arguments.length; i++) {
         if (parameterTypes[i].equals(String.class)) {
           switch (parameterNames[i]) {
