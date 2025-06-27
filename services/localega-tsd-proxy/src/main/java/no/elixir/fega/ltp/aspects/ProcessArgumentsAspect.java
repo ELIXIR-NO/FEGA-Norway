@@ -50,6 +50,9 @@ public class ProcessArgumentsAspect {
       String[] parameterNames = signature.getParameterNames();
       Class[] parameterTypes = signature.getParameterTypes();
 
+      Object elixirId = request.getAttribute(ELIXIR_ID);
+      log.info("ELIXIR_ID attribute: {}", elixirId);
+
       log.info("Method parameters");
         for (int i = 0; i < arguments.length; i++) {
           log.info("{} ({}): {}", parameterNames[i], parameterTypes[i].getSimpleName(), arguments[i]);
