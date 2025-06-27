@@ -13,5 +13,15 @@ else
     echo "Warning: /storage/certs/rootCA.pem not found, skipping certificate import."
 fi
 
-exec java -jar e2eTests.jar --select-class no.elixir.e2eTests.IngestionTest
-#exec java -jar e2eTests.jar --scan-classpath --include-classname  no.elixir.e2eTests.FEGATestsSuite
+# Decide which test to run based on INTEGRATION variable
+if [ "$INTEGRATION" = "FEGA" ]; then
+    echo "Running FEGA integration tests"
+    exec java -jar e2eTests.jar --select-class no.elixir.e2eTests.FegaIntegrationTest
+elif [ "$INTEGRATION" = "GDI" ]; then
+    echo "Running GDI integration tests"
+    exec java -jar e2eTests.jar --select-class no.elixir.e2eTests.GDIIntegrationTest
+else
+    echo "Error: Unknown or unset INTEGRATION value: $INTEGRATION"
+    echo "Please set INTEGRATION=FEGA or INTEGRATION=GDI"
+    exit 1
+fi

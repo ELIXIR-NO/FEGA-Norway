@@ -1,33 +1,23 @@
-package no.elixir.e2eTests;
+package no.elixir.e2eTests.features;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import no.elixir.e2eTests.constants.Strings;
-import org.junit.jupiter.api.Test;
+import no.elixir.e2eTests.core.State;
+import no.elixir.e2eTests.utils.CertificateUtils;
+import no.elixir.e2eTests.utils.CommonUtils;
 
 import java.nio.charset.StandardCharsets;
 
-public class ReleaseTest extends BaseE2ETest {
+public class ReleaseTest {
 
-    @Test
-    public void triggerReleaseMessageFromCEGA() throws Exception {
-        setupTestEnvironment();
-        try {
-            test();
-            // Wait for LEGA mapper service to update dataset status
-            waitForProcessing(1000);
-        } finally {
-            cleanupTestEnvironment();
-        }
-    }
-
-    private void test() throws Exception {
-        log.info("Releasing the dataset...");
+    public static void triggerReleaseMessageFromCEGA() throws Exception {
+        State.log.info("Releasing the dataset...");
         ConnectionFactory factory = new ConnectionFactory();
-        factory.useSslProtocol(createSslContext());
-        factory.setUri(env.getBrokerConnectionString());
+        factory.useSslProtocol(CertificateUtils.createSslContext());
+        factory.setUri(State.env.getBrokerConnectionString());
         Connection connectionFactory = factory.newConnection();
         Channel channel = connectionFactory.createChannel();
         AMQP.BasicProperties properties =
@@ -36,14 +26,14 @@ public class ReleaseTest extends BaseE2ETest {
                         .deliveryMode(2)
                         .contentType("application/json")
                         .contentEncoding(StandardCharsets.UTF_8.displayName())
-                        .correlationId(correlationId)
+                        .correlationId(State.correlationId)
                         .build();
-        String message = String.format(Strings.RELEASE_MESSAGE, datasetId);
-        log.info(message);
+        String message = String.format(Strings.RELEASE_MESSAGE, State.datasetId);
+        State.log.info(message);
         channel.basicPublish("localega", "files", properties, message.getBytes());
         channel.close();
         connectionFactory.close();
-        log.info("Dataset release message sent successfully");
+        State.log.info("Dataset release message sent successfully");
     }
 
 }
