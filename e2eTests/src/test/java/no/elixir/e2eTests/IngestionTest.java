@@ -329,7 +329,7 @@ public class IngestionTest {
     assertEquals(String.format("[\"%s\"]", datasetId).strip(), datasets.strip());
     // Meta data check
     String expected =
-            CommonUtils.toCompactJson(
+        CommonUtils.toCompactJson(
             String.format(
                     Strings.EXPECTED_DOWNLOAD_METADATA,
                     stableId,
@@ -339,7 +339,7 @@ public class IngestionTest {
                     rawSHA256Checksum)
                 .strip());
     String actual =
-            CommonUtils.toCompactJson(
+        CommonUtils.toCompactJson(
             Unirest.get(
                     String.format(
                         "https://%s:%s/metadata/datasets/%s/files",
