@@ -1,9 +1,5 @@
 package no.elixir.e2eTests.utils;
 
-import no.elixir.e2eTests.core.E2EState;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -12,6 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import no.elixir.e2eTests.core.E2EState;
 
 public class CertificateUtils {
 
@@ -106,10 +105,11 @@ public class CertificateUtils {
     // Load the PKCS12 trust store
     File rootCA = getCertificateFile("truststore.p12");
     KeyStore trustStore = KeyStore.getInstance("PKCS12");
-    trustStore.load(new FileInputStream(rootCA), E2EState.env.getTruststorePassword().toCharArray());
+    trustStore.load(
+        new FileInputStream(rootCA), E2EState.env.getTruststorePassword().toCharArray());
     // Create trust manager
     TrustManagerFactory trustManagerFactory =
-            TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
     trustManagerFactory.init(trustStore);
     // Create and initialize the SSLContext
     SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
@@ -117,5 +117,4 @@ public class CertificateUtils {
 
     return sslContext;
   }
-
 }
