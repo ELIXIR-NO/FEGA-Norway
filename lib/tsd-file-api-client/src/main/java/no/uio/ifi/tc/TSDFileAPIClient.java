@@ -149,7 +149,7 @@ public class TSDFileAPIClient {
         String responseBody = response.body().string();
         message = gson.fromJson(responseBody, Message.class);
       }
-    } catch (JsonSyntaxException e) {
+    } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
 
