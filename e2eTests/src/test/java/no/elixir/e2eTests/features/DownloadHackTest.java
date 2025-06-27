@@ -4,7 +4,7 @@ import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import no.elixir.crypt4gh.stream.Crypt4GHInputStream;
 import no.elixir.e2eTests.constants.Strings;
-import no.elixir.e2eTests.core.State;
+import no.elixir.e2eTests.core.E2EState;
 import no.elixir.e2eTests.utils.CommonUtils;
 import no.elixir.e2eTests.utils.TokenUtils;
 import org.apache.commons.codec.binary.Hex;
@@ -27,64 +27,64 @@ public class DownloadHackTest {
      * original inserted data at the top.
      */
     public static void downloadDatasetAndVerifyResults() throws Exception {
-        String token = TokenUtils.generateVisaToken(State.datasetId);
-        State.log.info("Visa JWT token when downloading: {}", token);
+        String token = TokenUtils.generateVisaToken(E2EState.datasetId);
+        E2EState.log.info("Visa JWT token when downloading: {}", token);
         String datasets =
                 Unirest.get(
                                 String.format(
-                                        "https://%s:%s/metadata/datasets", State.env.getSdaDoaHost(), State.env.getSdaDoaPort()))
+                                        "https://%s:%s/metadata/datasets", E2EState.env.getSdaDoaHost(), E2EState.env.getSdaDoaPort()))
                         .header("Authorization", "Bearer " + token)
                         .asString()
                         .getBody();
-        assertEquals(String.format("[\"%s\"]", State.datasetId).strip(), datasets.strip());
+        assertEquals(String.format("[\"%s\"]", E2EState.datasetId).strip(), datasets.strip());
         // Meta data check
         String expected =
                 CommonUtils.toCompactJson(
                         String.format(
                                         Strings.EXPECTED_DOWNLOAD_METADATA,
-                                        State.stableId,
-                                        State.datasetId,
-                                        State.encFile.getName(),
-                                        State.archivePath,
-                                        State.rawSHA256Checksum)
+                                        E2EState.stableId,
+                                        E2EState.datasetId,
+                                        E2EState.encFile.getName(),
+                                        E2EState.archivePath,
+                                        E2EState.rawSHA256Checksum)
                                 .strip());
         String actual =
                 CommonUtils.toCompactJson(
                         Unirest.get(
                                         String.format(
                                                 "https://%s:%s/metadata/datasets/%s/files",
-                                                State.env.getSdaDoaHost(), State.env.getSdaDoaPort(), State.datasetId))
+                                                E2EState.env.getSdaDoaHost(), E2EState.env.getSdaDoaPort(), E2EState.datasetId))
                                 .header("Authorization", "Bearer " + token)
                                 .asString()
                                 .getBody()
                                 .strip());
-        State.log.info("Expected: {}", expected);
-        State.log.info("Actual: {}", actual);
+        E2EState.log.info("Expected: {}", expected);
+        E2EState.log.info("Actual: {}", actual);
         JSONAssert.assertEquals(expected, actual, false);
         // Fetch the non-encrypted file
         HttpResponse<byte[]> response =
                 Unirest.get(
                                 String.format(
-                                        "https://%s:%s/files/%s", State.env.getSdaDoaHost(), State.env.getSdaDoaPort(), State.stableId))
+                                        "https://%s:%s/files/%s", E2EState.env.getSdaDoaHost(), E2EState.env.getSdaDoaPort(), E2EState.stableId))
                         .header("Authorization", "Bearer " + token)
                         .asBytes();
         if (response.getStatus() == 200) { // Check if the response is OK
             byte[] file = response.getBody();
             String obtainedChecksum = Hex.encodeHexString(DigestUtils.sha256(file));
-            assertEquals(State.rawSHA256Checksum, obtainedChecksum);
+            assertEquals(E2EState.rawSHA256Checksum, obtainedChecksum);
         } else {
             fail("Failed to fetch the file. Status: " + response.getStatus());
         }
         // Fetch the encrypted file
-        KeyPair recipientKeyPair = State.keyUtils.generateKeyPair();
+        KeyPair recipientKeyPair = E2EState.keyUtils.generateKeyPair();
         StringWriter stringWriter = new StringWriter();
-        State.keyUtils.writeCrypt4GHKey(stringWriter, recipientKeyPair.getPublic(), null);
+        E2EState.keyUtils.writeCrypt4GHKey(stringWriter, recipientKeyPair.getPublic(), null);
         String key = stringWriter.toString();
         HttpResponse<byte[]> encFileRes =
                 Unirest.get(
                                 String.format(
                                         "https://%s:%s/files/%s?destinationFormat=CRYPT4GH",
-                                        State.env.getSdaDoaHost(), State.env.getSdaDoaPort(), State.stableId))
+                                        E2EState.env.getSdaDoaHost(), E2EState.env.getSdaDoaPort(), E2EState.stableId))
                         .header("Authorization", "Bearer " + token)
                         .header("Public-Key", key)
                         .asBytes();
@@ -98,7 +98,7 @@ public class DownloadHackTest {
             }
             String obtainedChecksum =
                     Hex.encodeHexString(DigestUtils.sha256(byteArrayOutputStream.toByteArray()));
-            assertEquals(State.rawSHA256Checksum, obtainedChecksum);
+            assertEquals(E2EState.rawSHA256Checksum, obtainedChecksum);
         } else {
             fail("Failed to fetch the encrypted file. Status: " + response.getStatus());
         }

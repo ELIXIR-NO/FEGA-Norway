@@ -1,6 +1,6 @@
 package no.elixir.e2eTests.utils;
 
-import no.elixir.e2eTests.core.State;
+import no.elixir.e2eTests.core.E2EState;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -87,7 +87,7 @@ public class CertificateUtils {
    * @throws Exception If file retrieval fails.
    */
   public static File getCertificateFile(String name) throws Exception {
-    if ("local".equalsIgnoreCase(State.env.getRuntime())) {
+    if ("local".equalsIgnoreCase(E2EState.env.getRuntime())) {
       // Use getFileInContainer for local development
       return CertificateUtils.getFileInContainer("file-orchestrator", "/storage/certs/" + name);
     } else {
@@ -106,7 +106,7 @@ public class CertificateUtils {
     // Load the PKCS12 trust store
     File rootCA = getCertificateFile("truststore.p12");
     KeyStore trustStore = KeyStore.getInstance("PKCS12");
-    trustStore.load(new FileInputStream(rootCA), State.env.getTruststorePassword().toCharArray());
+    trustStore.load(new FileInputStream(rootCA), E2EState.env.getTruststorePassword().toCharArray());
     // Create trust manager
     TrustManagerFactory trustManagerFactory =
             TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
