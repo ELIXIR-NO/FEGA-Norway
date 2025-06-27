@@ -1,36 +1,24 @@
 package conf
 
 import (
-	"os"
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	setup()
-	code := m.Run()
-	teardown()
-	os.Exit(code)
-}
-
-func setup() {
-	_ = os.Setenv("CENTRAL_EGA_USERNAME", "1")
-	_ = os.Setenv("CENTRAL_EGA_PASSWORD", "2")
-	_ = os.Setenv("ELIXIR_AAI_TOKEN", "3")
-	_ = os.Setenv("TSD_PROJ_NAME", "5")
-	_ = os.Setenv("TSD_SERV", "6")
-}
-
 func TestNewConfigurationSameInstance(t *testing.T) {
+	t.Setenv("CENTRAL_EGA_USERNAME", "1")
+	t.Setenv("CENTRAL_EGA_PASSWORD", "2")
+	t.Setenv("ELIXIR_AAI_TOKEN", "3")
+	t.Setenv("TSD_PROJ_NAME", "5")
+	t.Setenv("TSD_SERV", "6")
 	configuration1 := NewConfiguration()
 	configuration2 := NewConfiguration()
-	println(configuration1)
-	println(configuration2)
 	if configuration1 != configuration2 {
 		t.Error()
 	}
 }
 
 func TestGetCentralEGAUsername(t *testing.T) {
+	t.Setenv("CENTRAL_EGA_USERNAME", "1")
 	configuration := NewConfiguration()
 	if configuration.GetCentralEGAUsername() != "1" {
 		t.Error()
@@ -38,6 +26,7 @@ func TestGetCentralEGAUsername(t *testing.T) {
 }
 
 func TestGetCentralEGAPassword(t *testing.T) {
+	t.Setenv("CENTRAL_EGA_PASSWORD", "2")
 	configuration := NewConfiguration()
 	if configuration.GetCentralEGAPassword() != "2" {
 		t.Error()
@@ -45,6 +34,7 @@ func TestGetCentralEGAPassword(t *testing.T) {
 }
 
 func TestGetElixirAAIToken(t *testing.T) {
+	t.Setenv("ELIXIR_AAI_TOKEN", "3")
 	configuration := NewConfiguration()
 	if configuration.GetElixirAAIToken() != "3" {
 		t.Error()
@@ -57,12 +47,15 @@ func TestGetTSDAPIVersion(t *testing.T) {
 		t.Error()
 	}
 }
+
 func TestGetTSDProjectName(t *testing.T) {
+	t.Setenv("TSD_PROJ_NAME", "5")
 	configuration := NewConfiguration()
 	if configuration.GetTSDProjectName() != "5" {
 		t.Error()
 	}
 }
+
 func TestGetTSDservice(t *testing.T) {
 	configuration := NewConfiguration()
 	if configuration.GetTSDservice() != "ega" {
@@ -71,6 +64,7 @@ func TestGetTSDservice(t *testing.T) {
 }
 
 func TestNewConfigurationDefaultInstanceURL(t *testing.T) {
+	t.Setenv("LOCAL_EGA_INSTANCE_URL", "")
 	configuration := NewConfiguration()
 	if configuration.GetLocalEGAInstanceURL() != defaultInstanceURL {
 		t.Error()
@@ -78,7 +72,7 @@ func TestNewConfigurationDefaultInstanceURL(t *testing.T) {
 }
 
 func TestNewConfigurationNonDefaultInstanceURL(t *testing.T) {
-	_ = os.Setenv("LOCAL_EGA_INSTANCE_URL", "test/")
+	t.Setenv("LOCAL_EGA_INSTANCE_URL", "test/")
 	configuration := NewConfiguration()
 	if configuration.GetLocalEGAInstanceURL() != "test" {
 		t.Error()
@@ -86,6 +80,7 @@ func TestNewConfigurationNonDefaultInstanceURL(t *testing.T) {
 }
 
 func TestNewConfigurationDefaultTSDbaseURL(t *testing.T) {
+	t.Setenv("TSD_BASE_URL", "")
 	configuration := NewConfiguration()
 	if configuration.GetTSDbaseURL() != defaultTSDfileAPIbaseURL {
 		t.Error()
@@ -93,15 +88,15 @@ func TestNewConfigurationDefaultTSDbaseURL(t *testing.T) {
 }
 
 func TestNewConfigurationNonDefaultTSDbaseURL(t *testing.T) {
-	_ = os.Setenv("TSD_BASE_URL", "test/tsd_base/")
+	t.Setenv("TSD_BASE_URL", "test/tsd_base/")
 	configuration := NewConfiguration()
 	if configuration.GetTSDbaseURL() != "test/tsd_base" {
 		t.Error()
 	}
 }
 
-
 func TestNewConfigurationDefaultChunkSize(t *testing.T) {
+	t.Setenv("LEGA_COMMANDER_CHUNK_SIZE", "")
 	configuration := NewConfiguration()
 	if configuration.GetChunkSize() != defaultChunkSize {
 		t.Error()
@@ -109,7 +104,7 @@ func TestNewConfigurationDefaultChunkSize(t *testing.T) {
 }
 
 func TestNewConfigurationNonDefaultChunkSize(t *testing.T) {
-	_ = os.Setenv("LEGA_COMMANDER_CHUNK_SIZE", "100")
+	t.Setenv("LEGA_COMMANDER_CHUNK_SIZE", "100")
 	configuration := NewConfiguration()
 	if configuration.GetChunkSize() != 100 {
 		t.Error()
@@ -117,35 +112,23 @@ func TestNewConfigurationNonDefaultChunkSize(t *testing.T) {
 }
 
 func TestNewConfigurationNonNumericChunkSize(t *testing.T) {
-	_ = os.Setenv("LEGA_COMMANDER_CHUNK_SIZE", "test")
+	t.Setenv("LEGA_COMMANDER_CHUNK_SIZE", "test")
 	configuration := NewConfiguration()
 	if configuration.GetChunkSize() != defaultChunkSize {
 		t.Error()
 	}
 }
+
 func TestNewConfigurationGetTSDURL(t *testing.T) {
-	_ = os.Setenv("TSD_BASE_URL", "tsd_base/")
-
-	_ = os.Setenv("TSD_PROJ_NAME", "tsd_project")
-
+	t.Setenv("TSD_BASE_URL", "tsd_base/")
+	t.Setenv("TSD_PROJ_NAME", "tsd_project")
 	configuration := NewConfiguration()
 	if configuration.GetTSDURL() != "tsd_base/v1/tsd_project/ega" {
 		t.Error()
 	}
-	_ = os.Unsetenv("TSD_PROJ_NAME")
-	// default value for project name should be set when the env.var is empty
+	t.Setenv("TSD_PROJ_NAME", "")
 	configuration = NewConfiguration()
 	if configuration.GetTSDURL() != "tsd_base/v1/p969/ega" {
 		t.Error()
 	}
-}
-
-
-
-func teardown() {
-	_ = os.Unsetenv("CENTRAL_EGA_USERNAME")
-	_ = os.Unsetenv("CENTRAL_EGA_PASSWORD")
-	_ = os.Unsetenv("LOCAL_EGA_INSTANCE_URL")
-	_ = os.Unsetenv("ELIXIR_AAI_TOKEN")
-	_ = os.Unsetenv("LEGA_COMMANDER_CHUNK_SIZE")
 }
