@@ -1,6 +1,6 @@
 package no.elixir.e2eTests;
 
-import no.elixir.e2eTests.core.BaseTest;
+import no.elixir.e2eTests.core.BaseE2ETest;
 import no.elixir.e2eTests.features.*;
 import no.elixir.e2eTests.utils.CommonUtils;
 import org.junit.jupiter.api.*;
@@ -10,12 +10,12 @@ public class FegaIntegrationTest {
 
     @BeforeAll
     static void setup() throws Exception {
-        BaseTest.setupTestEnvironment();
+        BaseE2ETest.setupTestEnvironment();
     }
 
     @AfterAll
     static void cleanup() {
-        BaseTest.cleanupTestEnvironment();
+        BaseE2ETest.cleanupTestEnvironment();
     }
 
     @Test

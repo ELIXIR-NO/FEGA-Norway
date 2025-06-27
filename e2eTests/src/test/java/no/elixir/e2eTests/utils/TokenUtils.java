@@ -1,7 +1,7 @@
 package no.elixir.e2eTests.utils;
 
 import com.auth0.jwt.algorithms.Algorithm;
-import no.elixir.e2eTests.core.State;
+import no.elixir.e2eTests.core.E2EState;
 import no.elixir.e2eTests.constants.Strings;
 import org.apache.commons.io.FileUtils;
 
@@ -22,7 +22,7 @@ public class TokenUtils {
         byte[] visaPayload =
                 Base64.getUrlEncoder()
                         .encode(
-                                String.format(Strings.VISA_PAYLOAD, State.env.getProxyTokenAudience(), resource)
+                                String.format(Strings.VISA_PAYLOAD, E2EState.env.getProxyTokenAudience(), resource)
                                         .getBytes());
         byte[] visaSignature = Algorithm.RSA256(publicKey, privateKey).sign(visaHeader, visaPayload);
         return "%s.%s.%s"
