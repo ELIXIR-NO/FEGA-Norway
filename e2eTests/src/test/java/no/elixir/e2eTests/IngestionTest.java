@@ -1,6 +1,5 @@
 package no.elixir.e2eTests;
 
-import static no.elixir.e2eTests.utils.JsonUtils.toCompactJson;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -39,6 +38,7 @@ import no.elixir.crypt4gh.util.KeyUtils;
 import no.elixir.e2eTests.config.Environment;
 import no.elixir.e2eTests.constants.Strings;
 import no.elixir.e2eTests.utils.CertificateUtils;
+import no.elixir.e2eTests.utils.CommonUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -75,7 +75,7 @@ public class IngestionTest {
     long fileSize = 1024 * 1024 * 10;
     log.info("Generating {} bytes file to submit...", fileSize);
 
-    rawFile = no.elixir.e2eTests.utils.FileUtils.createRandomFile(basePath, fileSize);
+    rawFile = CommonUtils.createRandomFile(basePath, fileSize);
 
     byte[] bytes = DigestUtils.sha256(Files.newInputStream(rawFile.toPath()));
     rawSHA256Checksum = Hex.encodeHexString(bytes);
@@ -121,8 +121,7 @@ public class IngestionTest {
     Thread.sleep(5000); // Wait for LEGA finalize service to complete and update DB
     // Verify that everything is ok so far
     verifyAfterFinalizeAndLookUpAccessionID();
-    // Trigger the process further,
-    // with retrieved information from earlier steps
+    // Trigger the process further, with retrieved information from earlier steps
     triggerMappingMessageFromCEGA();
     Thread.sleep(1000); // Wait for LEGA mapper service to store mapping
     triggerReleaseMessageFromCEGA();
@@ -330,7 +329,7 @@ public class IngestionTest {
     assertEquals(String.format("[\"%s\"]", datasetId).strip(), datasets.strip());
     // Meta data check
     String expected =
-        toCompactJson(
+            CommonUtils.toCompactJson(
             String.format(
                     Strings.EXPECTED_DOWNLOAD_METADATA,
                     stableId,
@@ -340,7 +339,7 @@ public class IngestionTest {
                     rawSHA256Checksum)
                 .strip());
     String actual =
-        toCompactJson(
+            CommonUtils.toCompactJson(
             Unirest.get(
                     String.format(
                         "https://%s:%s/metadata/datasets/%s/files",
