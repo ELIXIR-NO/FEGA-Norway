@@ -92,7 +92,8 @@ public class Strings {
             }]
             """;
 
-  public static final String EXPORT_REQ_BODY = """
+  public static final String EXPORT_REQ_BODY =
+      """
           {
               "id": "%s",
               "accessToken": "%s",
@@ -100,5 +101,4 @@ public class Strings {
               "type": "%s"
           }
           """;
-
 }
