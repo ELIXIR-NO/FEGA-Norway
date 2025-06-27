@@ -1,51 +1,39 @@
-package no.elixir.e2eTests;
+package no.elixir.e2eTests.features;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import no.elixir.e2eTests.constants.Strings;
-import org.junit.jupiter.api.Test;
+import no.elixir.e2eTests.core.State;
+import no.elixir.e2eTests.utils.CertificateUtils;
+import no.elixir.e2eTests.utils.CommonUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-public class IngestTest extends BaseE2ETest {
+public class IngestTest {
 
-    @Test
-    public void triggerIngestMessageFromCEGA() throws Exception {
-        setupTestEnvironment();
-        try {
-            test();
-            // Wait for the LEGA ingest and verify services to complete and update DB
-            waitForProcessing(5000);
-        } finally {
-            cleanupTestEnvironment();
-        }
-    }
-
-    private void test() throws Exception {
-        log.info("Publishing ingestion message to CentralEGA...");
+    public static void publishIngestionMessageToCEGA() throws Exception {
+        State.log.info("Publishing ingestion message to CentralEGA...");
         ConnectionFactory factory = new ConnectionFactory();
-        factory.useSslProtocol(createSslContext());
-        factory.setUri(env.getBrokerConnectionString());
+        factory.useSslProtocol(CertificateUtils.createSslContext());
+        factory.setUri(State.env.getBrokerConnectionString());
         Connection connectionFactory = factory.newConnection();
         Channel channel = connectionFactory.createChannel();
-        correlationId = UUID.randomUUID().toString();
-
+        State.correlationId = UUID.randomUUID().toString();
         AMQP.BasicProperties properties =
                 new AMQP.BasicProperties()
                         .builder()
                         .deliveryMode(2)
                         .contentType("application/json")
                         .contentEncoding(StandardCharsets.UTF_8.displayName())
-                        .correlationId(correlationId)
+                        .correlationId(State.correlationId)
                         .build();
 
-        String message = Strings.INGEST_MESSAGE.formatted(env.getCegaAuthUsername(), encFile.getName());
-        log.info(message);
+        String message = Strings.INGEST_MESSAGE.formatted(State.env.getCegaAuthUsername(), State.encFile.getName());
+        State.log.info(message);
         channel.basicPublish("localega", "files", properties, message.getBytes());
-
         channel.close();
         connectionFactory.close();
     }
