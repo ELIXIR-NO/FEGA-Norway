@@ -29,6 +29,11 @@ jobs:
         env:
           TAG_PREFIX: crypt4gh-
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: true
+          DEFAULT_BUMP: patch
+          MAJOR_STRING_TOKEN: "#major_crypt4gh"
+          MINOR_STRING_TOKEN: "#minor_crypt4gh"
+          PATCH_STRING_TOKEN: "#patch_crypt4gh"
       - name: Extract New Version
         id: new-tag
         run: |

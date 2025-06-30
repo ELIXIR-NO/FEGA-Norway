@@ -15,7 +15,8 @@ group = "no.elixir"
 
 // The target Java version can be overriden on the command-line with the argument "-PjavaVersion=<version>"
 // A JDK of this version must be available on your system
-val javaVersion = (project.findProperty("javaVersion") as String?)?.toInt() ?: 21
+val javaVersion = (project.findProperty("javaVersion") as String?)?.toInt()
+    ?: JavaVersion.current().majorVersion.toInt()
 
 repositories {
     mavenCentral()
@@ -174,7 +175,8 @@ fun MavenPom.includeDependencies() {
 
 publishing {
     publications {
-        // Publish everything, including slim and fat JAR, docs, sources and signature files (for publication to Maven Central)
+        // Publish everything, including slim and fat JAR, docs, sources and signature files (for publication to Maven
+        // Central)
         create<MavenPublication>("mavenJava") {
             from(components["java"])
             pom {
@@ -220,12 +222,16 @@ publishing {
             }
         }
 
-        maven { // this currently only works for snapshots
+        maven {
+            // this currently only works for snapshots
             name = "MavenCentral"
             val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
             url = uri(
-                if (isSnapshot) "https://central.sonatype.com/repository/maven-snapshots/"
-                else "https://central.sonatype.com/api/v1/publisher/"
+                if (isSnapshot) {
+                    "https://central.sonatype.com/repository/maven-snapshots/"
+                } else {
+                    "https://central.sonatype.com/api/v1/publisher/"
+                }
             )
             credentials {
                 username = System.getenv("MAVEN_CENTRAL_TOKEN_USER") ?: ""
@@ -233,14 +239,16 @@ publishing {
             }
         }
         // Publish all files required by Maven Central to a local staging directory under lib/crypt4gh/build/
-	// These can later be pushed to Maven Central by JReleaser
+        // These can later be pushed to Maven Central by JReleaser
         maven {
             name = "localStaging"
-	    url = layout.buildDirectory.get().asFile.resolve("jreleaser/staging-deploy").toURI()
+            url = layout.buildDirectory.get()
+                .asFile
+                .resolve("jreleaser/staging-deploy")
+                .toURI()
         }
     }
 }
-
 
 signing {
     // the signing key should be supplied in Base64 encoded format
@@ -257,25 +265,28 @@ signing {
     }
 }
 
-jreleaser { // this is not working yet
-   signing { // signing will be performed by the signing-block above
-      setActive("NEVER")
-   }
-   deploy {
-      maven {
-         mavenCentral {
-            create("sonatype") {
-               setActive("RELEASE")
-               sign.set(false) // the artifacts should already have been signed
-               applyMavenCentralRules.set(true)
-               url.set("https://central.sonatype.com/api/v1/publisher")
-               username.set(System.getenv("MAVEN_CENTRAL_TOKEN_USER") ?: "")
-               password.set(System.getenv("MAVEN_CENTRAL_TOKEN_PASSWORD") ?: "")
-               stagingRepository(layout.buildDirectory.get().asFile.resolve("jreleaser/staging-deploy").absolutePath)
+jreleaser {
+    // this is not working yet
+    signing {
+        // signing will be performed by the signing-block above
+        setActive("NEVER")
+    }
+    deploy {
+        maven {
+            mavenCentral {
+                create("sonatype") {
+                    setActive("RELEASE")
+                    sign.set(false) // the artifacts should already have been signed
+                    applyMavenCentralRules.set(true)
+                    url.set("https://central.sonatype.com/api/v1/publisher")
+                    username.set(System.getenv("MAVEN_CENTRAL_TOKEN_USER") ?: "")
+                    password.set(System.getenv("MAVEN_CENTRAL_TOKEN_PASSWORD") ?: "")
+                    stagingRepository(layout.buildDirectory.get().asFile.resolve("jreleaser/staging-deploy")
+                        .absolutePath)
+                }
             }
-         }
-      }
-   }
+        }
+    }
 }
 
 // Block publishing if the version number is not specified
@@ -303,7 +314,9 @@ tasks.withType<PublishToMavenRepository>().configureEach {
 tasks.withType<PublishToMavenLocal>().configureEach {
     doFirst {
         if (project.version.toString() == "unspecified") {
-            throw GradleException("Cannot publish to MavenLocal with an unspecified version. Use argument: -Pversion=X.Y.Z")
+            throw GradleException(
+                "Cannot publish to MavenLocal with an unspecified version. Use argument: -Pversion=X.Y.Z"
+            )
         }
     }
 }
