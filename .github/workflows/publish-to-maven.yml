@@ -38,7 +38,7 @@ jobs:
         id: new-tag
         run: |
           full_version="${{ steps.generate-new-tag.outputs.new_tag }}"
-          component="${{ matrix.component }}"
+          component="crypt4gh"
           version="${full_version#"$component"-}"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
@@ -50,6 +50,9 @@ jobs:
           ./gradlew lib:crypt4gh:clean lib:crypt4gh:build lib:crypt4gh:publishToMavenLocal lib:crypt4gh:publishAllPublicationsToLocalStagingRepository \
             -Pversion=${{ steps.new-tag.outputs.version }}
 
+      - name: Print Working Directory (Before JReleaser)
+        run: |
+          ls -R lib/crypt4gh/build/jreleaser/staging-deploy || echo "Staging directory not found"
       - name: Run JReleaser
         uses: jreleaser/release-action@v2
         env:
