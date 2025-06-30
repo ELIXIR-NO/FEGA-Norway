@@ -57,5 +57,7 @@ jobs:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAVEN_CENTRAL_TOKEN_USER: ${{ secrets.MAVEN_CENTRAL_TOKEN_USER }}
           MAVEN_CENTRAL_TOKEN_PASSWORD: ${{ secrets.MAVEN_CENTRAL_TOKEN_PASSWORD }}
+          JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_TOKEN_USER }}
+          JRELEASER_MAVENCENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN_PASSWORD }}
         with:
           arguments:  deploy --dry-run -c lib/crypt4gh/jreleaser.yml
