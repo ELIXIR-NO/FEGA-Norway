@@ -3,6 +3,7 @@ on:
   push:
 
 jobs:
+
   release:
     runs-on: ubuntu-latest
 
@@ -17,11 +18,6 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "21"
-
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-home-cache-cleanup: true
 
       - name: Get New Version
         id: generate-new-tag
@@ -47,7 +43,7 @@ jobs:
           SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: |
-          ./gradlew lib:crypt4gh:clean lib:crypt4gh:build lib:crypt4gh:publishToMavenLocal lib:crypt4gh:publishAllPublicationsToLocalStagingRepository \
+          ./gradlew lib:crypt4gh:clean lib:crypt4gh:build lib:crypt4gh:publishAllPublicationsToLocalStagingRepository \
             -Pversion=${{ steps.new-tag.outputs.version }}
 
       - name: Print Working Directory (Before JReleaser)
