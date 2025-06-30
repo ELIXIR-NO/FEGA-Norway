@@ -14,4 +14,4 @@ deploy:
         applyMavenCentralRules: true
         namespace: no.elixir
         stagingRepositories:
-          - staging
+          - lib/crypt4gh/build/jreleaser/staging-deploy
