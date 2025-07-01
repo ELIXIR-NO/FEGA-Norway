@@ -37,6 +37,7 @@ public class RabbitMQConfig {
   private ConnectionFactory createConnectionFactory(RabbitMQProperties.BaseProperties props)
       throws Exception {
     CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+    connectionFactory.setPublisherConfirmType(CachingConnectionFactory.ConfirmType.CORRELATED);
     connectionFactory.setHost(props.getHost());
     connectionFactory.setPort(props.getPort());
     connectionFactory.setUsername(props.getUsername());
@@ -107,9 +108,28 @@ public class RabbitMQConfig {
       MessageConverter messageConverter,
       RabbitMQProperties.CegaProperties cegaProps) {
     RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+    rabbitTemplate.setMandatory(true);
     rabbitTemplate.setMessageConverter(messageConverter);
     rabbitTemplate.setExchange(cegaProps.getExchange());
     rabbitTemplate.setRoutingKey(cegaProps.getRoutingKey());
+
+    rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
+      if (ack) {
+        log.info("Message confirmed by broker: {}", correlationData != null ? correlationData.getId() : null);
+      } else {
+        log.warn("Message NOT confirmed by broker: {}, cause: {}",
+                correlationData != null ? correlationData.getId() : null, cause);
+      }
+    });
+
+    rabbitTemplate.setReturnsCallback(returned -> {
+      log.warn("Message returned: {}, replyText: {}, exchange: {}, routingKey: {}",
+              new String(returned.getMessage().getBody()),
+              returned.getReplyText(),
+              returned.getExchange(),
+              returned.getRoutingKey());
+    });
+
     return rabbitTemplate;
   }
 

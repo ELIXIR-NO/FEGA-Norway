@@ -14,9 +14,12 @@ import no.uio.ifi.tc.model.pojo.TSDFileAPIResponse;
 import org.apache.http.entity.ContentType;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -140,16 +143,22 @@ public class PublishMQAspect {
 
   private void publishMessage(FileDescriptor fileDescriptor) {
     String json = gson.toJson(fileDescriptor);
+    String correlationId = UUID.randomUUID().toString();
+    CorrelationData correlationData = new CorrelationData(correlationId);
+
     cegaMqRabbitTemplate.convertAndSend(
-        exchange,
-        routingKey,
-        json,
-        m -> {
-          m.getMessageProperties().setContentType(ContentType.APPLICATION_JSON.getMimeType());
-          m.getMessageProperties().setCorrelationId(UUID.randomUUID().toString());
-          return m;
-        });
+            exchange,
+            routingKey,
+            json,
+            m -> {
+              m.getMessageProperties().setContentType(ContentType.APPLICATION_JSON.getMimeType());
+              m.getMessageProperties().setCorrelationId(correlationId);
+              return m;
+            },
+            correlationData
+    );
+
     log.info(
-        "Message published to {} exchange with routing key {}: {}", exchange, routingKey, json);
+            "Message published to {} exchange with routing key {}: {}", exchange, routingKey, json);
   }
 }
