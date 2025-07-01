@@ -50,6 +50,12 @@ import org.springframework.web.client.RestTemplate;
 @EnableWebSecurity
 public class LocalEGATSDProxyApplication {
 
+  @Value("${token.redirect-uri}")
+  private String redirectUri;
+
+  @Value("${aai.service-base-url}")
+  private String aaiBase;
+
   public static void main(String[] args) {
     SpringApplication.run(LocalEGATSDProxyApplication.class, args);
   }
@@ -97,13 +103,13 @@ public class LocalEGATSDProxyApplication {
             .clientSecret(elixirAAIClientSecret)
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-            .redirectUri("{baseUrl}/oidc-protected")
+            .redirectUri(redirectUri)
             .scope("openid", "ga4gh_passport_v1")
-            .authorizationUri("https://login.elixir-czech.org/oidc/authorize")
-            .tokenUri("https://login.elixir-czech.org/oidc/token")
-            .userInfoUri("https://login.elixir-czech.org/oidc/userinfo")
+            .authorizationUri(aaiBase + "/oidc/authorize")
+            .tokenUri(aaiBase + "/oidc/token")
+            .userInfoUri(aaiBase + "/oidc/userinfo")
             .userNameAttributeName(IdTokenClaimNames.SUB)
-            .jwkSetUri("https://login.elixir-czech.org/oidc/jwk")
+            .jwkSetUri(aaiBase + "/oidc/jwk")
             .clientName("elixir-aai")
             .build());
   }
