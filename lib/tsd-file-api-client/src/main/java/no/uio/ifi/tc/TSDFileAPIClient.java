@@ -142,13 +142,12 @@ public class TSDFileAPIClient {
     Message message = new Message();
 
     try (Response response = client.newCall(request).execute()) {
-      message.setStatusCode(response.code());
-      message.setStatusText(response.message());
-
       if (response.isSuccessful() && response.body() != null) {
         String responseBody = response.body().string();
         message = gson.fromJson(responseBody, Message.class);
       }
+      message.setStatusCode(response.code());
+      message.setStatusText(response.message());
     } catch (JsonSyntaxException e) {
       log.error(e.getMessage(), e);
     }
@@ -173,13 +172,12 @@ public class TSDFileAPIClient {
     ResumableUploads resumableUploads = new ResumableUploads();
 
     try (Response response = client.newCall(request).execute()) {
-      resumableUploads.setStatusCode(response.code());
-      resumableUploads.setStatusText(response.message());
-
       if (response.isSuccessful() && response.body() != null) {
         String responseBody = response.body().string();
         resumableUploads = gson.fromJson(responseBody, ResumableUploads.class);
       }
+      resumableUploads.setStatusCode(response.code());
+      resumableUploads.setStatusText(response.message());
     } catch (JsonSyntaxException e) {
       log.error(e.getMessage(), e);
     }
@@ -233,12 +231,12 @@ public class TSDFileAPIClient {
     Chunk chunkResponse = new Chunk();
 
     try (Response response = client.newCall(request).execute()) {
-      chunkResponse.setStatusCode(response.code());
-      chunkResponse.setStatusText(response.message());
       String _body = Objects.requireNonNull(response.body()).string();
       if (response.isSuccessful() && _body != null) {
         chunkResponse = gson.fromJson(_body, Chunk.class);
       }
+      chunkResponse.setStatusCode(response.code());
+      chunkResponse.setStatusText(response.message());
     } catch (JsonSyntaxException e) {
       log.error(e.getMessage(), e);
     }
@@ -285,13 +283,12 @@ public class TSDFileAPIClient {
     Chunk chunkResponse = new Chunk();
 
     try (Response response = client.newCall(request).execute()) {
-      chunkResponse.setStatusCode(response.code());
-      chunkResponse.setStatusText(response.message());
-
       if (response.isSuccessful() && response.body() != null) {
         String responseBody = response.body().string();
         chunkResponse = gson.fromJson(responseBody, Chunk.class);
       }
+      chunkResponse.setStatusCode(response.code());
+      chunkResponse.setStatusText(response.message());
     } catch (JsonSyntaxException e) {
       log.error(e.getMessage(), e);
     }
@@ -364,13 +361,12 @@ public class TSDFileAPIClient {
     Message message = new Message();
 
     try (Response response = client.newCall(request).execute()) {
-      message.setStatusCode(response.code());
-      message.setStatusText(response.message());
-
       if (response.isSuccessful() && response.body() != null) {
         String responseBody = response.body().string();
         message = gson.fromJson(responseBody, Message.class);
       }
+      message.setStatusCode(response.code());
+      message.setStatusText(response.message());
     } catch (JsonSyntaxException e) {
       log.error(e.getMessage(), e);
     }
@@ -442,14 +438,14 @@ public class TSDFileAPIClient {
 
     try {
       response = client.newCall(request).execute();
-      token.setStatusCode(response.code());
-      token.setStatusText(response.message());
       ResponseBody responseBody = response.body();
       if (response.isSuccessful() && responseBody != null) {
         String bodyString = responseBody.string();
         token.setToken(
             JsonParser.parseString(bodyString).getAsJsonObject().get("token").getAsString());
       }
+      token.setStatusCode(response.code());
+      token.setStatusText(response.message());
       response.close();
     } catch (Exception e) {
       log.error(e.getMessage(), e);
