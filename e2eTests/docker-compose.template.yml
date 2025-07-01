@@ -426,7 +426,7 @@ services:
   doa:
     container_name: doa
     hostname: doa
-    image: ghcr.io/neicnordic/sda-doa:v1.6.175
+    image: ghcr.io/neicnordic/sda-doa:v1.6.186
     depends_on:
       file-orchestrator:
         condition: service_healthy
