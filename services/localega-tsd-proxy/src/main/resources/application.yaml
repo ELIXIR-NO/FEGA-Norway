@@ -51,10 +51,10 @@ elixir:
     secret: ${CLIENT_SECRET}
 
 token:
-  redirect-uri: ${TOKEN_REDIRECT_URI:'{baseUrl}/oidc-protected'}
+  redirect-uri: ${TOKEN_REDIRECT_URI:{baseUrl}/oidc-protected}
 
 aai:
-  service-base-url: ${AAI_SERVICE_BASE_URL:'https://login.elixir-czech.org'}
+  service-base-url: ${AAI_SERVICE_BASE_URL:https://login.elixir-czech.org}
 
 tsd-auth:
   token-type: ${TSD_AUTH_TOKEN_TYPE:elixir}
@@ -94,3 +94,8 @@ heartbeat:
   ok_if_ok_is_after_failed_and_diff_in_minutes_ge: 10
   not_ok_if_failed_is_after_ok_and_diff_in_minutes_ge: 3
 
+server.ssl:
+  enabled: ${SSL_ENABLED:true}
+  key-store-type: PKCS12
+  key-store: file:/etc/ega/ssl/server.p12
+  key-store-password: ${SERVER_CERT_PASSWORD}
