@@ -93,9 +93,3 @@ mq:
 heartbeat:
   ok_if_ok_is_after_failed_and_diff_in_minutes_ge: 10
   not_ok_if_failed_is_after_ok_and_diff_in_minutes_ge: 3
-
-server.ssl:
-  enabled: ${SSL_ENABLED:true}
-  key-store-type: PKCS12
-  key-store: file:/etc/ega/ssl/server.p12
-  key-store-password: ${SERVER_CERT_PASSWORD}
