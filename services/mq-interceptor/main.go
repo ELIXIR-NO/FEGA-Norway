@@ -255,9 +255,28 @@ func selectEgaIdByElixirId(elixirId string) (egaId string, err error) {
 }
 
 func getTLSConfig() *tls.Config {
+	debug := os.Getenv("DEBUG") == "true"
 	caCertPath := os.Getenv("CA_CERT_PATH")
 	if caCertPath == "" {
-		log.Fatal("CA_CERT_PATH environment variable not set")
+		if debug {
+			log.Println("CA_CERT_PATH not set, using system cert pool")
+		}
+		systemPool, err := x509.SystemCertPool()
+		if err != nil {
+			log.Printf("WARNING: Failed to load system cert pool: %v", err)
+			return &tls.Config{InsecureSkipVerify: false}
+		}
+		if debug {
+			log.Println("System cert pool loaded (cannot list subjects due to security).")
+		}
+		return &tls.Config{
+			RootCAs:            systemPool,
+			InsecureSkipVerify: false,
+		}
+	}
+	// Load custom CA from path
+	if debug {
+		log.Printf("Using CA certificate from path: %s", caCertPath)
 	}
 	caCert, err := os.ReadFile(caCertPath)
 	if err != nil {
@@ -266,6 +285,9 @@ func getTLSConfig() *tls.Config {
 	caCertPool := x509.NewCertPool()
 	if !caCertPool.AppendCertsFromPEM(caCert) {
 		log.Fatal("Failed to add CA certificate to pool")
+	}
+	if debug {
+		log.Println("Custom CA certificate loaded and added to pool")
 	}
 	return &tls.Config{
 		RootCAs:            caCertPool,
