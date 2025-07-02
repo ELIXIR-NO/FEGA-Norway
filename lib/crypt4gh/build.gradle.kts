@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("extra-java-module-info")
-    id("io.freefair.lombok") version "8.13.1"
+    id("io.freefair.lombok") version "8.14"
     id("formatting-conventions")
     id("maven-publish")
 }
@@ -20,7 +20,7 @@ dependencies {
     implementation("commons-cli:commons-cli:1.9.0")
     implementation("commons-io:commons-io:2.19.0")
     implementation("com.rfksystems:blake2b:2.0.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.13.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.13.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
