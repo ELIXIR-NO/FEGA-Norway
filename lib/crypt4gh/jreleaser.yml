@@ -1,0 +1,17 @@
+project:
+  name: crypt4gh
+  version: 3.0.26
+  java:
+    groupId: no.elixir
+    artifactId: crypt4gh
+deploy:
+  maven:
+    mavenCentral:
+      sonatype:
+        active: ALWAYS
+        url: https://central.sonatype.com/api/v1/publisher
+        sign: false
+        applyMavenCentralRules: true
+        namespace: no.elixir
+        stagingRepositories:
+          - build/jreleaser/staging-deploy
