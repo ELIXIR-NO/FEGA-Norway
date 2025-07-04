@@ -49,6 +49,10 @@ token:
 aai:
   service-base-url: ${AAI_SERVICE_BASE_URL:'https://login.elixir-czech.org'}
 
+tsd-auth:
+  token-type: ${TSD_AUTH_TOKEN_TYPE:elixir}
+  oidc-provider-name: ${TSD_AUTH_OIDC_PROVIDER_NAME:elixir} # lifesc
+
 ga4gh:
   passport:
     # First, the public key is checked. If present, it's used for validating the token and openid-configuration-url is not used.
