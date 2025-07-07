@@ -24,14 +24,14 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.1")
     implementation("org.slf4j:slf4j-jdk14:2.0.17")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:5.0.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.13.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.13.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.bouncycastle:bcprov-jdk15to18:1.81")
     testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.81")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0")
 }
 
 publishing {
