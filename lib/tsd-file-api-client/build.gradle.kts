@@ -24,10 +24,10 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-impl:0.12.6")
     implementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
-    api("com.squareup.okhttp3:okhttp:4.12.0")
+    api("com.squareup.okhttp3:okhttp:5.0.0")
     implementation("org.slf4j:slf4j-jdk14:2.0.17")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.13.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.13.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
