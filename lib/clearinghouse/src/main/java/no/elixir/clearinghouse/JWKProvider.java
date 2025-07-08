@@ -1,8 +1,8 @@
 package no.elixir.clearinghouse;
 
-import com.auth0.jwk.Jwk;
-import com.auth0.jwk.JwkException;
-import com.auth0.jwk.SigningKeyNotFoundException;
+import com.google.gson.JsonElement;
+import io.jsonwebtoken.security.Jwk;
+import io.jsonwebtoken.security.Jwks;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.gson.Gson;
@@ -10,7 +10,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -43,7 +42,7 @@ public enum JWKProvider {
     return cache.get(new ImmutablePair<>(url, keyId));
   }
 
-  private Jwk getInternal(Pair<String, String> urlAndId) throws JwkException {
+  private Jwk getInternal(Pair<String, String> urlAndId) throws Exception {
     var url = urlAndId.getKey();
     var keyId = urlAndId.getValue();
     return getAll(url).stream()
@@ -51,7 +50,7 @@ public enum JWKProvider {
         .findAny()
         .orElseThrow(
             () ->
-                new SigningKeyNotFoundException(
+                new Exception(
                     "No key found in " + url + " with kid " + keyId, null));
   }
 
@@ -68,8 +67,8 @@ public enum JWKProvider {
       throw new RuntimeException(e);
     }
     return keysArray.asList().stream()
-        .map(k -> gson.fromJson(k.toString(), Map.class))
-        .map(k -> Jwk.fromValues((Map<String, Object>) k))
-        .collect(Collectors.toList());
+            .map(JsonElement::toString)
+            .map(keyJson -> Jwks.parser().build().parse(keyJson))
+            .collect(Collectors.toList());
   }
 }
