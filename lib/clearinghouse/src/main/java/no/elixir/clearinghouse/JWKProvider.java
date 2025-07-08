@@ -1,13 +1,13 @@
 package no.elixir.clearinghouse;
 
-import com.google.gson.JsonElement;
-import io.jsonwebtoken.security.Jwk;
-import io.jsonwebtoken.security.Jwks;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.jsonwebtoken.security.Jwk;
+import io.jsonwebtoken.security.Jwks;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,10 +48,7 @@ public enum JWKProvider {
     return getAll(url).stream()
         .filter(k -> k.getId().equals(keyId))
         .findAny()
-        .orElseThrow(
-            () ->
-                new Exception(
-                    "No key found in " + url + " with kid " + keyId, null));
+        .orElseThrow(() -> new Exception("No key found in " + url + " with kid " + keyId, null));
   }
 
   @SuppressWarnings("unchecked")
@@ -67,8 +64,8 @@ public enum JWKProvider {
       throw new RuntimeException(e);
     }
     return keysArray.asList().stream()
-            .map(JsonElement::toString)
-            .map(keyJson -> Jwks.parser().build().parse(keyJson))
-            .collect(Collectors.toList());
+        .map(JsonElement::toString)
+        .map(keyJson -> Jwks.parser().build().parse(keyJson))
+        .collect(Collectors.toList());
   }
 }
