@@ -33,13 +33,8 @@ tasks.register<Exec>("make-executable") {
     commandLine("chmod", "+x", "./scripts/bootstrap.sh")
 }
 
-tasks.register<Exec>("cleanup") {
-    dependsOn("make-executable")
-    commandLine("../gradlew", "clean")
-}
-
 tasks.register<Exec>("assemble-binaries") {
-    dependsOn("cleanup")
+    dependsOn("make-executable")
     commandLine(
         "../gradlew",
         ":e2eTests:jar",
