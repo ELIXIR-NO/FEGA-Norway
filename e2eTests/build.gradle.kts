@@ -62,9 +62,13 @@ tasks.register<Exec>("apply-configs") {
     commandLine("sh", "-c", "./scripts/bootstrap.sh check_requirements")
 }
 
-tasks.register<Exec>("start-docker-containers") {
+tasks.register<Exec>("build-docker-images") {
     dependsOn("apply-configs")
-    commandLine("docker", "compose", "up", "--pull", "always", "--build", "-d", "--parallel")
+    commandLine("docker", "compose", "build", "--parallel")
+}
+tasks.register<Exec>("build-docker-images") {
+    dependsOn("apply-configs")
+    commandLine("docker", "compose", "up", "-d")
 }
 
 tasks.register<Exec>("stop-docker-containers") {
