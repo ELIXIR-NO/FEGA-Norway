@@ -36,7 +36,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build with Gradle
-        run: ./gradlew assemble --parallel
+        run: ./gradlew assemble --parallel  --daemon --build-cache
 
       - name: Run tests
         run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test --parallel
