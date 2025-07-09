@@ -66,7 +66,7 @@ tasks.register<Exec>("build-docker-images") {
     dependsOn("apply-configs")
     commandLine("docker", "compose", "build", "--parallel")
 }
-tasks.register<Exec>("start-docker-images") {
+tasks.register<Exec>("start-docker-containers") {
     dependsOn("build-docker-images")
     commandLine("docker", "compose", "up", "-d")
 }
