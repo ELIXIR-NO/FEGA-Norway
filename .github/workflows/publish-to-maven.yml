@@ -43,7 +43,7 @@ jobs:
           SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: |
-          ./gradlew lib:crypt4gh:clean lib:crypt4gh:build lib:crypt4gh:publishAllPublicationsToLocalStagingRepository \
+          ./gradlew lib:crypt4gh:clean lib:crypt4gh:build lib:crypt4gh:publishMavenJavaPublicationToLocalStagingRepository \
             -Pversion=${{ steps.new-tag.outputs.version }}
 
       - name: Print Working Directory (Before JReleaser)
