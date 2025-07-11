@@ -46,14 +46,10 @@ jobs:
           ./gradlew lib:crypt4gh:clean lib:crypt4gh:build lib:crypt4gh:publishMavenJavaPublicationToLocalStagingRepository \
             -Pversion=${{ steps.new-tag.outputs.version }}
 
-      - name: Print Working Directory (Before JReleaser)
-        run: |
-          ls -R lib/crypt4gh/build/jreleaser/staging-deploy || echo "Staging directory not found"
       - name: Run JReleaser
         uses: jreleaser/release-action@v2
         env:
           JRELEASER_PROJECT_VERSION: ${{ steps.new-tag.outputs.version }}
-
           JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_TOKEN_USER }}
           JRELEASER_MAVENCENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN_PASSWORD }}
         with:
