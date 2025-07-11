@@ -1,9 +1,9 @@
 project:
   name: crypt4gh
-  version: 3.0.26
-  java:
-    groupId: no.elixir
-    artifactId: crypt4gh
+  languages:
+    java:
+      groupId: no.elixir
+      artifactId: crypt4gh
 deploy:
   maven:
     mavenCentral:
