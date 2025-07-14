@@ -621,6 +621,9 @@ public final class Bcrypt {
 
     for (int count = 1; count <= blocks; count++) {
       // append 4-byte block counter to the end of the salt
+      if (salt.length > Integer.MAX_VALUE - 4) {
+        throw new IllegalArgumentException("Salt length is too large and may cause an overflow.");
+      }
       byte[] blockSalt = new byte[salt.length + 4];
       System.arraycopy(salt, 0, blockSalt, 0, salt.length);
       blockSalt[blockSalt.length - 4] = (byte) ((count >> 24) & 0xff);
