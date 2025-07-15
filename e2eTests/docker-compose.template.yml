@@ -430,7 +430,7 @@ services:
   doa:
     container_name: doa
     hostname: doa
-    image: ghcr.io/neicnordic/sda-doa:v1.6.186
+    image: ghcr.io/neicnordic/sensitive-data-archive:v1.0.18-doa
     depends_on:
       file-orchestrator:
         condition: service_healthy
