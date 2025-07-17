@@ -138,11 +138,10 @@ public class PublishMQAspect {
   }
 
   private void publishMessage(FileDescriptor fileDescriptor, String type) {
-    String json = gson.toJson(fileDescriptor);
     tsdRabbitTemplate.convertAndSend(
         exchange,
         routingKey,
-        json,
+        fileDescriptor,
         m -> {
           m.getMessageProperties().setContentType(ContentType.APPLICATION_JSON.getMimeType());
           m.getMessageProperties().setCorrelationId(UUID.randomUUID().toString());
@@ -153,6 +152,6 @@ public class PublishMQAspect {
         type,
         exchange,
         routingKey,
-        json);
+        fileDescriptor);
   }
 }
