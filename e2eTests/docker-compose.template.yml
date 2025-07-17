@@ -464,7 +464,7 @@ services:
       - "-jar"
       - "/localega-doa.jar"
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080"]
+      test: [ "CMD-SHELL", "nc -z localhost 8080" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -645,6 +645,8 @@ services:
         condition: service_healthy
       file-orchestrator:
         condition: service_healthy
+    environment:
+      - INTEGRATION=FEGA
     volumes:
       - storage:/storage
 
