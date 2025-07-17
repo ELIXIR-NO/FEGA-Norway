@@ -36,143 +36,39 @@ function apply_configs() {
     echo "docker-compose.yml has been successfully created from the template."
   else
     echo "Error: docker-compose.template.yml does not exist."
+    return 1
   fi
 
   local f=docker-compose.yml
+  local missing_vars=()
 
-  # Proxy
-  frepl "<<PROXY_SSL_ENABLED>>" "$PROXY_SSL_ENABLED" $f
-  frepl "<<PROXY_TSD_SECURE>>" "$PROXY_TSD_SECURE" $f
-  frepl "<<PROXY_DB_PORT>>" "$PROXY_DB_PORT" $f
-  frepl "<<PROXY_ROOT_CERT_PASSWORD>>" "$PROXY_ROOT_CERT_PASSWORD" $f
-  frepl "<<PROXY_TSD_ROOT_CERT_PASSWORD>>" "$PROXY_TSD_ROOT_CERT_PASSWORD" $f
-  frepl "<<PROXY_SERVER_CERT_PASSWORD>>" "$PROXY_SERVER_CERT_PASSWORD" $f
-  frepl "<<PROXY_CLIENT_ID>>" "$PROXY_CLIENT_ID" $f
-  frepl "<<PROXY_CLIENT_SECRET>>" "$PROXY_CLIENT_SECRET" $f
-  frepl "<<PROXY_CEGAAUTH_URL>>" "$PROXY_CEGAAUTH_URL" $f
-  frepl "<<PROXY_CEGAAUTH_USERNAME>>" "$PROXY_CEGAAUTH_USERNAME" $f
-  frepl "<<PROXY_CEGAAUTH_PASSWORD>>" "$PROXY_CEGAAUTH_PASSWORD" $f
-  frepl "<<PROXY_TSD_HOST>>" "$PROXY_TSD_HOST" $f
-  frepl "<<PROXY_TSD_ACCESS_KEY>>" "$PROXY_TSD_ACCESS_KEY" $f
-  frepl "<<PROXY_POSTGRES_PASSWORD>>" "$PROXY_POSTGRES_PASSWORD" $f
-  frepl "<<PROXY_ADMIN_USER>>" "$PROXY_ADMIN_USER" $f
-  frepl "<<PROXY_ADMIN_PASSWORD>>" "$PROXY_ADMIN_PASSWORD" $f
-  frepl "<<PROXY_TSD_MQ_HOST>>" "$PROXY_TSD_MQ_HOST" $f
-  frepl "<<PROXY_TSD_MQ_PORT>>" "$PROXY_TSD_MQ_PORT" $f
-  frepl "<<PROXY_TSD_MQ_VHOST>>" "$PROXY_TSD_MQ_VHOST" $f
-  frepl "<<PROXY_TSD_MQ_USERNAME>>" "$PROXY_TSD_MQ_USERNAME" $f
-  frepl "<<PROXY_TSD_MQ_PASSWORD>>" "$PROXY_TSD_MQ_PASSWORD" $f
-  frepl "<<PROXY_TSD_MQ_EXCHANGE>>" "$PROXY_TSD_MQ_EXCHANGE" $f
-  frepl "<<PROXY_TSD_MQ_EXPORT_REQUEST_ROUTING_KEY>>" "$PROXY_TSD_MQ_EXPORT_REQUEST_ROUTING_KEY" $f
-  frepl "<<PROXY_TSD_MQ_INBOX_ROUTING_KEY>>" "$PROXY_TSD_MQ_INBOX_ROUTING_KEY" $f
-  frepl "<<PROXY_TSD_MQ_ENABLE_TLS>>" "$PROXY_TSD_MQ_ENABLE_TLS" $f
-  frepl "<<PROXY_TRUSTSTORE>>" "$PROXY_TRUSTSTORE" $f
-  frepl "<<PROXY_TRUSTSTORE_PASSWORD>>" "$PROXY_TRUSTSTORE_PASSWORD" $f
+  # Extract all template variables from the file
+  local template_vars=($(grep -o '<<[^>]*>>' "$f" | sed 's/<<\(.*\)>>/\1/' | sort -u))
 
-  # Interceptor
-  frepl "<<INTERCEPTOR_POSTGRES_CONNECTION>>" "$INTERCEPTOR_POSTGRES_CONNECTION" $f
-  frepl "<<INTERCEPTOR_CEGA_MQ_CONNECTION>>" "$INTERCEPTOR_CEGA_MQ_CONNECTION" $f
-  frepl "<<INTERCEPTOR_CEGA_MQ_EXCHANGE>>" "$INTERCEPTOR_CEGA_MQ_EXCHANGE" $f
-  frepl "<<INTERCEPTOR_CEGA_MQ_QUEUE>>" "$INTERCEPTOR_CEGA_MQ_QUEUE" $f
-  frepl "<<INTERCEPTOR_MQ_CONNECTION>>" "$INTERCEPTOR_MQ_CONNECTION" $f
-  frepl "<<INTERCEPTOR_LEGA_MQ_EXCHANGE>>" "$INTERCEPTOR_LEGA_MQ_EXCHANGE" $f
-  frepl "<<INTERCEPTOR_LEGA_MQ_QUEUE>>" "$INTERCEPTOR_LEGA_MQ_QUEUE" $f
-  frepl "<<INTERCEPTOR_ENABLE_TLS>>" "$INTERCEPTOR_ENABLE_TLS" $f
-  frepl "<<INTERCEPTOR_CA_CERT_PATH>>" "$INTERCEPTOR_CA_CERT_PATH" $f
+  echo "Found ${#template_vars[@]} template variables to replace..."
 
-  # Postgres
-  frepl "<<POSTGRES_POSTGRES_USER>>" "$POSTGRES_POSTGRES_USER" $f
-  frepl "<<POSTGRES_POSTGRES_PASSWORD>>" "$POSTGRES_POSTGRES_PASSWORD" $f
-  frepl "<<POSTGRES_POSTGRES_DB>>" "$POSTGRES_POSTGRES_DB" $f
+  for var in "${template_vars[@]}"; do
+    if [ -n "${!var}" ]; then
+      frepl "<<$var>>" "${!var}" "$f"
+      echo "✓ Replaced <<$var>>"
+    else
+      missing_vars+=("$var")
+      echo "✗ Missing: $var"
+    fi
+  done
 
-  # DB
-  frepl "<<DB_POSTGRES_DB>>" "$DB_POSTGRES_DB" $f
-  frepl "<<DB_PGDATA>>" "$DB_PGDATA" $f
-  frepl "<<DB_POSTGRES_USER>>" "$DB_POSTGRES_USER" $f
-  frepl "<<DB_POSTGRES_PASSWORD>>" "$DB_POSTGRES_PASSWORD" $f
-  frepl "<<DB_POSTGRES_SERVER_CERT>>" "$DB_POSTGRES_SERVER_CERT" $f
-  frepl "<<DB_POSTGRES_SERVER_KEY>>" "$DB_POSTGRES_SERVER_KEY" $f
-  frepl "<<DB_POSTGRES_SERVER_CACERT>>" "$DB_POSTGRES_SERVER_CACERT" $f
-  frepl "<<DB_POSTGRES_VERIFY_PEER>>" "$DB_POSTGRES_VERIFY_PEER" $f
-
-  # SDA services (ingest, verify, finalize, mapper, intercept)
-  frepl "<<SDA_ARCHIVE_TYPE>>" "$SDA_ARCHIVE_TYPE" $f
-  frepl "<<SDA_ARCHIVE_LOCATION>>" "$SDA_ARCHIVE_LOCATION" $f
-  frepl "<<SDA_BROKER_HOST>>" "$SDA_BROKER_HOST" $f
-  frepl "<<SDA_BROKER_PORT>>" "$SDA_BROKER_PORT" $f
-  frepl "<<SDA_BROKER_USER>>" "$SDA_BROKER_USER" $f
-  frepl "<<SDA_BROKER_PASSWORD>>" "$SDA_BROKER_PASSWORD" $f
-  frepl "<<SDA_BROKER_VHOST>>" "$SDA_BROKER_VHOST" $f
-  frepl "<<SDA_BROKER_QUEUE_INGEST>>" "$SDA_BROKER_QUEUE_INGEST" $f
-  frepl "<<SDA_BROKER_QUEUE_VERIFY>>" "$SDA_BROKER_QUEUE_VERIFY" $f
-  frepl "<<SDA_BROKER_QUEUE_FINALIZE>>" "$SDA_BROKER_QUEUE_FINALIZE" $f
-  frepl "<<SDA_BROKER_QUEUE_MAPPER>>" "$SDA_BROKER_QUEUE_MAPPER" $f
-  frepl "<<SDA_BROKER_QUEUE_INTERCEPT>>" "$SDA_BROKER_QUEUE_INTERCEPT" $f
-  frepl "<<SDA_BROKER_EXCHANGE>>" "$SDA_BROKER_EXCHANGE" $f
-  frepl "<<SDA_BROKER_ROUTINGKEY_INGEST>>" "$SDA_BROKER_ROUTINGKEY_INGEST" $f
-  frepl "<<SDA_BROKER_ROUTINGKEY_VERIFY>>" "$SDA_BROKER_ROUTINGKEY_VERIFY" $f
-  frepl "<<SDA_BROKER_ROUTINGKEY_FINALIZE>>" "$SDA_BROKER_ROUTINGKEY_FINALIZE" $f
-  frepl "<<SDA_BROKER_ROUTINGERROR>>" "$SDA_BROKER_ROUTINGERROR" $f
-  frepl "<<SDA_BROKER_SSL>>" "$SDA_BROKER_SSL" $f
-  frepl "<<SDA_BROKER_VERIFYPEER>>" "$SDA_BROKER_VERIFYPEER" $f
-  frepl "<<SDA_BROKER_CACERT>>" "$SDA_BROKER_CACERT" $f
-  frepl "<<SDA_BROKER_CLIENTCERT>>" "$SDA_BROKER_CLIENTCERT" $f
-  frepl "<<SDA_BROKER_CLIENTKEY>>" "$SDA_BROKER_CLIENTKEY" $f
-  frepl "<<SDA_C4GH_PASSPHRASE>>" "$SDA_C4GH_PASSPHRASE" $f
-  frepl "<<SDA_C4GH_FILEPATH>>" "$SDA_C4GH_FILEPATH" $f
-  frepl "<<SDA_DB_HOST>>" "$SDA_DB_HOST" $f
-  frepl "<<SDA_DB_PORT>>" "$SDA_DB_PORT" $f
-  frepl "<<SDA_DB_USER>>" "$SDA_DB_USER" $f
-  frepl "<<SDA_DB_PASSWORD>>" "$SDA_DB_PASSWORD" $f
-  frepl "<<SDA_DB_DATABASE>>" "$SDA_DB_DATABASE" $f
-  frepl "<<SDA_DB_SSLMODE>>" "$SDA_DB_SSLMODE" $f
-  frepl "<<SDA_DB_CLIENTCERT>>" "$SDA_DB_CLIENTCERT" $f
-  frepl "<<SDA_DB_CLIENTKEY>>" "$SDA_DB_CLIENTKEY" $f
-  frepl "<<SDA_INBOX_TYPE>>" "$SDA_INBOX_TYPE" $f
-  frepl "<<SDA_INBOX_LOCATION>>" "$SDA_INBOX_LOCATION" $f
-  frepl "<<SDA_LOG_LEVEL>>" "$SDA_LOG_LEVEL" $f
-
-  # DOA
-  frepl "<<DOA_SSL_MODE>>" "$DOA_SSL_MODE" $f
-  frepl "<<DOA_SSL_ENABLED>>" "$DOA_SSL_ENABLED" $f
-  frepl "<<DOA_ARCHIVE_PATH>>" "$DOA_ARCHIVE_PATH" $f
-  frepl "<<DOA_DB_INSTANCE>>" "$DOA_DB_INSTANCE" $f
-  frepl "<<DOA_POSTGRES_USER>>" "$DOA_POSTGRES_USER" $f
-  frepl "<<DOA_POSTGRES_PASSWORD>>" "$DOA_POSTGRES_PASSWORD" $f
-  frepl "<<DOA_POSTGRES_DB>>" "$DOA_POSTGRES_DB" $f
-  frepl "<<DOA_OUTBOX_ENABLED>>" "$DOA_OUTBOX_ENABLED" $f
-  frepl "<<DOA_KEYSTORE_PATH>>" "$DOA_KEYSTORE_PATH" $f
-  frepl "<<DOA_KEYSTORE_PASSWORD>>" "$DOA_KEYSTORE_PASSWORD" $f
-
-  # CEGAMQ
-  frepl "<<CEGAMQ_CONFIG_FILE>>" "$CEGAMQ_CONFIG_FILE" $f
-  frepl "<<CEGAMQ_ENABLED_PLUGINS_FILE>>" "$CEGAMQ_ENABLED_PLUGINS_FILE" $f
-  frepl "<<CEGAMQ_NODE_PORT>>" "$CEGAMQ_NODE_PORT" $f
-
-  # CEGAAUTH
-  frepl "<<CEGAAUTH_CEGA_USERS_PASSWORD>>" "$CEGAAUTH_CEGA_USERS_PASSWORD" $f
-  frepl "<<CEGAAUTH_CEGA_USERS_USER>>" "$CEGAAUTH_CEGA_USERS_USER" $f
-
-  # Heartbeat
-  frepl "<<HEARTBEAT_MODE_PUB>>" "$HEARTBEAT_MODE_PUB" $f
-  frepl "<<HEARTBEAT_MODE_SUB>>" "$HEARTBEAT_MODE_SUB" $f
-  frepl "<<HEARTBEAT_RABBITMQ_HOST>>" "$HEARTBEAT_RABBITMQ_HOST" $f
-  frepl "<<HEARTBEAT_RABBITMQ_PORT>>" "$HEARTBEAT_RABBITMQ_PORT" $f
-  frepl "<<HEARTBEAT_RABBITMQ_USER>>" "$HEARTBEAT_RABBITMQ_USER" $f
-  frepl "<<HEARTBEAT_RABBITMQ_PASS>>" "$HEARTBEAT_RABBITMQ_PASS" $f
-  frepl "<<HEARTBEAT_RABBITMQ_VHOST>>" "$HEARTBEAT_RABBITMQ_VHOST" $f
-  frepl "<<HEARTBEAT_RABBITMQ_EXCHANGE>>" "$HEARTBEAT_RABBITMQ_EXCHANGE" $f
-  frepl "<<HEARTBEAT_RABBITMQ_QUEUE>>" "$HEARTBEAT_RABBITMQ_QUEUE" $f
-  frepl "<<HEARTBEAT_RABBITMQ_ROUTING_KEY>>" "$HEARTBEAT_RABBITMQ_ROUTING_KEY" $f
-  frepl "<<HEARTBEAT_RABBITMQ_TLS>>" "$HEARTBEAT_RABBITMQ_TLS" $f
-  frepl "<<HEARTBEAT_RABBITMQ_CA_CERT_PATH>>" "$HEARTBEAT_RABBITMQ_CA_CERT_PATH" $f
-  frepl "<<HEARTBEAT_PUBLISH_INTERVAL>>" "$HEARTBEAT_PUBLISH_INTERVAL" $f
-  frepl "<<HEARTBEAT_RABBITMQ_MANAGEMENT_PORT>>" "$HEARTBEAT_RABBITMQ_MANAGEMENT_PORT" $f
-  frepl "<<HEARTBEAT_PUBLISHER_CONFIG_PATH>>" "$HEARTBEAT_PUBLISHER_CONFIG_PATH" $f
-  frepl "<<HEARTBEAT_REDIS_HOST>>" "$HEARTBEAT_REDIS_HOST" $f
-  frepl "<<HEARTBEAT_REDIS_PORT>>" "$HEARTBEAT_REDIS_PORT" $f
-  frepl "<<HEARTBEAT_REDIS_DB>>" "$HEARTBEAT_REDIS_DB" $f
-
+  if [ ${#missing_vars[@]} -gt 0 ]; then
+    echo ""
+    echo "WARNING: The following variables are not set:"
+    printf "  %s\n" "${missing_vars[@]}"
+    echo ""
+    echo "Please set these variables in your env.sh file:"
+    for var in "${missing_vars[@]}"; do
+      echo "export $var=\"\""
+    done
+  else
+    echo "All template variables have been successfully replaced!"
+  fi
 }
 
 function check_requirements() {
@@ -206,6 +102,11 @@ function check_requirements() {
 
 }
 
+function cleanup_workspace() {
+    rm -f *.raw *.raw.enc &&
+      ../gradlew clean
+}
+
 # Entrypoint --
 
 usage="[check_requirements|apply_configs]"
@@ -218,6 +119,9 @@ if [ $# -ge 1 ]; then
     ;;
   "apply_configs")
     apply_configs
+    ;;
+  "cleanup_workspace")
+    cleanup_workspace
     ;;
   *)
     echo "Invalid action. Usage: $0 $usage"
