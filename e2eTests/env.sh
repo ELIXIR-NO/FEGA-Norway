@@ -204,7 +204,7 @@ export HEARTBEAT_REDIS_DB=0
 # If set to "container", the entire test runs inside a Docker container.
 # If set to "local", you can run the test using: `./gradlew :e2eTests:test`.
 # Mainly used to switch the host/ports and file systems to fetch the certificates.
-export E2E_RUNTIME=local
+export E2E_RUNTIME=container
 
 # Helper function to choose value based on runtime
 function _runtime_() {
