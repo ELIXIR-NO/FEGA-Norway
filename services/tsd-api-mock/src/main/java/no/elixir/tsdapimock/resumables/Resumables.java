@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ public class Resumables {
 
   @Value("${tsd.elixir.import}")
   public String tsdElixirImport;
+
+  @Value("${tsd.elixir.export}")
+  public String tsdElixirExport;
 
   @Autowired
   public Resumables(ResumablesRepository resumablesRepository) {
@@ -179,5 +183,58 @@ public class Resumables {
     }
     log.info("DELETING" + dir.toPath());
     Files.delete(dir.toPath());
+  }
+
+  /**
+   * Lists files in the specified outbox/export directory after checking if it exists and contains
+   * files Creates the directory if it doesn't exist.
+   *
+   * @param project the project parameter
+   * @param userName the username parameter
+   * @param createIfNotExists whether to create the directory if it doesn't exist
+   * @return List of file names, or empty list if directory doesn't exist or is empty
+   */
+  public List<File> listFiles(String project, String userName, boolean createIfNotExists) {
+    // Construct the directory path
+    String dirPath = tsdElixirExport.formatted(project, userName);
+
+    // Create File object for the directory
+    File directory = new File(dirPath);
+
+    // Check if directory exists
+    if (!directory.exists()) {
+      if (createIfNotExists) {
+        log.info("Directory does not exist, attempting to create: {}", dirPath);
+        boolean created = directory.mkdirs(); // mkdirs() creates parent directories too
+        if (created) {
+          log.info("Successfully created directory: {}", dirPath);
+          return new ArrayList<>(); // New directory will be empty
+        } else {
+          log.error("Failed to create directory: {}", dirPath);
+          return new ArrayList<>();
+        }
+      } else {
+        log.warn("Directory does not exist: {}", dirPath);
+        return new ArrayList<>();
+      }
+    }
+
+    // Check if it's actually a directory
+    if (!directory.isDirectory()) {
+      log.warn("Path is not a directory: {}", dirPath);
+      return new ArrayList<>();
+    }
+
+    // Get list of files
+    File[] files = directory.listFiles();
+
+    // Check if directory is empty or listFiles() returned null
+    if (files == null || files.length == 0) {
+      log.info("Directory is empty or cannot be read: {}", dirPath);
+      return new ArrayList<>();
+    }
+
+    log.info("Found {} files in: {}", files.length, dirPath);
+    return List.of(files);
   }
 }
