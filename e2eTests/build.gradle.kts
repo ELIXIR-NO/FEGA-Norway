@@ -35,7 +35,7 @@ tasks.register<Exec>("make-executable") {
 
 tasks.register<Exec>("cleanup") {
     dependsOn("make-executable")
-    commandLine("../gradlew", "clean")
+    commandLine("sh", "-c", "./scripts/bootstrap.sh cleanup_workspace")
 }
 
 tasks.register<Exec>("assemble-binaries") {
