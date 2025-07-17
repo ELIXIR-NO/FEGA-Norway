@@ -164,9 +164,16 @@ export DOA_DB_INSTANCE=$DB_HOST
 export DOA_POSTGRES_USER=$DB_POSTGRES_USER
 export DOA_POSTGRES_PASSWORD=$DB_POSTGRES_PASSWORD
 export DOA_POSTGRES_DB=$DB_POSTGRES_DB
-export DOA_OUTBOX_ENABLED=false
+export DOA_OUTBOX_ENABLED=true
+export DOA_OUTBOX_TYPE=POSIX
+export DOA_OUTBOX_QUEUE=exportRequests
+export DOA_OUTBOX_LOCATION="/ega/outbox/p11-%s/files/"
 export DOA_KEYSTORE_PATH=/etc/ega/ssl/server.p12
 export DOA_KEYSTORE_PASSWORD=$OPENSSL_SERVER_CERT_PASSWORD
+export DOA_BROKER_HOST=$MQ_HOST
+export DOA_BROKER_PORT=$MQ_PORT
+export DOA_BROKER_VHOST=$MQ_VHOST
+export DOA_BROKER_VALIDATE=false
 
 # Heartbeat
 # ---------------------------------------------------------------------------
@@ -197,7 +204,7 @@ export HEARTBEAT_REDIS_DB=0
 # If set to "container", the entire test runs inside a Docker container.
 # If set to "local", you can run the test using: `./gradlew :e2eTests:test`.
 # Mainly used to switch the host/ports and file systems to fetch the certificates.
-export E2E_RUNTIME=container
+export E2E_RUNTIME=local
 
 # Helper function to choose value based on runtime
 function _runtime_() {

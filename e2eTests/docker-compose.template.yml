@@ -16,6 +16,7 @@ services:
     build: ../services/tsd-api-mock
     volumes:
       - tsd-inbox:/tsd/p11/data/durable/apps/ega/
+      - tsd-outbox:/tsd/p11/data/durable/apps/egaout/
       - tsd-certs:/etc/jwt/public_keys/
       - tsd-certs:/etc/ega/ssl/
     command: # See services/tsd-api-mock/Dockerfile
@@ -453,10 +454,18 @@ services:
       - POSTGRES_DB=<<DOA_POSTGRES_DB>>
       - POSTGRES_PASSWORD=<<DOA_POSTGRES_PASSWORD>>
       - OUTBOX_ENABLED=<<DOA_OUTBOX_ENABLED>>
+      - OUTBOX_TYPE=<<DOA_OUTBOX_TYPE>>
+      - OUTBOX_QUEUE=<<DOA_OUTBOX_QUEUE>>
+      - OUTBOX_LOCATION=<<DOA_OUTBOX_LOCATION>>
       - KEYSTORE_PATH=<<DOA_KEYSTORE_PATH>>
       - KEYSTORE_PASSWORD=<<DOA_KEYSTORE_PASSWORD>>
+      - BROKER_HOST=<<DOA_BROKER_HOST>>
+      - BROKER_PORT=<<DOA_BROKER_PORT>>
+      - BROKER_VHOST=<<DOA_BROKER_VHOST>>
+      - BROKER_VALIDATE=<<DOA_BROKER_VALIDATE>>
     volumes:
       - tsd-vault:/ega/archive/
+      - tsd-outbox:/ega/outbox/
       - doa-certs:/etc/ega/
     command:
       - "java"
@@ -604,6 +613,7 @@ services:
       dockerfile: file-orchestrator.Dockerfile
     volumes:
       - tsd-inbox:/volumes/tsd-inbox
+      - tsd-outbox:/volumes/tsd-outbox
       - tsd-vault:/volumes/tsd-vault
       - tsd-certs:/volumes/tsd-certs
       - interceptor-certs:/volumes/interceptor-certs
@@ -652,6 +662,7 @@ services:
 
 volumes:
   tsd-inbox:
+  tsd-outbox:
   tsd-vault:
   tsd-certs:
   interceptor-certs:
