@@ -16,11 +16,11 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.17")
     implementation("org.slf4j:slf4j-simple:2.0.17")
     implementation("org.apache.commons:commons-lang3:3.18.0")
-    implementation("commons-codec:commons-codec:1.18.0")
-    implementation("commons-cli:commons-cli:1.9.0")
-    implementation("commons-io:commons-io:2.19.0")
+    implementation("commons-codec:commons-codec:1.19.0")
+    implementation("commons-cli:commons-cli:1.10.0")
+    implementation("commons-io:commons-io:2.20.0")
     implementation("com.rfksystems:blake2b:2.0.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.13.3")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.13.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
