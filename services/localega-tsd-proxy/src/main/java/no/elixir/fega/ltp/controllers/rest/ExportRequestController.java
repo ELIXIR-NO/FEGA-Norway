@@ -2,7 +2,7 @@ package no.elixir.fega.ltp.controllers.rest;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import no.elixir.fega.ltp.dto.ExportRequest;
+import no.elixir.fega.ltp.dto.ExportRequestDto;
 import no.elixir.fega.ltp.dto.GenericResponse;
 import no.elixir.fega.ltp.exceptions.GenericException;
 import no.elixir.fega.ltp.services.ExportRequestService;
@@ -25,7 +25,8 @@ public class ExportRequestController {
   }
 
   @PostMapping("/export")
-  public ResponseEntity<GenericResponse> exportRequest(@RequestBody @NotNull ExportRequest body) {
+  public ResponseEntity<GenericResponse> exportRequest(
+      @RequestBody @NotNull ExportRequestDto body) {
     try {
       exportRequestService.exportRequest(body);
     } catch (GenericException e) {
