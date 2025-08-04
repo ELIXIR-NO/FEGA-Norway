@@ -205,8 +205,6 @@ publishing {
                 classifier = ""
                 builtBy(tasks.shadowJar)
             }
-            artifact(tasks.named("sourcesJar"))
-            artifact(tasks.named("javadocJar"))
             pom {
                 setupPomDetails()
                 // the pom-file for the fat Jar does not include any dependencies
