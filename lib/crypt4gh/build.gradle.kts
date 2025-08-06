@@ -15,8 +15,9 @@ group = "no.elixir"
 
 // The target Java version can be overriden on the command-line with the argument "-PjavaVersion=<version>"
 // A JDK of this version must be available on your system
+private val defaultJavaVersion = JavaVersion.VERSION_21.majorVersion.toInt()
 val javaVersion = (project.findProperty("javaVersion") as String?)?.toInt()
-    ?: JavaVersion.current().majorVersion.toInt()
+    ?: defaultJavaVersion
 
 repositories {
     mavenCentral()
