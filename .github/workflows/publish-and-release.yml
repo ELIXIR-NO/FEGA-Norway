@@ -56,6 +56,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build and publish to local staging
+        if: ${{ matrix.component == 'crypt4gh'}}
+        env:
+          SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          ./gradlew lib:${{matrix.component}}:clean lib:${{matrix.component}}:build lib:${{matrix.component}}:publishMavenJavaPublicationToLocalStagingRepository \
+            -Pversion=${{ steps.new-tag.outputs.version }}
+
+      - name: Run JReleaser
+        if: ${{ matrix.component == 'crypt4gh'}}
+        uses: jreleaser/release-action@v2
+        env:
+          JRELEASER_PROJECT_VERSION: ${{ steps.new-tag.outputs.version }}
+          JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_TOKEN_USER }}
+          JRELEASER_MAVENCENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN_PASSWORD }}
+        with:
+          arguments: deploy -c lib/${{matrix.component}}/jreleaser.yml
+
       - name: Set Repository Name
         if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
         id: repo_name
