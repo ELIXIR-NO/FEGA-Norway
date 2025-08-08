@@ -15,3 +15,46 @@ deploy:
         namespace: no.elixir
         stagingRepositories:
           - build/jreleaser/staging-deploy
+
+hooks:
+  script:
+    before:
+      - run: |
+          #!/bin/bash
+          set -e
+          echo "Validating required artifacts and signatures..."
+
+          artifacts_dir="staging/no/elixir/{{projectName}}/{{projectVersion}}"
+          basename="{{projectName}}-{{projectVersion}}"
+          artifacts=(
+              "${basename}.jar"
+              "${basename}-sources.jar"
+              "${basename}-javadoc.jar"
+              "${basename}-tool.jar"
+              "${basename}.pom"
+              "${basename}.module"
+          )
+          digests=("md5" "sha1" "sha256" "sha512")
+
+          for artifact in "${artifacts[@]}"; do
+             filename="${artifacts_dir}/${artifact}"
+             if [[ ! -f "$filename" ]]; then
+                echo "ERROR: Missing artifact: $artifact"
+                exit 1
+             fi
+             if [[ ! -f "$filename.asc" ]]; then
+                echo "ERROR: Missing signature for: $artifact"
+                exit 1
+             fi
+             for digest in "${digests[@]}"; do
+                if [[ ! -f "$filename.$digest" ]]; then
+                   echo "ERROR: Missing $digest digest for artifact: $artifact"
+                   exit 1
+                fi
+                if [[ ! -f "$filename.asc.$digest" ]]; then
+                   echo "ERROR: Missing $digest digest for signature: $artifact.asc"
+                   exit 1
+                fi
+             done
+          done
+          echo "All required artifacts and signatures found!"
