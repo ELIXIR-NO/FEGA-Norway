@@ -70,6 +70,6 @@ Crypt4GH encryption/decryption tool
  -sk,--seckey <arg>    secret key to use (specify key file)
  -v,--version          print application's version
 
-Read more about the format at
+Read more about the format at:
 http://samtools.github.io/hts-specs/crypt4gh.pdf
 ```
