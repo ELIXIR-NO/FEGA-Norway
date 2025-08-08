@@ -24,7 +24,7 @@ hooks:
           set -e
           echo "Validating required artifacts and signatures..."
 
-          artifacts_dir="staging/no/elixir/{{projectName}}/{{projectVersion}}"
+          artifacts_dir="build/jreleaser/staging-deploy/no/elixir/{{projectName}}/{{projectVersion}}"
           basename="{{projectName}}-{{projectVersion}}"
           artifacts=(
               "${basename}.jar"
@@ -41,19 +41,27 @@ hooks:
              if [[ ! -f "$filename" ]]; then
                 echo "ERROR: Missing artifact: $artifact"
                 exit 1
+             else
+                echo "Found staged file: $filename"
              fi
              if [[ ! -f "$filename.asc" ]]; then
                 echo "ERROR: Missing signature for: $artifact"
                 exit 1
+             else
+                echo "Found staged file: $filename"
              fi
              for digest in "${digests[@]}"; do
                 if [[ ! -f "$filename.$digest" ]]; then
                    echo "ERROR: Missing $digest digest for artifact: $artifact"
                    exit 1
+                else
+                   echo "Found staged file: $filename"
                 fi
                 if [[ ! -f "$filename.asc.$digest" ]]; then
                    echo "ERROR: Missing $digest digest for signature: $artifact.asc"
                    exit 1
+                else
+                   echo "Found staged file: $filename"
                 fi
              done
           done
