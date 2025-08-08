@@ -48,20 +48,20 @@ hooks:
                 echo "ERROR: Missing signature for: $artifact"
                 exit 1
              else
-                echo "Found staged file: $filename"
+                echo "Found staged file: $filename.asc"
              fi
              for digest in "${digests[@]}"; do
                 if [[ ! -f "$filename.$digest" ]]; then
                    echo "ERROR: Missing $digest digest for artifact: $artifact"
                    exit 1
                 else
-                   echo "Found staged file: $filename"
+                   echo "Found staged file: $filename.$digest"
                 fi
                 if [[ ! -f "$filename.asc.$digest" ]]; then
                    echo "ERROR: Missing $digest digest for signature: $artifact.asc"
                    exit 1
                 else
-                   echo "Found staged file: $filename"
+                   echo "Found staged file: $filename.asc.$digest"
                 fi
              done
           done
