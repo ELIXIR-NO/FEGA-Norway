@@ -31,6 +31,33 @@ jobs:
         run: |
           ./gradlew :lib:${{matrix.component}}:publish --dry-run
 
+      - name: Build and publish to local staging
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
+        env:
+          SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          ./gradlew lib:${{matrix.component}}:clean lib:${{matrix.component}}:build lib:${{matrix.component}}:publishMavenJavaPublicationToLocalStagingRepository \
+            -Pversion=1.0.0-DRYRUN
+
+      - name: Run JReleaser
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
+        uses: jreleaser/release-action@v2
+        env:
+          JRELEASER_PROJECT_VERSION: 1.0.0-DRYRUN
+          JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_TOKEN_USER }}
+          JRELEASER_MAVENCENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN_PASSWORD }}
+        with:
+          arguments: deploy --dry-run -c lib/${{matrix.component}}/jreleaser.yml
+
+      - name: Print Logs
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
+        run: |
+          echo "TRACE LOG:"
+          cat lib/${{matrix.component}}/out/jreleaser/trace.log || echo "No trace log found"
+          echo "OUTPUT PROPERTIES:"
+          cat lib/${{matrix.component}}/out/jreleaser/output.properties || echo "No output properties found"
+
       - name: Set Repository Name
         if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
         id: repo_name
