@@ -67,6 +67,7 @@ jobs:
 
       - name: Run JReleaser
         if: ${{ matrix.component == 'crypt4gh'}}
+        continue-on-error: true
         uses: jreleaser/release-action@v2
         env:
           JRELEASER_PROJECT_VERSION: ${{ steps.new-tag.outputs.version }}
