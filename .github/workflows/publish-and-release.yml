@@ -76,6 +76,14 @@ jobs:
         with:
           arguments: deploy -c lib/${{matrix.component}}/jreleaser.yml
 
+      - name: Print Logs
+        if: ${{ matrix.component == 'crypt4gh'}}
+        run: |
+          echo "TRACE LOG:"
+          cat lib/${{matrix.component}}/out/jreleaser/trace.log || echo "No trace log found"
+          echo "OUTPUT PROPERTIES:"
+          cat lib/${{matrix.component}}/out/jreleaser/output.properties || echo "No output properties found"
+
       - name: Set Repository Name
         if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
         id: repo_name
