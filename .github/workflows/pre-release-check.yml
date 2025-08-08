@@ -51,9 +51,9 @@ jobs:
         if: failure()
         run: |
           echo "TRACE LOG:"
-          cat out/jreleaser/trace.log || echo "No trace log found"
+          cat lib/${{matrix.component}}/out/jreleaser/trace.log || echo "No trace log found"
           echo "OUTPUT PROPERTIES:"
-          cat out/jreleaser/output.properties || echo "No output properties found"
+          cat lib/${{matrix.component}}/out/jreleaser/output.properties || echo "No output properties found"
 
       - name: Set Repository Name
         if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
