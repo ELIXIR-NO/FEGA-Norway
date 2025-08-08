@@ -33,6 +33,9 @@ jobs:
 
       - name: Build and publish to local staging
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
+        env:
+          SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: |
           ./gradlew lib:${{matrix.component}}:clean lib:${{matrix.component}}:build lib:${{matrix.component}}:publishMavenJavaPublicationToLocalStagingRepository \
             -Pversion=1.0.0-DRYRUN
