@@ -50,9 +50,16 @@ jobs:
           distribution: "temurin"
 
       - name: Publish Jar Files
-        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' }}
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'tsd-file-api-client' }}
         run: |
           ./gradlew :lib:${{matrix.component}}:publish -Pversion=${{ steps.new-tag.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Jar Files Crypt4gh
+        if: ${{ matrix.component == 'crypt4gh' }}
+        run: |
+          ./gradlew :lib:${{matrix.component}}:publishLibraryPublicationToGithubRegistry -Pversion=${{ steps.new-tag.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
