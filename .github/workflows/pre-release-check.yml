@@ -1,6 +1,5 @@
 name: Release Pre Check
 on:
-  push:
   pull_request:
     branches:
       - main
