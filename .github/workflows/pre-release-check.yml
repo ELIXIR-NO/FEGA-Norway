@@ -36,6 +36,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Publish Jar Files ${{matrix.component}}
+        if: ${{ matrix.component == 'clearinghouse' }}
+        run: |
+          ./gradlew :lib:${{matrix.component}}:publishMavenJavaPublicationToGithubRegistryRepository --dry-run
+
       - name: Build and publish to local staging for JReleaser
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
         env:

@@ -55,16 +55,22 @@ jobs:
           ./gradlew :lib:${{matrix.component}}:publish -Pversion=${{ steps.new-tag.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Publish Jar Files ${{matrix.component}}
-        if: ${{ matrix.component == 'crypt4gh' || matrix.component == 'clearinghouse' }}
+        if: ${{ matrix.component == 'crypt4gh'}}
         run: |
           ./gradlew :lib:${{matrix.component}}:publishLibraryPublicationToGithubRegistry -Pversion=${{ steps.new-tag.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Publish Jar Files ${{matrix.component}}
+        if: ${{ matrix.component == 'clearinghouse' }}
+        run: |
+          ./gradlew :lib:${{matrix.component}}:publishMavenJavaPublicationToGithubRegistryRepository -Pversion=${{ steps.new-tag.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and publish to local staging for JReleaser
-        if: ${{ matrix.component == 'crypt4gh'}}
+        if: ${{ matrix.component == 'crypt4gh' || matrix.component == 'clearinghouse'}}
         env:
           SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
@@ -73,7 +79,7 @@ jobs:
             -Pversion=${{ steps.new-tag.outputs.version }}
 
       - name: Run JReleaser
-        if: ${{ matrix.component == 'crypt4gh'}}
+        if: ${{ matrix.component == 'crypt4gh' || matrix.component == 'clearinghouse'}}
         continue-on-error: true
         uses: jreleaser/release-action@v2
         env:
@@ -84,7 +90,7 @@ jobs:
           arguments: deploy -c lib/${{matrix.component}}/jreleaser.yml
 
       - name: Print Logs
-        if: ${{ matrix.component == 'crypt4gh'}}
+        if: ${{ matrix.component == 'crypt4gh' || matrix.component == 'clearinghouse'}}
         run: |
           echo "TRACE LOG:"
           cat lib/${{matrix.component}}/out/jreleaser/trace.log || echo "No trace log found"
