@@ -24,19 +24,19 @@ jobs:
           java-version: "21"
           distribution: "temurin"
 
-      - name: Publish Jar Files
-        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'tsd-file-api-client' }}
+      - name: Publish Jar Files ${{matrix.component}}
+        if: ${{matrix.component == 'tsd-file-api-client' }}
         run: |
           ./gradlew :lib:${{matrix.component}}:publish --dry-run
 
-      - name: Publish Jar Files Crypt4gh
-        if: ${{ matrix.component == 'crypt4gh' }}
+      - name: Publish Jar Files ${{matrix.component}}
+        if: ${{ matrix.component == 'crypt4gh' || matrix.component == 'clearinghouse' }}
         run: |
           ./gradlew :lib:${{matrix.component}}:publishLibraryPublicationToGithubRegistry --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and publish to local staging
+      - name: Build and publish to local staging for JReleaser
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
         env:
           SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
