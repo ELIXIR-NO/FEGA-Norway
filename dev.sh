@@ -280,14 +280,12 @@ function apply_all_spotless_checks() {
 function cleanup_environment() {
     local verbose=true
 
-    # Logging function that uses your existing log functions
     log_verbose() {
         if [[ "$verbose" == true ]]; then
             log_info "$1"
         fi
     }
 
-    # Function to run commands with error handling (using your existing patterns)
     run_command() {
         local cmd="$1"
         local description="$2"
@@ -359,7 +357,7 @@ function cleanup_environment() {
         "e2e-tests"
     )
 
-    # Use docker-compose if available (matching your pattern of cd e2eTests)
+    # Use docker-compose if available
     if [[ -n "$compose_cmd" ]]; then
         log_verbose "Using $compose_cmd for cleanup"
         cd e2eTests 2>/dev/null || true
