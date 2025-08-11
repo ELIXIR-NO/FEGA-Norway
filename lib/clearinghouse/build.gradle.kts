@@ -61,6 +61,13 @@ publishing {
                         name.set("Parisa")
                     }
                 }
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/license/MIT")
+                        distribution.set("repo")
+                    }
+                }
                 scm {
                     url.set("https://github.com/ELIXIR-NO/FEGA-Norway")
                 }
