@@ -30,7 +30,7 @@ jobs:
           ./gradlew :lib:${{matrix.component}}:publish --dry-run
 
       - name: Publish Jar Files ${{matrix.component}}
-        if: ${{ matrix.component == 'crypt4gh' || matrix.component == 'clearinghouse' }}
+        if: ${{ matrix.component == 'crypt4gh'}}
         run: |
           ./gradlew :lib:${{matrix.component}}:publishLibraryPublicationToGithubRegistry --dry-run
         env:
