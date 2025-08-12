@@ -142,26 +142,19 @@ tag_to_version() {
       exit 1
     }
   fi
-
-  log_info "REALTAG: $REALTAG"
-
-  REALTAG=$(echo "$REALTAG" | tr -d '[:space:]')
-
   case "$REALTAG" in
     v*)
       VERSION=${REALTAG#v}
-      TAG="$REALTAG"
       ;;
     lega-commander-*)
       VERSION=${REALTAG#lega-commander-}
-      TAG="v${VERSION}"
+      VERSION=${VERSION%-assets}
       ;;
     *)
       VERSION="$REALTAG"
-      TAG="v${REALTAG}"
       ;;
   esac
-
+  TAG="v${VERSION}"
   log_info "VERSION: $VERSION"
   log_info "TAG: $TAG"
 }
@@ -344,34 +337,25 @@ http_copy() {
 github_get_latest() {
   owner_repo="$1"
 
-  # 1) Get all releases as JSON
-  releases_json=$(http_copy "https://api.github.com/repos/${owner_repo}/releases" \
-                             "Accept:application/vnd.github.v3+json") || {
-    log_crit "Failed to list releases from GitHub."
+  tags_json=$(http_copy \
+      "https://api.github.com/repos/${owner_repo}/tags?per_page=100" \
+      "Accept:application/vnd.github.v3+json") || {
+    log_crit "Failed to list tags from GitHub."
     return 1
   }
 
-  #Extract all tag_name fields, filtering those that begin with "lega-commander-"
-  #Then parse out the version portion after 'lega-commander-'
-
-  cmd_results=$(
-    echo "$releases_json" |
-      sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' |
-      grep '^lega-commander-' |
-      sed 's/^lega-commander-//'
+  tags=$(
+    echo "$tags_json" |
+      sed -n 's/.*"name":[[:space:]]*"\([^"]*\)".*/\1/p' |
+      grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$'
   )
 
-  if [ -z "$cmd_results" ]; then
-    log_crit "No releases found with tag_name starting 'lega-commander-'."
+  [ -z "$tags" ] && {
+    log_crit "No lega-commander tags (vX.Y.Z) found."
     return 1
-  fi
+  }
 
-  # Sort them descending and pick the top
-  latest_version=$(printf "%s\n" "$cmd_results" | sort -rV | head -n1)
-
-  # Rebuild the final tag name
-  latest_tag="lega-commander-$latest_version"
-
+  latest_tag=$(printf "%s\n" "$tags" | sort -rV | head -n1)
   echo "$latest_tag"
 }
 
