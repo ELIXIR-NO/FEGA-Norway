@@ -60,7 +60,7 @@ updates:
         patterns:
           - "*"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
       time: "09:00"
       timezone: "Europe/Oslo"
@@ -75,7 +75,7 @@ updates:
         patterns:
           - "*"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
       time: "09:00"
       timezone: "Europe/Oslo"
