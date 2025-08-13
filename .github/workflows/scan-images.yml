@@ -16,7 +16,7 @@ jobs:
       localega-tsd-proxy: ${{ steps.changes.outputs.localega-tsd-proxy }}
       mq-interceptor: ${{ steps.changes.outputs.mq-interceptor }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3
         id: changes
         with:
