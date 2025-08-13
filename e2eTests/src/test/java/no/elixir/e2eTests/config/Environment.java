@@ -26,6 +26,8 @@ public class Environment {
   private final String truststorePassword;
   private final String runtime;
   private final String proxyTokenAudience;
+  private final String proxyAdminUsername;
+  private final String proxyAdminPassword;
 
   public Environment() {
     this.env = loadEnvFromShellScript();
@@ -44,6 +46,8 @@ public class Environment {
     this.sdaDoaPort = env.get("E2E_SDA_DOA_PORT");
     this.truststorePassword = env.get("E2E_TRUSTSTORE_PASSWORD");
     this.proxyTokenAudience = env.get("E2E_PROXY_TOKEN_AUDIENCE");
+    this.proxyAdminUsername = env.get("E2E_PROXY_ADMIN_USERNAME");
+    this.proxyAdminPassword = env.get("E2E_PROXY_ADMIN_PASSWORD");
   }
 
   private Map<String, String> loadEnvFromShellScript() {
