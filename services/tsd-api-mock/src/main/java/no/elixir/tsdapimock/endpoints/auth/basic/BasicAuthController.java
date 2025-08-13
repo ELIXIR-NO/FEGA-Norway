@@ -2,7 +2,6 @@ package no.elixir.tsdapimock.endpoints.auth.basic;
 
 import jakarta.validation.Valid;
 import java.util.NoSuchElementException;
-import no.elixir.tsdapimock.auth.basic.dto.*;
 import no.elixir.tsdapimock.core.exceptions.CredentialsMismatchException;
 import no.elixir.tsdapimock.endpoints.auth.basic.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
