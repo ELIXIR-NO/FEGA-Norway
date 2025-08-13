@@ -303,7 +303,7 @@ tasks.withType<PublishToMavenRepository>().configureEach {
         val repoName = repository.name
 
         when {
-            repoName == "fega-norway-crypt4gh" && isSnapshot -> {
+            repoName == "GithubRegistry" && isSnapshot -> {
                 logger.lifecycle("Skipping SNAPSHOT publishing to GitHub Packages")
                 onlyIf { false }
             }
