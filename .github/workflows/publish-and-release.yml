@@ -20,7 +20,7 @@ jobs:
         component: ${{ fromJson(needs.detect.outputs.changed-components).component }}
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Get New Version

@@ -15,7 +15,7 @@ jobs:
       matrix:
         component: ${{ fromJson(needs.detect.outputs.changed-components).component }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Java
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' || matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock'}}
