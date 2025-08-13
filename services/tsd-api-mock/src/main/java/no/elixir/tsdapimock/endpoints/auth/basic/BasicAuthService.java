@@ -4,7 +4,6 @@ import static javax.management.timer.Timer.ONE_HOUR;
 import static javax.management.timer.Timer.ONE_WEEK;
 
 import java.security.SecureRandom;
-import no.elixir.tsdapimock.auth.basic.dto.*;
 import no.elixir.tsdapimock.core.exceptions.CredentialsMismatchException;
 import no.elixir.tsdapimock.core.utils.JwtService;
 import no.elixir.tsdapimock.endpoints.auth.basic.dto.*;
