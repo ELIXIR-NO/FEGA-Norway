@@ -13,7 +13,10 @@ else
     echo "Warning: /storage/certs/rootCA.pem not found, skipping certificate import."
 fi
 
-# Decide which test to run based on INTEGRATION variable
+# Choose which test to run based on the INTEGRATION variable.
+# If set to "FEGA", run no.elixir.e2eTests.FEGAIntegrationTest.
+# Otherwise, run no.elixir.e2eTests.GDIIntegrationTest.
+# See the top-level classes in no.elixir.e2eTests for details.
 if [ "$INTEGRATION" = "FEGA" ]; then
     echo "Running FEGA integration tests"
     exec java -jar e2eTests.jar --select-class no.elixir.e2eTests.FEGAIntegrationTest
