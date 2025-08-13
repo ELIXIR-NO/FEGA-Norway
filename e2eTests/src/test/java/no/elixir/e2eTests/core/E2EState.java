@@ -8,13 +8,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Shared E2E test state across multiple test classes.
- * <p></p>
- * In JUnit, test state is not preserved between different test classes.
- * This class uses static variables as a workaround so that data and utilities
- * can be accessed globally by all E2E test classes.
- * <p></p>
- * Example usage:
- *   E2EState.log.info("message");
+ *
+ * <p>In JUnit, test state is not preserved between different test classes. This class uses static
+ * variables as a workaround so that data and utilities can be accessed globally by all E2E test
+ * classes.
+ *
+ * <p>Example usage: E2EState.log.info("message");
  */
 public class E2EState {
 
