@@ -42,7 +42,11 @@ function apply_configs() {
   local f=docker-compose.yml
   local missing_vars=()
 
-  # Extract all template variables from the file
+  # Automatically detect and replace all template variables in the format <<VAR_NAME>>.
+  # Previously, each variable had to be set manually; now, values are pulled from the environment.
+  # - If a value exists, it is replaced in the file.
+  # - If not, it is added to a list of missing variables, and a warning is shown
+  #   with export commands to set them in env.sh.
   local template_vars=($(grep -o '<<[^>]*>>' "$f" | sed 's/<<\(.*\)>>/\1/' | sort -u))
 
   echo "Found ${#template_vars[@]} template variables to replace..."

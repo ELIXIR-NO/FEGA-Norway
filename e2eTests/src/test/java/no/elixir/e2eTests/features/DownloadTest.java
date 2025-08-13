@@ -16,14 +16,18 @@ public class DownloadTest {
   public static void testDownloadDatasetUsingExportRequestAndVerifyResults() throws Exception {
     String accessToken = TokenUtils.generateVisaToken(E2EState.datasetId);
     E2EState.log.info(E2EState.encFile.getName());
+
     HttpResponse<JsonNode> exportRequestRes = makeExportRequest(accessToken);
     assertEquals(200, exportRequestRes.getStatus());
+
     E2EState.log.info("Export request response: {}", exportRequestRes.getBody());
     HttpResponse<FileListingResponse> listFilesRes = checkFilesWithRetry(accessToken);
     assertNotNull(listFilesRes);
     assertEquals(200, listFilesRes.getStatus());
+
     E2EState.log.info("List user outbox request response: {}", listFilesRes.getBody());
     assertFalse(listFilesRes.getBody().files.isEmpty());
+
     Optional<TsdFile> first = listFilesRes.getBody().files.stream().findFirst();
     assertTrue(first.isPresent());
     assertEquals(E2EState.encFile.getName(), first.get().fileName);
@@ -44,7 +48,8 @@ public class DownloadTest {
   private static HttpResponse<FileListingResponse> checkFilesWithRetry(String accessToken)
       throws Exception {
     String listFilesEndpoint = buildListFilesUrl();
-    for (int i = 1; i <= 5; i++) {
+    final int MAX_RETRIES = 5;
+    for (int i = 1; i <= MAX_RETRIES; i++) {
       HttpResponse<FileListingResponse> res =
           Unirest.get(listFilesEndpoint)
               .socketTimeout(300000)
@@ -61,7 +66,7 @@ public class DownloadTest {
         E2EState.log.info("Files found on attempt {}", i);
         return res;
       }
-      if (i < 5) {
+      if (i < MAX_RETRIES) {
         E2EState.log.info("Files not found, waiting 1 second before attempt {}", i + 1);
         Thread.sleep(1000);
       }
