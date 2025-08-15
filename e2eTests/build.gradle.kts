@@ -18,7 +18,7 @@ dependencies {
     testImplementation("com.rabbitmq:amqp-client:5.26.0")
     testImplementation("com.konghq:unirest-java:3.14.5")
     testImplementation("org.postgresql:postgresql:42.7.7")
-    testImplementation("com.auth0:java-jwt:4.5.0") // FIXME: io.jsonwebtoken
+    testImplementation("com.auth0:java-jwt:4.5.0")
     testImplementation("commons-io:commons-io:2.20.0")
     testImplementation(project(":lib:crypt4gh"))
     testImplementation("org.slf4j:slf4j-api:2.0.17")
@@ -35,7 +35,7 @@ tasks.register<Exec>("make-executable") {
 
 tasks.register<Exec>("cleanup") {
     dependsOn("make-executable")
-    commandLine("../gradlew", "clean")
+    commandLine("sh", "-c", "./scripts/bootstrap.sh cleanup_workspace")
 }
 
 tasks.register<Exec>("assemble-binaries") {

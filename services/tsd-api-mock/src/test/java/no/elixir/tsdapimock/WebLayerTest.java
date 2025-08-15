@@ -4,8 +4,8 @@ import static javax.management.timer.Timer.ONE_HOUR;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import no.elixir.tsdapimock.auth.basic.Client;
-import no.elixir.tsdapimock.utils.JwtService;
+import no.elixir.tsdapimock.endpoints.auth.basic.Client;
+import no.elixir.tsdapimock.core.utils.JwtService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
