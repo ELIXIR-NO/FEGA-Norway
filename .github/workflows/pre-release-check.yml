@@ -93,7 +93,7 @@ jobs:
           push: true
           no-cache: 'true'
           tags: |
-            ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ github.event.number }}
+            ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ github.event.number }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.clone_url }}
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
