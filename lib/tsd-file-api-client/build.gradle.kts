@@ -20,9 +20,9 @@ dependencies {
     implementation("commons-io:commons-io:2.20.0")
     implementation("com.google.code.gson:gson:2.13.1")
 
-    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
-    implementation("io.jsonwebtoken:jjwt-impl:0.12.6")
-    implementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
+    implementation("io.jsonwebtoken:jjwt-api:0.12.7")
+    implementation("io.jsonwebtoken:jjwt-impl:0.12.7")
+    implementation("io.jsonwebtoken:jjwt-jackson:0.12.7")
 
     api("com.squareup.okhttp3:okhttp:5.1.0")
     implementation("org.slf4j:slf4j-jdk14:2.0.17")
