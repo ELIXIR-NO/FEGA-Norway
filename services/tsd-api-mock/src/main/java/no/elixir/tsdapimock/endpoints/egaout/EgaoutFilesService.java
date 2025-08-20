@@ -90,6 +90,10 @@ public class EgaoutFilesService {
       }
     }
 
-    return new OutboxFileListingDto(tsdFiles, "1");
+    // Note: Regardless of the page number, resumables.listFiles
+    // will return all files in the user's outbox.
+    // See: https://github.com/ELIXIR-NO/FEGA-Norway/issues/561
+    final String PAGE_NUMBER = "1";
+    return new OutboxFileListingDto(tsdFiles, PAGE_NUMBER);
   }
 }
