@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -Eeuo pipefail
+
 source ./e2eTests/env.sh
 
 # Cross-platform compatibility checks
@@ -7,15 +9,12 @@ OS="$(uname)"
 case $OS in
   'Linux')
     OS='Linux'
-    DOCKER_CMD='systemctl'
     ;;
   'Darwin')
     OS='Mac'
-    DOCKER_CMD='brew'
     ;;
   *)
     OS='Unknown'
-    DOCKER_CMD='systemctl'
     ;;
 esac
 
@@ -121,8 +120,8 @@ function rebuild_and_deploy_proxy() {
     show_header
     log_step "Rebuilding and deploying proxy service"
 
-    ./gradlew :service:localega-tsd-proxy:clean > /dev/null &&
-    ./gradlew :service:localega-tsd-proxy:assemble > /dev/null &&
+    ./gradlew :services:localega-tsd-proxy:clean > /dev/null &&
+    ./gradlew :services:localega-tsd-proxy:assemble > /dev/null &&
     docker rm proxy -f > /dev/null 2>&1 &&
     docker rmi tsd-proxy:latest -f > /dev/null 2>&1 &&
     cd e2eTests &&
@@ -135,8 +134,8 @@ function rebuild_and_deploy_mq_interceptor() {
     show_header
     log_step "Rebuilding and deploying MQ interceptor"
 
-    ./gradlew :service:mq-interceptor:clean > /dev/null &&
-    ./gradlew :service:mq-interceptor:assemble > /dev/null &&
+    ./gradlew :services:mq-interceptor:clean > /dev/null &&
+    ./gradlew :services:mq-interceptor:assemble > /dev/null &&
     docker rm interceptor -f > /dev/null 2>&1 &&
     docker rmi mq-interceptor:latest -f > /dev/null 2>&1 &&
     cd e2eTests &&
@@ -174,8 +173,8 @@ function rebuild_and_deploy_tsd() {
     show_header
     log_step "Rebuilding and deploying TSD API mock"
 
-    ./gradlew :service:tsd-api-mock:clean > /dev/null &&
-    ./gradlew :service:tsd-api-mock:assemble > /dev/null &&
+    ./gradlew :services:tsd-api-mock:clean > /dev/null &&
+    ./gradlew :services:tsd-api-mock:assemble > /dev/null &&
     docker rm tsd -f > /dev/null 2>&1 &&
     docker rmi tsd-api-mock:latest -f > /dev/null 2>&1 &&
     cd e2eTests &&
