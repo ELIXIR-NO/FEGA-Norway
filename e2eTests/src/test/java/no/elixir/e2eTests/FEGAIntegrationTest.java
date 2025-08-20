@@ -68,7 +68,7 @@ public class FEGAIntegrationTest {
 
   @Test
   @Order(7)
-  void DownloadHackTest() throws Exception {
-    DownloadTest.testDownloadDatasetUsingExportRequestAndVerifyResults();
+  void DownloadTest() throws Exception {
+    DownloadTest.downloadDatasetAndVerifyResults();
   }
 }
