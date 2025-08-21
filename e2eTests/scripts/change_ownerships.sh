@@ -2,6 +2,10 @@
 
 cd confs || exit 1
 
+# tsd
+chmod 777 /volumes/tsd-outbox/*
+chown -R 65534:65534 /volumes/tsd-outbox/*
+
 # proxy
 chmod -R 777 /volumes/proxy-certs/*
 chmod 777 /volumes/proxy-certs/jwt /volumes/proxy-certs/ssl /volumes/proxy-certs/store
@@ -62,7 +66,7 @@ echo
 chmod -R 777 /volumes/doa-certs/
 chown -R 65534:65534 /volumes/doa-certs/
 chmod 755 /volumes/doa-certs/
-echo "Inspecting /volumes/db-data & /volumes/db-certs"
+echo "Inspecting /volumes/doa-certs/"
 ls -alh /volumes/doa-certs/
 echo
 

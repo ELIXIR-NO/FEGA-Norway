@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.clearinghouse.model.Visa;
-import no.elixir.clearinghouse.model.VisaType;
-import no.elixir.fega.ltp.dto.ExportRequest;
+import no.elixir.fega.ltp.dto.ExportRequestDto;
 import no.elixir.fega.ltp.exceptions.GenericException;
+import no.elixir.fega.ltp.models.DOAExportRequest;
 import org.apache.http.entity.ContentType;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,15 +36,12 @@ public class ExportRequestService {
     this.tsdRabbitTemplate = tsdRabbitTemplate;
   }
 
-  public void exportRequest(ExportRequest exportRequest)
+  public void exportRequest(ExportRequestDto exportRequestDto)
       throws GenericException, IllegalArgumentException {
 
-    String subject = tokenService.getSubject(exportRequest.getAccessToken());
+    String subject = tokenService.getSubject(exportRequestDto.getAccessToken());
     List<Visa> controlledAccessGrantsVisas =
-        tokenService.filterByVisaType(
-            tokenService.fetchTheFullPassportUsingPassportScopedAccessTokenAndGetVisas(
-                exportRequest.getAccessToken()),
-            VisaType.ControlledAccessGrants);
+        tokenService.getControlledAccessGrantsVisas(exportRequestDto.getAccessToken());
     log.info(
         "Elixir user {} authenticated and provided following valid GA4GH Visas: {}",
         subject,
@@ -54,7 +51,7 @@ public class ExportRequestService {
         controlledAccessGrantsVisas.stream()
             .filter(
                 visa -> {
-                  String escapedId = Pattern.quote(exportRequest.getId());
+                  String escapedId = Pattern.quote(exportRequestDto.getId());
                   return visa.getValue().matches(".*" + escapedId + ".*");
                 })
             .collect(Collectors.toSet());
@@ -63,8 +60,8 @@ public class ExportRequestService {
       log.info(
           "No visas found for user {}. Requested to export {} {}",
           subject,
-          exportRequest.getId(),
-          exportRequest.getType());
+          exportRequestDto.getId(),
+          exportRequestDto.getType());
       throw new GenericException(HttpStatus.BAD_REQUEST, "No visas found");
     }
 
@@ -75,12 +72,12 @@ public class ExportRequestService {
               log.info(
                   "Found {} visa(s). Using the first visa to make the request.", collect.size());
 
-              exportRequest.setJwtToken(visa.getRawToken());
-
+              exportRequestDto.setJwtToken(visa.getRawToken());
+              DOAExportRequest message = DOAExportRequest.fromExportRequestDto(exportRequestDto);
               tsdRabbitTemplate.convertAndSend(
                   exchange,
                   routingKey,
-                  exportRequest.getInfoRequiredForDOAExportRequestAsJson(),
+                  message,
                   m -> {
                     m.getMessageProperties()
                         .setContentType(ContentType.APPLICATION_JSON.getMimeType());
@@ -89,7 +86,7 @@ public class ExportRequestService {
                   });
               log.info(
                   "Export request: {} | Exchange: {} | Routing-key: {}",
-                  exportRequest,
+                  message,
                   exchange,
                   routingKey);
             }));

@@ -116,6 +116,17 @@ function reexecute_tests_in_container() {
     log_success "E2E tests rebuilt and reexecuted!"
 }
 
+function reexecute_tests_in_container() {
+  ./gradlew :e2eTests:clean > /dev/null &&
+  ./gradlew :e2eTests:assemble > /dev/null &&
+  docker rm e2e-tests -f > /dev/null &&
+  docker rmi fega-norway-e2e-tests:latest -f > /dev/null &&
+  cd e2eTests &&
+  docker compose up -d e2e-tests > /dev/null &&
+  cd .. &&
+  echo "Task done ✅ Built and reexecuting e2e-tests."
+}
+
 function rebuild_and_deploy_proxy() {
     show_header
     log_step "Rebuilding and deploying proxy service"
