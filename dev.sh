@@ -629,7 +629,7 @@ function show_menu() {
 
 # Main execution logic
 
-if [ -z "$1" ]; then
+if [ -z "${1-}" ]; then
     show_menu
 else
     FUNC_NAME=$1
