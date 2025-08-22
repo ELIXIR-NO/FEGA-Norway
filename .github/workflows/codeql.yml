@@ -8,8 +8,7 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
-    timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
@@ -18,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'java-kotlin', 'go' ]
+        language: [ 'java', 'go' ]
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
@@ -33,7 +32,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '21'
+        java-version: 21
 
     - name: Cache gradle packages
       uses: actions/cache@v4
@@ -45,8 +44,13 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
 
-    - name: Build with Gradle
-      run: ./gradlew assemble
+    - name: Build with Gradle Java
+      if: ${{ matrix.language == 'java' }}
+      run: ./gradlew lib:clearinghouse:assemble lib:crypt4gh:assemble lib:tsd-file-api-client:assemble services:localega-tsd-proxy:assemble
+
+    - name: Build with Gradle Go
+      if: ${{ matrix.language == 'go' }}
+      run: ./gradlew services:mq-interceptor:assemble cli:lega-commander:assemble
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
