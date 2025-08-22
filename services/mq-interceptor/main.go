@@ -74,36 +74,38 @@ func main() {
 	legaPublishChannel, err := legaMQ.Channel()
 	failOnError(err, "Failed to create LEGA publish RabbitMQ channel")
 	legaNotifyCloseChannel := legaMQ.NotifyClose(make(chan *amqp.Error))
+	cegaPublishChannel := MQChannel(legaPublishChannel)
+    errorPublishChannel := MQChannel(legaPublishChannel)
+    cegaExchange := os.Getenv("LEGA_MQ_EXCHANGE")
+    legaExchange := os.Getenv("LEGA_MQ_EXCHANGE")
 	go func() {
 		err := <-legaNotifyCloseChannel
 		log.Fatal(err)
 	}()
 
-	cegaMqConnString := os.Getenv("CEGA_MQ_CONNECTION")
-	cegaMQ, err := dialRabbitMQ(cegaMqConnString)
-	failOnError(err, "Failed to connect to CEGA queue after many attempts")
-	cegaConsumeChannel, err := cegaMQ.Channel()
-	failOnError(err, "Failed to create CEGA consume RabbitMQ channel")
-	cegaPublishChannel, err := cegaMQ.Channel()
-	failOnError(err, "Failed to create CEGA publish RabbitMQ channel")
-	cegaNotifyCloseChannel := cegaMQ.NotifyClose(make(chan *amqp.Error))
-	go func() {
-		err := <-cegaNotifyCloseChannel
-		log.Fatal(err)
-	}()
-	errorPublishChannel := cegaPublishChannel
+    cegaMqConnString := os.Getenv("CEGA_MQ_CONNECTION")
+    if cegaMqConnString != "" {
+        cegaMQ, err := dialRabbitMQ(cegaMqConnString)
+        failOnError(err, "Failed to connect to CEGA queue after many attempts")
 
-	cegaQueue := os.Getenv("CEGA_MQ_QUEUE")
-	cegaExchange := os.Getenv("CEGA_MQ_EXCHANGE")
-	legaExchange := os.Getenv("LEGA_MQ_EXCHANGE")
+        cegaConsumeChannel, err := cegaMQ.Channel()
+        failOnError(err, "Failed to create CEGA consume RabbitMQ channel")
+        cegaPublishChannel, err = cegaMQ.Channel()
+        failOnError(err, "Failed to create CEGA publish RabbitMQ channel")
+        errorPublishChannel = cegaPublishChannel
+        cegaExchange = os.Getenv("CEGA_MQ_EXCHANGE")
 
-	cegaDeliveries, err := cegaConsumeChannel.Consume(cegaQueue, "", false, false, false, false, nil)
-	failOnError(err, "Failed to connect to CEGA queue: "+cegaQueue)
-	go func() {
-		for delivery := range cegaDeliveries {
-			forwardDeliveryTo(true, cegaConsumeChannel, legaPublishChannel, errorPublishChannel, legaExchange, "", delivery)
-		}
-	}()
+        cegaQueue := os.Getenv("CEGA_MQ_QUEUE")
+        cegaDeliveries, err := cegaConsumeChannel.Consume(cegaQueue, "", false, false, false, false, nil)
+        failOnError(err, "Failed to connect to CEGA queue: "+cegaQueue)
+        go func() {
+            for delivery := range cegaDeliveries {
+                forwardDeliveryTo(true, cegaConsumeChannel, legaPublishChannel, errorPublishChannel, legaExchange, "", delivery)
+            }
+        }()
+    } else {
+        log.Println("CEGA_MQ_CONNECTION not set, skipping CEGA setup")
+    }
 
 	errorDeliveries, err := legaConsumeChannel.Consume("error", "", false, false, false, false, nil)
 	failOnError(err, "Failed to connect to 'error' queue")
