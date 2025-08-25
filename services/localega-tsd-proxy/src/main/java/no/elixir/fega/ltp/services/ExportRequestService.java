@@ -44,7 +44,7 @@ public class ExportRequestService {
         tokenService.getControlledAccessGrantsVisas(exportRequestDto.getAccessToken());
     log.info(
         "Elixir user {} authenticated and provided following valid GA4GH Visas: {}",
-        subject,
+        maskSubject(subject),
         controlledAccessGrantsVisas);
 
     Set<Visa> collect =
@@ -59,7 +59,7 @@ public class ExportRequestService {
     if (collect.isEmpty()) {
       log.info(
           "No visas found for user {}. Requested to export {} {}",
-          subject,
+          maskSubject(subject),
           exportRequestDto.getId(),
           exportRequestDto.getType());
       throw new GenericException(HttpStatus.BAD_REQUEST, "No visas found");
@@ -91,4 +91,17 @@ public class ExportRequestService {
                   routingKey);
             }));
   }
+
+    private String maskSubject(String subject) {
+        String username = subject.substring(0, subject.indexOf("@"));
+
+        //mask the username
+        if (username.length() < 4)
+            subject = subject.replaceAll("(?<=.).(?=.*@)", "*");
+        else if (username.length() < 6)
+            subject = subject.replaceAll("(?<=.{2}).(?=.*.{1}@)", "*");
+        else subject = subject.replaceAll("(?<=.{3}).(?=.*.{2}@)", "*");
+        // mask the domain
+        return subject.replaceAll("(?<=@)[^.]+(?=\\.[^.]+$)", "*****");
+    }
 }
