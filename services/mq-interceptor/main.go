@@ -76,8 +76,8 @@ func main() {
 	legaNotifyCloseChannel := legaMQ.NotifyClose(make(chan *amqp.Error))
 	cegaPublishChannel := MQChannel(legaPublishChannel)
     errorPublishChannel := MQChannel(legaPublishChannel)
-    cegaExchange := os.Getenv("LEGA_MQ_EXCHANGE")
-    legaExchange := os.Getenv("CEGA_MQ_EXCHANGE")
+    cegaExchange := os.Getenv("CEGA_MQ_EXCHANGE")
+    legaExchange := os.Getenv("LEGA_MQ_EXCHANGE")
     if cegaExchange == "" {
         cegaExchange = legaExchange
     }
@@ -109,6 +109,7 @@ func main() {
     } else {
         log.Println("CEGA_MQ_CONNECTION not set, skipping CEGA setup")
     }
+    log.Printf("Consuming from LEGA queue: %s", os.Getenv("LEGA_MQ_QUEUE"))
 
 	errorDeliveries, err := legaConsumeChannel.Consume("error", "", false, false, false, false, nil)
 	failOnError(err, "Failed to connect to 'error' queue")
@@ -165,6 +166,7 @@ func forwardDeliveryTo(fromCEGAToLEGA bool, channelFrom MQChannel, channelTo MQC
 	} else if messageType != nil {
 		routingKey = messageType.(string)
 	}
+    log.Printf("Publishing to exchange=%s key=%s", exchange, routingKey)
 	err = channelTo.Publish(exchange, routingKey, false, false, *publishing)
 	if err != nil {
 		log.Printf("%s", err)
@@ -212,22 +214,23 @@ func buildPublishingFromDelivery(fromCEGAToLEGA bool, delivery amqp.Delivery) (*
 
 	stringUser := fmt.Sprintf("%s", user)
 
+	var mappedID string
 	if fromCEGAToLEGA {
-		elixirId, err := selectElixirIdByEGAId(stringUser)
-		if err != nil {
-			return nil, "", err
-		}
-		message["user"] = elixirId
+		mappedID, err = selectElixirIdByEGAId(stringUser)
 	} else {
-		egaId, err := selectEgaIdByElixirId(stringUser)
-		if err != nil {
-			return nil, "", err
-		}
-		message["user"] = egaId
+		mappedID, err = selectEgaIdByElixirId(stringUser)
 	}
 
-	publishing.Body, err = json.Marshal(message)
+	if err == sql.ErrNoRows {
+		log.Printf("No mapping found for user [%s], leaving unchanged", stringUser)
+		publishing.Body = delivery.Body
+		return &publishing, messageType, nil
+	} else if err != nil {
+		return nil, "", err
+	}
 
+	message["user"] = mappedID
+	publishing.Body, err = json.Marshal(message)
 	return &publishing, messageType, err
 }
 
@@ -301,6 +304,11 @@ func getTLSConfig() *tls.Config {
 		RootCAs:            caCertPool,
 		InsecureSkipVerify: false,
 	}
+}
+
+func ensureUserMapping(egaId, elixirId string) error {
+    _, err := db.Exec("INSERT INTO mapping (ega_id, elixir_id) VALUES ($1, $2) ON CONFLICT (ega_id) DO NOTHING", egaId, elixirId)
+    return err
 }
 
 func failOnError(err error, msg string) {
