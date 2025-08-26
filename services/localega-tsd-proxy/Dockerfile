@@ -1,12 +1,11 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
-COPY build.gradle.kts settings.gradle.kts ./
+COPY build.gradle.kts settings.gradle.kts gradlew ./
 COPY gradle/ ./gradle/
 COPY buildSrc ./buildSrc
 COPY lib/clearinghouse ./lib/clearinghouse
 COPY lib/tsd-file-api-client ./lib/tsd-file-api-client
-COPY gradlew ./
 COPY services/localega-tsd-proxy ./services/localega-tsd-proxy
 
 RUN ./gradlew :services:localega-tsd-proxy:clean :services:localega-tsd-proxy:build -x test --no-daemon
