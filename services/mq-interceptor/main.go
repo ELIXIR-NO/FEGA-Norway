@@ -77,7 +77,10 @@ func main() {
 	cegaPublishChannel := MQChannel(legaPublishChannel)
     errorPublishChannel := MQChannel(legaPublishChannel)
     cegaExchange := os.Getenv("LEGA_MQ_EXCHANGE")
-    legaExchange := os.Getenv("LEGA_MQ_EXCHANGE")
+    legaExchange := os.Getenv("CEGA_MQ_EXCHANGE")
+    if cegaExchange == "" {
+        cegaExchange = legaExchange
+    }
 	go func() {
 		err := <-legaNotifyCloseChannel
 		log.Fatal(err)
@@ -229,15 +232,18 @@ func buildPublishingFromDelivery(fromCEGAToLEGA bool, delivery amqp.Delivery) (*
 }
 
 func publishError(delivery amqp.Delivery, err error, errorChannel MQChannel) error {
-	errorMessage := fmt.Sprintf("{\"reason\" : \"%s\", \"original_message\" : \"%s\"}", err.Error(), string(delivery.Body))
-	publishing := amqp.Publishing{
-		ContentType:     delivery.ContentType,
-		ContentEncoding: delivery.ContentEncoding,
-		CorrelationId:   delivery.CorrelationId,
-		Body:            []byte(errorMessage),
-	}
-	err = errorChannel.Publish(os.Getenv("CEGA_MQ_EXCHANGE"), "files.error", false, false, publishing)
-	return err
+    ex := os.Getenv("CEGA_MQ_EXCHANGE")
+    if ex == "" {
+        ex = os.Getenv("LEGA_MQ_EXCHANGE")
+    }
+    errorMessage := fmt.Sprintf("{\"reason\":\"%s\",\"original_message\":\"%s\"}", err.Error(), string(delivery.Body))
+    publishing := amqp.Publishing{
+        ContentType:     delivery.ContentType,
+        ContentEncoding: delivery.ContentEncoding,
+        CorrelationId:   delivery.CorrelationId,
+        Body:            []byte(errorMessage),
+    }
+    return errorChannel.Publish(ex, "files.error", false, false, publishing)
 }
 
 func selectElixirIdByEGAId(egaId string) (elixirId string, err error) {
