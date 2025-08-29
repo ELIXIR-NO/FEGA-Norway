@@ -52,7 +52,9 @@ services:
     container_name: proxy
     hostname: proxy
     image: tsd-proxy:latest
-    build: ../services/localega-tsd-proxy
+    build:
+      context: ..
+      dockerfile: services/localega-tsd-proxy/Dockerfile
     depends_on:
       file-orchestrator:
         condition: service_healthy
