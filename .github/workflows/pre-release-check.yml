@@ -75,10 +75,6 @@ jobs:
         run: |
           REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
-      - name: Build with Gradle
-        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock'}}
-
-        run: ./gradlew services:${{matrix.component}}:assemble
 
       - name: Log in to the Github Container registry
         if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
@@ -89,7 +85,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        if: ${{ matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        if: ${{ matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
         uses: docker/build-push-action@v6
         with:
           context: ./services/${{ matrix.component }}
@@ -103,7 +99,7 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Build and push
-        if: ${{ matrix.component == 'localega-tsd-proxy' }}
+        if: ${{ matrix.component == 'localega-tsd-proxy'  || matrix.component == 'tsd-api-mock'}}
         uses: docker/build-push-action@v6
         with:
           file: ./services/${{ matrix.component }}/Dockerfile
