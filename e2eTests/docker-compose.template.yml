@@ -13,7 +13,9 @@ services:
         condition: service_healthy
     ports:
       - "5006:5006" # This is the JDWP debug port. See command below.
-    build: ../services/tsd-api-mock
+    build:
+      context: ..
+      dockerfile: services/tsd-api-mock/Dockerfile
     volumes:
       - tsd-inbox:/tsd/p11/data/durable/apps/ega/
       - tsd-outbox:/tsd/p11/data/durable/apps/egaout/
