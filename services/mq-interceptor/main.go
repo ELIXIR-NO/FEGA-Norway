@@ -2,6 +2,7 @@
 package main
 
 import (
+    "errors"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
@@ -206,20 +207,20 @@ func buildPublishingFromDelivery(fromCEGAToLEGA bool, delivery amqp.Delivery) (*
 	}
 
 	stringUser := fmt.Sprintf("%s", user)
-
-	if fromCEGAToLEGA {
-		elixirId, err := selectElixirIdByEGAId(stringUser)
-		if err != nil {
-			return nil, "", err
-		}
-		message["user"] = elixirId
-	} else {
-		egaId, err := selectEgaIdByElixirId(stringUser)
-		if err != nil {
-			return nil, "", err
-		}
-		message["user"] = egaId
-	}
+    var mappedID string
+    if fromCEGAToLEGA {
+        mappedID, err = selectElixirIdByEGAId(stringUser)
+        } else {
+            mappedID, err = selectEgaIdByElixirId(stringUser)
+        }
+        if errors.Is(err, sql.ErrNoRows) {
+            // No mapping available — leave the user unchanged
+            publishing.Body = delivery.Body
+            return &publishing, messageType, nil
+        } else if err != nil {
+            return nil, "", err
+        }
+        message["user"] = mappedID
 
 	publishing.Body, err = json.Marshal(message)
 
