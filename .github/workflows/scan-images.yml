@@ -44,7 +44,7 @@ jobs:
           echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.32.0
+        uses: aquasecurity/trivy-action@0.33.0
         with:
           image-ref: ghcr.io/${{ env.repo_name }}:localega-tsd-proxy-${{ github.event.number }}
           format: 'sarif'
@@ -71,7 +71,7 @@ jobs:
           REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.32.0
+        uses: aquasecurity/trivy-action@0.33.0
         with:
           image-ref: ghcr.io/${{ env.repo_name }}:mq-interceptor-${{ github.event.number }}
           format: 'sarif'
