@@ -54,6 +54,8 @@ jobs:
         uses: jreleaser/release-action@v2
         env:
           JRELEASER_PROJECT_VERSION: 1.0.0-DRYRUN
+          JRELEASER_MAVENCENTRAL_USERNAME: dummy
+          JRELEASER_MAVENCENTRAL_TOKEN: dummy
         with:
           arguments: deploy --dry-run -c lib/${{matrix.component}}/jreleaser.yml
 
