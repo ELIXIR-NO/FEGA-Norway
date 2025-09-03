@@ -4,6 +4,8 @@
 
 Crypt4GH is a standard file container format from the [Global Alliance for Genomics and Health](https://www.ga4gh.org/) (GA4GH) that allows genomic data to remain secure throughout their lifetime, from initial sequencing to sharing with professionals at external organizations. The format uses _envelope encryption_ to protect files both at rest and in transit.
 
+
+
 The data itself is encrypted with a 256-bits symmetric key, which is randomly generated on-the-fly by a cryptographically secure pseudorandom number generator.
 The encryption is based on the [ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305) cipher and message authentication code by Daniel J. Bernstein. 
 Large files are divided into blocks of 64 KB, and these blocks are individually encrypted with the data encryption key and a random 96-bits nonce that is different for each block.
