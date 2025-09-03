@@ -3,12 +3,12 @@ import java.util.Base64
 plugins {
     id("java")
     id("extra-java-module-info")
-    id("io.freefair.lombok") version "8.14"
+    id("io.freefair.lombok") version "8.14.2"
     id("formatting-conventions")
     id("maven-publish")
     id("signing")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("org.jreleaser") version "1.18.0"
+    id("org.jreleaser") version "1.20.0"
 }
 
 group = "no.elixir"
