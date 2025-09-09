@@ -189,13 +189,6 @@ func main() {
 			if err != nil {
 				log.Fatal(aurora.Red(err))
 			}
-		} else if outboxOptions.Delete != "" {
-			err = fileManager.DeleteFile(outboxOptions.Delete)
-			if err != nil {
-				log.Fatal(aurora.Red(err))
-			} else {
-				fmt.Println(aurora.Green("Success"))
-			}
 		} else {
 			log.Fatal(aurora.Red("none of the flags are selected"))
 		}
