@@ -33,29 +33,6 @@ spring:
   cache:
     type: simple
 
-  rabbitmq:
-    connections:
-      cega:
-        host: ${BROKER_HOST:public-mq}
-        port: ${BROKER_PORT:5671}
-        virtual-host: ${BROKER_VHOST:/}
-        username: ${BROKER_USERNAME:admin}
-        password: ${BROKER_PASSWORD:guest}
-        ssl:
-          validate-server-certificate: true
-          enabled: true
-          algorithm: TLSv1.2
-      tsd:
-        host: ${TSD_MQ_HOST:mq}
-        port: ${TSD_MQ_PORT:5671}
-        virtual-host: ${TSD_MQ_VHOST:/}
-        username: ${TSD_MQ_USERNAME:admin}
-        password: ${TSD_MQ_PASSWORD:admin}
-        ssl:
-          validate-server-certificate: true
-          enabled: true
-          algorithm: TLSv1.2
-
   security:
     user:
       name: ${ADMIN_USER}
@@ -65,6 +42,16 @@ elixir:
   client:
     id: ${CLIENT_ID}
     secret: ${CLIENT_SECRET}
+
+token:
+  redirect-uri: ${TOKEN_REDIRECT_URI:'{baseUrl}/oidc-protected'}
+
+aai:
+  service-base-url: ${AAI_SERVICE_BASE_URL:'https://login.elixir-czech.org'}
+
+tsd-auth:
+  token-type: ${TSD_AUTH_TOKEN_TYPE:elixir}
+  oidc-provider-name: ${TSD_AUTH_OIDC_PROVIDER_NAME:elixir} # lifesc
 
 ga4gh:
   passport:

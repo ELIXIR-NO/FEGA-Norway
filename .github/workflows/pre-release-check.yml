@@ -1,0 +1,148 @@
+name: Release Pre Check
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  detect:
+    uses: ./.github/workflows/detect-changed-components.yml
+
+  check_publish:
+    needs: detect
+    runs-on: ubuntu-latest
+    permissions:
+        contents: read
+        packages: write
+    strategy:
+      matrix:
+        component: ${{ fromJson(needs.detect.outputs.changed-components).component }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Java
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' || matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock'}}
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Publish Jar Files tsd-file-api-client
+        if: ${{matrix.component == 'tsd-file-api-client' }}
+        run: |
+          ./gradlew :lib:${{matrix.component}}:publish --dry-run
+
+      - name: Publish Jar Files crypt4gh
+        if: ${{ matrix.component == 'crypt4gh'}}
+        run: |
+          ./gradlew :lib:${{matrix.component}}:publishLibraryPublicationToGithubRegistry --dry-run
+
+      - name: Publish Jar Files clearinghouse
+        if: ${{ matrix.component == 'clearinghouse' }}
+        run: |
+          ./gradlew :lib:${{matrix.component}}:publishMavenJavaPublicationToGithubRegistryRepository --dry-run
+
+      - name: Build and publish to local staging for JReleaser
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
+        env:
+          SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          ./gradlew lib:${{matrix.component}}:clean lib:${{matrix.component}}:build lib:${{matrix.component}}:publishMavenJavaPublicationToLocalStagingRepository \
+            -Pversion=1.0.0-DRYRUN
+
+      - name: Run JReleaser
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
+        uses: jreleaser/release-action@v2
+        env:
+          JRELEASER_PROJECT_VERSION: 1.0.0-DRYRUN
+          JRELEASER_MAVENCENTRAL_USERNAME: dummy
+          JRELEASER_MAVENCENTRAL_TOKEN: dummy
+        with:
+          arguments: deploy --dry-run -c lib/${{matrix.component}}/jreleaser.yml
+
+      - name: Print Logs
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
+        run: |
+          echo "TRACE LOG:"
+          cat lib/${{matrix.component}}/out/jreleaser/trace.log || echo "No trace log found"
+          echo "OUTPUT PROPERTIES:"
+          cat lib/${{matrix.component}}/out/jreleaser/output.properties || echo "No output properties found"
+
+      - name: Set Repository Name
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        id: repo_name
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_name=$REPO_NAME" >> $GITHUB_ENV
+
+      - name: Log in to the Github Container registry
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        if: ${{ matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/${{ matrix.component }}
+          push: true
+          no-cache: 'true'
+          tags: |
+            ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ github.event.number }}
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
+            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build and push
+        if: ${{ matrix.component == 'localega-tsd-proxy'  || matrix.component == 'tsd-api-mock'}}
+        uses: docker/build-push-action@v6
+        with:
+          file: ./services/${{ matrix.component }}/Dockerfile
+          context: .
+          push: true
+          no-cache: 'true'
+          tags: |
+            ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ github.event.number }}
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
+            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Set up Go
+        if: ${{ matrix.component == 'lega-commander' }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.25
+      - name: Run GoReleaser
+        if: ${{ matrix.component == 'lega-commander' }}
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: release --clean --snapshot
+          workdir: cli/lega-commander
+
+      - name: Set component path
+        run: |
+          declare -A component_paths=(
+           [lega-commander]="cli:lega-commander"
+            [e2eTests]="e2eTests"
+            [clearinghouse]="lib:clearinghouse"
+            [crypt4gh]="lib:crypt4gh"
+            [tsd-file-api-client]="lib:tsd-file-api-client"
+            [cega-mock]="services:cega-mock"
+            [localega-tsd-proxy]="services:localega-tsd-proxy"
+            [mq-interceptor]="services:mq-interceptor"
+            [tsd-api-mock]="services:tsd-api-mock"
+          )
+          echo "component_path=${component_paths[${{ matrix.component }}]}" >> $GITHUB_ENV
+
+      - name: Generate Fancy Changelog
+        run: |
+          ./gradlew ${{ env.component_path }}:generateChangelog \
+            -Pversion=v1.0.0 \
+            -PprTitle="pre-release-check"

@@ -109,7 +109,7 @@ public enum Clearinghouse {
     var keyId = getHeaderItemValue(visaToken, KID);
     var jwk = JWKProvider.INSTANCE.get(jku, keyId);
     try {
-      return getVisaWithPublicKey(visaToken, (RSAPublicKey) jwk.getPublicKey());
+      return getVisaWithPublicKey(visaToken, (RSAPublicKey) jwk.toKey());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       return Optional.empty();
@@ -187,7 +187,7 @@ public enum Clearinghouse {
       var keyId = getHeaderItemValue(accessToken, KID);
       var jwk = JWKProvider.INSTANCE.get(jwksURL, keyId);
 
-      return getVisaTokensWithPublicKey(accessToken, (RSAPublicKey) jwk.getPublicKey());
+      return getVisaTokensWithPublicKey(accessToken, (RSAPublicKey) jwk.toKey());
     } catch (IOException e) {
       throw new RuntimeException(e);
     } catch (Exception e) {

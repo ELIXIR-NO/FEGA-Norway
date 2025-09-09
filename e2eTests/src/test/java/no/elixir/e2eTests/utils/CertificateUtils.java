@@ -1,11 +1,16 @@
 package no.elixir.e2eTests.utils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyStore;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import no.elixir.e2eTests.core.E2EState;
 
 public class CertificateUtils {
 
@@ -70,5 +75,46 @@ public class CertificateUtils {
     }
 
     return file;
+  }
+
+  /**
+   * Retrieves a file from either a local Docker container or directly from the mapped volume,
+   * depending on the test runtime environment.
+   *
+   * @param name The name of the certificate file.
+   * @return File instance of the certificate.
+   * @throws Exception If file retrieval fails.
+   */
+  public static File getCertificateFile(String name) throws Exception {
+    if ("local".equalsIgnoreCase(E2EState.env.getRuntime())) {
+      // Use getFileInContainer for local development
+      return CertificateUtils.getFileInContainer("file-orchestrator", "/storage/certs/" + name);
+    } else {
+      // Assuming this test code is run inside a docker container.
+      return CertificateUtils.getFileFromLocalFolder("/storage/certs/", name);
+    }
+  }
+
+  /**
+   * Creates ssl contexts for services such as: RabbitMQ
+   *
+   * @return SSLContext
+   * @throws Exception Unable to load the store.
+   */
+  public static SSLContext createSslContext() throws Exception {
+    // Load the PKCS12 trust store
+    File rootCA = getCertificateFile("truststore.p12");
+    KeyStore trustStore = KeyStore.getInstance("PKCS12");
+    trustStore.load(
+        new FileInputStream(rootCA), E2EState.env.getTruststorePassword().toCharArray());
+    // Create trust manager
+    TrustManagerFactory trustManagerFactory =
+        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    trustManagerFactory.init(trustStore);
+    // Create and initialize the SSLContext
+    SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+    sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+
+    return sslContext;
   }
 }

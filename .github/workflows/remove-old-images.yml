@@ -13,7 +13,7 @@ jobs:
           account: '${{ github.repository_owner }}'
           cut-off: '8w'
           image-names: 'fega-norway'
-          image-tags: '*-[0-9]* *-latest'
+          image-tags: '!*.*.*'
           token: ${{ secrets.PACKAGE_TOKEN }}
 
       - name: Remove untagged images

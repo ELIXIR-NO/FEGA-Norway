@@ -1,20 +1,20 @@
-FROM golang:1.24 as builder
+FROM golang:1.25 AS builder
 
-ENV GOPATH=$PWD
 ENV CGO_ENABLED=0
 ENV GOPROXY=direct
 
+WORKDIR /app
 COPY . .
 
-RUN go build
+RUN go build -o mq-interceptor ./main.go
+RUN echo "nobody:x:65534:65534:nobody:/:" > /app/passwd
 
-RUN echo "nobody:x:65534:65534:nobody:/:/sbin/nologin" > passwd
+# Final stage
+FROM gcr.io/distroless/static:nonroot
 
-FROM scratch
-
-COPY --from=builder /go/passwd /etc/passwd
-COPY --from=builder /go/mq-interceptor ./mq-interceptor
+COPY --from=builder /app/mq-interceptor /
+COPY --from=builder /app/passwd /etc/passwd
 
 USER 65534
 
-ENTRYPOINT [ "/mq-interceptor" ]
+ENTRYPOINT ["/mq-interceptor"]

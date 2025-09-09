@@ -1,3 +1,3 @@
 module github.com/ELIXIR-NO/FEGA-Norway/services/cega-mock
 
-go 1.24.0
+go 1.25.0

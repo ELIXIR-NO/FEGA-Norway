@@ -20,11 +20,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 public class ProxyController {
 
-  private static final String TOKEN_TYPE = "elixir";
-
+  @Value("${tsd-auth.token-type}")
+  private String tokenType;
+  @Value("${tsd-auth.oidc-provider-name}")
+  private String oidcType;
   @Value("${tsd.app-id}")
   private String tsdAppId;
-
   @Value("${tsd.app-out-id}")
   private String tsdAppOutId;
 
@@ -56,7 +57,7 @@ public class ProxyController {
       throws IOException {
 
     String elixirAAIIdToken = getElixirAAIToken(bearerAuthorization);
-    Token token = tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, elixirAAIIdToken);
+    Token token = tsdFileAPIClient.getToken(tokenType, oidcType, elixirAAIIdToken);
 
     byte[] chunkBytes = inputStream.readAllBytes();
 
@@ -103,7 +104,7 @@ public class ProxyController {
       @PathVariable("fileName") String fileName)
       throws IOException {
     Token token =
-        tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
+        tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
     response.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM.toString());
     response.addHeader(
         HttpHeaders.CONTENT_DISPOSITION,
@@ -150,7 +151,7 @@ public class ProxyController {
       @RequestParam(value = "fileName") String fileName)
       throws IOException {
     Token token =
-        tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
+        tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
     return ResponseEntity.ok(tsdFileAPIClient.deleteFile(token.getToken(), tsdAppId, fileName));
   }
 
@@ -167,7 +168,7 @@ public class ProxyController {
       @RequestParam(value = "uploadId", required = false) String uploadId)
       throws IOException {
     Token token =
-        tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
+        tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
     if (!StringUtils.hasLength(uploadId)) {
       return ResponseEntity.ok(tsdFileAPIClient.listResumableUploads(token.getToken(), tsdAppId));
     } else {
@@ -189,7 +190,7 @@ public class ProxyController {
       @RequestParam(value = "uploadId") String uploadId)
       throws IOException {
     Token token =
-        tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
+        tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
     return ResponseEntity.ok(
         tsdFileAPIClient.deleteResumableUpload(token.getToken(), tsdAppId, uploadId));
   }
