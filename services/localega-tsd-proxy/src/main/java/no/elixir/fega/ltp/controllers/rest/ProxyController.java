@@ -128,11 +128,13 @@ public class ProxyController {
       throws IOException {
 
     Token token =
-        tsdFileAPIClient.getToken(TOKEN_TYPE, TOKEN_TYPE, getElixirAAIToken(bearerAuthorization));
+            tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
+
     TSDFiles tsdFiles =
-        tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId, page, perPage);
-    log.info(
-        "Files returned: {}, page: {}, perPage: {}", tsdFiles.getFiles().size(), page, perPage);
+            tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId, page, perPage);
+
+    log.info("Files returned: {}, page: {}, perPage: {}",
+            tsdFiles.getFiles().size(), page, perPage);
 
     return ResponseEntity.ok(tsdFiles);
   }
