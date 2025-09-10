@@ -644,7 +644,7 @@ services:
     container_name: e2e-tests
     hostname: e2e_tests
     build:
-      context: .
+      context: ..
       dockerfile: e2e-tests.Dockerfile
     depends_on:
       proxy:
