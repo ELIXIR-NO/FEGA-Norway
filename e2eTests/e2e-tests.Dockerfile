@@ -4,6 +4,7 @@ WORKDIR /app
 COPY build.gradle.kts settings.gradle.kts gradlew ./
 COPY gradle/ ./gradle/
 COPY buildSrc ./buildSrc
+COPY e2eTests/ ./e2eTests/
 RUN ./gradlew :e2eTests:clean :e2eTests:build -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
@@ -14,7 +15,7 @@ RUN apk add --no-cache bash
 WORKDIR /fega-norway
 
 # Copy the application JAR and scripts
-COPY --from=builder app/build/libs/e2eTests.jar /fega-norway/e2eTests.jar
+COPY --from=builder app/e2eTests/build/libs/e2eTests.jar /fega-norway/e2eTests.jar
 COPY e2eTests/env.sh /fega-norway/env.sh
 COPY e2eTests/entrypoint.sh /entrypoint.sh
 
