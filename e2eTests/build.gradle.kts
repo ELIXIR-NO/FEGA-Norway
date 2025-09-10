@@ -59,15 +59,6 @@ tasks.register<Exec>("stop-docker-containers") {
 
 tasks.test {
     useJUnitPlatform()
-    // test tasks are completed
-    mustRunAfter(
-        ":lib:crypt4gh:test",
-        ":lib:clearinghouse:test",
-        ":lib:tsd-file-api-client:test",
-        ":services:tsd-api-mock:test",
-        ":services:mq-interceptor:test",
-        ":services:localega-tsd-proxy:test"
-    )
     testLogging.showStandardStreams = true
 }
 
