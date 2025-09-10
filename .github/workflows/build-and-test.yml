@@ -46,15 +46,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: wrapper
-          cache-disabled: false
-
       - name: Run e2e tests
+        working-directory: ./e2eTests
         run: |
-          ./gradlew start-docker-containers
+          chmod +x ./scripts/bootstrap.sh
+          ./scripts/bootstrap.sh cleanup_workspace
+          ./scripts/bootstrap.sh apply_configs
+          ./scripts/bootstrap.sh check_requirements
+          docker compose up --pull always --build -d
 
           # Wait for the e2e-tests container to complete
           echo "Waiting for e2e-tests container to complete..."
