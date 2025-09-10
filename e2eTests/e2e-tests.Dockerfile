@@ -15,8 +15,8 @@ WORKDIR /fega-norway
 
 # Copy the application JAR and scripts
 COPY --from=builder app/build/libs/e2eTests.jar /fega-norway/e2eTests.jar
-COPY env.sh /fega-norway/env.sh
-COPY entrypoint.sh /entrypoint.sh
+COPY e2eTests/env.sh /fega-norway/env.sh
+COPY e2eTests/entrypoint.sh /entrypoint.sh
 
 # Make entrypoint executable
 RUN chmod +x /entrypoint.sh
