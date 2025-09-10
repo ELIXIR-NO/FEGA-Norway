@@ -107,8 +107,7 @@ function check_requirements() {
 }
 
 function cleanup_workspace() {
-    rm -f *.raw *.raw.enc &&
-      ../gradlew clean
+    rm -f *.raw *.raw.enc
 }
 
 # Entrypoint --
