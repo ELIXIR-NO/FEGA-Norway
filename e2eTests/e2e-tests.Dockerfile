@@ -1,9 +1,10 @@
 # Use Temurin 21 as the base image for Java 21
-FROM eclipse-temurin:21-jdk-alpine As builder
+FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 COPY build.gradle.kts settings.gradle.kts gradlew ./
 COPY gradle/ ./gradle/
 COPY buildSrc ./buildSrc
+COPY lib/crypt4gh ./lib/crypt4gh
 COPY e2eTests/ ./e2eTests/
 RUN ./gradlew :e2eTests:clean :e2eTests:build -x test --no-daemon
 
