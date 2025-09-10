@@ -41,38 +41,6 @@ jobs:
       - name: Run tests
         run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test
 
-
-      - name: Run e2e tests
-        run: |
-          ./gradlew clean
-          ./gradlew start-docker-containers
-
-          # Wait for the e2e-tests container to complete
-          echo "Waiting for e2e-tests container to complete..."
-          while [ "$(docker inspect --format='{{.State.Running}}' e2e-tests 2>/dev/null)" == "true" ]; do
-            echo "e2e-tests still running, waiting for 5 seconds..."
-            sleep 5
-          done
-
-          # Show the logs from the e2e-tests container
-          echo "=============== e2e-tests Container Logs ==============="
-          docker logs e2e-tests
-          echo "========================================================"
-
-          # Get the exit code once the container has finished
-          EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' e2e-tests)
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "e2e tests failed with exit code $EXIT_CODE"
-            exit 1
-          else
-            echo "e2e tests completed successfully"
-          fi
-
-      - name: Containers status
-        if: failure()
-        run: |
-          docker ps -a
-
   e2e-tests:
     runs-on: ubuntu-latest
     steps:
