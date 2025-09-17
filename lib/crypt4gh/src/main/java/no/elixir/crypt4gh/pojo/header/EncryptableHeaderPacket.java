@@ -31,9 +31,9 @@ public abstract class EncryptableHeaderPacket implements Crypt4GHEntity {
       throws IOException, GeneralSecurityException {
     int headerPacketTypeCode = Crypt4GHEntity.getInt(inputStream.readNBytes(4));
     HeaderPacketType headerPacketType = HeaderPacketType.getByCode(headerPacketTypeCode);
-      return switch (headerPacketType) {
-          case DATA_ENCRYPTION_PARAMETERS -> DataEncryptionParameters.create(inputStream);
-          case DATA_EDIT_LIST -> new DataEditList(inputStream);
-      };
+    return switch (headerPacketType) {
+      case DATA_ENCRYPTION_PARAMETERS -> DataEncryptionParameters.create(inputStream);
+      case DATA_EDIT_LIST -> new DataEditList(inputStream);
+    };
   }
 }
