@@ -41,16 +41,17 @@ public enum KDF {
    * @throws GeneralSecurityException If key can't be derived.
    */
   public byte[] derive(int rounds, char[] password, byte[] salt) throws GeneralSecurityException {
-      return switch (this) {
-          case SCRYPT -> SCrypt.scrypt(toBytes(password), salt, 1 << 14, 8, 1, KEY_LENGTH);
-          case BCRYPT -> Bcrypt.bcrypt_pbkdf(toBytes(password), salt, rounds, KEY_LENGTH);
-          case PBKDF2_HMAC_SHA256 -> {
-              KeySpec spec = new PBEKeySpec(password, salt, rounds, KEY_LENGTH * 8);  // note: key length in bits
-              SecretKeyFactory factory = SecretKeyFactory.getInstance(PBKDF_2_WITH_HMAC_SHA_256);
-              yield factory.generateSecret(spec).getEncoded();
-          }
-          case NONE -> throw new GeneralSecurityException("Can't derive key with 'none' KDF");
-      };
+    return switch (this) {
+      case SCRYPT -> SCrypt.scrypt(toBytes(password), salt, 1 << 14, 8, 1, KEY_LENGTH);
+      case BCRYPT -> Bcrypt.bcrypt_pbkdf(toBytes(password), salt, rounds, KEY_LENGTH);
+      case PBKDF2_HMAC_SHA256 -> {
+        KeySpec spec =
+            new PBEKeySpec(password, salt, rounds, KEY_LENGTH * 8); // note: key length in bits
+        SecretKeyFactory factory = SecretKeyFactory.getInstance(PBKDF_2_WITH_HMAC_SHA_256);
+        yield factory.generateSecret(spec).getEncoded();
+      }
+      case NONE -> throw new GeneralSecurityException("Can't derive key with 'none' KDF");
+    };
   }
 
   /**

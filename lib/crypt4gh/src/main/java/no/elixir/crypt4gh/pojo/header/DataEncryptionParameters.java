@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.Objects;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -35,10 +34,11 @@ public abstract class DataEncryptionParameters extends EncryptableHeaderPacket {
     int dataEncryptionMethodCode = Crypt4GHEntity.getInt(inputStream.readNBytes(4));
     DataEncryptionMethod dataEncryptionMethod =
         DataEncryptionMethod.getByCode(dataEncryptionMethodCode);
-      if (Objects.requireNonNull(dataEncryptionMethod) == DataEncryptionMethod.CHACHA20_IETF_POLY1305) {
-          return new ChaCha20IETFPoly1305EncryptionParameters(inputStream);
-      }
-      throw new GeneralSecurityException(
-              "Data Encryption Method not found for code: " + dataEncryptionMethodCode);
+    if (Objects.requireNonNull(dataEncryptionMethod)
+        == DataEncryptionMethod.CHACHA20_IETF_POLY1305) {
+      return new ChaCha20IETFPoly1305EncryptionParameters(inputStream);
+    }
+    throw new GeneralSecurityException(
+        "Data Encryption Method not found for code: " + dataEncryptionMethodCode);
   }
 }
