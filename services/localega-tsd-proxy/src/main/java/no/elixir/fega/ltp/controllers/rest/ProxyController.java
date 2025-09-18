@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.uio.ifi.tc.TSDFileAPIClient;
 import no.uio.ifi.tc.model.pojo.Chunk;
 import no.uio.ifi.tc.model.pojo.ResumableUpload;
+import no.uio.ifi.tc.model.pojo.TSDFiles;
 import no.uio.ifi.tc.model.pojo.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -121,14 +122,23 @@ public class ProxyController {
    */
   @GetMapping("/files")
   public ResponseEntity<?> getFiles(
-      @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
-      @RequestParam(value = "inbox", defaultValue = "true") boolean inbox)
-      throws IOException {
+          @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
+          @RequestParam(value = "inbox", defaultValue = "true") boolean inbox,
+          @RequestParam(value = "page", defaultValue = "1") int page,
+          @RequestParam(value = "per_page", defaultValue = "100") int perPage)
+          throws IOException {
+
     Token token =
-        tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
-    return ResponseEntity.ok(
-        tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId));
+            tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
+
+    TSDFiles tsdFiles =
+            tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId, page, perPage);
+
+    log.info("Files returned: {}, page: {}, perPage: {}", tsdFiles.getFiles().size(), page, perPage);
+
+    return ResponseEntity.ok(tsdFiles);
   }
+
 
   /**
    * Deletes uploaded file.
