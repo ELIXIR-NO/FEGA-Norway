@@ -5,7 +5,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "thursday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -44,7 +44,7 @@ updates:
           - "*"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "tuesday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -61,7 +61,7 @@ updates:
           - "*"
     schedule:
       interval: "monthly"
-      day: "monday"
+      day: "wednesday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -76,7 +76,7 @@ updates:
           - "*"
     schedule:
       interval: "monthly"
-      day: "monday"
+      day: "tuesday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -91,7 +91,7 @@ updates:
           - "*"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "friday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -108,7 +108,7 @@ updates:
           - "*"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "tuesday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -117,7 +117,7 @@ updates:
     directory: "/services/tsd-api-mock"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "tuesday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -132,7 +132,7 @@ updates:
           - "*"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "thursday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -141,7 +141,7 @@ updates:
     directory: "/services/localega-tsd-proxy"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "thursday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -156,7 +156,7 @@ updates:
           - "*"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "wednesday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -165,7 +165,7 @@ updates:
     directory: "/services/mq-interceptor"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "wednesday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -180,7 +180,7 @@ updates:
           - "*"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "friday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
@@ -190,7 +190,7 @@ updates:
     directory: "/services/cega-mock"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "friday"
       time: "09:00"
       timezone: "Europe/Oslo"
     commit-message:
