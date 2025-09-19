@@ -17,14 +17,14 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-console-standalone:1.13.4")
     testImplementation("com.rabbitmq:amqp-client:5.26.0")
     testImplementation("com.konghq:unirest-java:3.14.5")
-    testImplementation("org.postgresql:postgresql:42.7.7")
+    testImplementation("org.postgresql:postgresql:42.7.8")
     testImplementation("com.auth0:java-jwt:4.5.0")
     testImplementation("commons-io:commons-io:2.20.0")
     testImplementation(project(":lib:crypt4gh"))
     testImplementation("org.slf4j:slf4j-api:2.0.17")
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
-    testCompileOnly("org.projectlombok:lombok:1.18.40")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.40")
+    testCompileOnly("org.projectlombok:lombok:1.18.42")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
 }
 
 // Start setup scripts.
