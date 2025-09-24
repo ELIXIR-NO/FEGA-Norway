@@ -23,7 +23,7 @@ jobs:
         run: |
           read -r -a bumps <<< "$BUMPS"
           bumps_pattern=$(IFS='|'; echo "${bumps[*]}")
-          all_matches=$(git log origin/"$BASE_REF"..origin/"$HEAD_REF" --pretty=format:"%s" | grep -E "#(${bumps_pattern})_" || true)
+          all_matches=$(git log origin/"$BASE_REF"..origin/"$HEAD_REF" --pretty=format:"%s" | grep -oE "#(${bumps_pattern})_[^ ]*" || true)
           {
             echo "all_matches<<EOF"
             echo "$all_matches"
