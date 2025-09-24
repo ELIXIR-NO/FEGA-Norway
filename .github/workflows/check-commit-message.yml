@@ -34,6 +34,7 @@ jobs:
         id: check-match
         if: steps.check-commit-messages.outputs.all_matches != ''
         run: |
+          echo "${{ steps.check-commit-messages.outputs.all_matches }}"
           read -r -a components <<< "$COMPONENTS"
           read -r -a bumps <<< "$BUMPS"
           bumps_pattern=$(IFS='|'; echo "${bumps[*]}")
