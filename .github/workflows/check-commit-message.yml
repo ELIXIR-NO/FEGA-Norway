@@ -1,8 +1,6 @@
 name: Check Commit Messages
 on:
   push:
-    branches:
-      - main
 
 env:
   BUMPS: "major minor patch"
