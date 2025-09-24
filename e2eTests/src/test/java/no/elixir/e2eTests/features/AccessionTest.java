@@ -10,12 +10,18 @@ import no.elixir.e2eTests.core.E2EState;
 import no.elixir.e2eTests.utils.CertificateUtils;
 import no.elixir.e2eTests.utils.CommonUtils;
 
+import javax.net.ssl.SSLContext;
+
 public class AccessionTest {
 
   public static void publishAccessionMessageOnBehalfOfCEGAToLocalEGA() throws Exception {
     E2EState.log.info("Publishing accession message on behalf of CEGA to CEGA RMQ...");
     ConnectionFactory factory = new ConnectionFactory();
-    factory.useSslProtocol(CertificateUtils.createSslContext());
+    try {
+        factory.useSslProtocol(CertificateUtils.createSslContext());
+    } catch (Exception e) {
+        factory.useSslProtocol(SSLContext.getDefault());
+    }
     factory.setUri(E2EState.env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();

@@ -10,6 +10,8 @@ import no.elixir.e2eTests.core.E2EState;
 import no.elixir.e2eTests.utils.CertificateUtils;
 import no.elixir.e2eTests.utils.CommonUtils;
 
+import javax.net.ssl.SSLContext;
+
 public class MappingTest {
 
   /** Trigger the process further, with retrieved information from earlier steps. */
@@ -17,7 +19,11 @@ public class MappingTest {
     E2EState.log.info("Mapping file to a dataset...");
     E2EState.datasetId = "EGAD" + CommonUtils.getRandomNumber(11);
     ConnectionFactory factory = new ConnectionFactory();
-    factory.useSslProtocol(CertificateUtils.createSslContext());
+      try {
+          factory.useSslProtocol(CertificateUtils.createSslContext());
+      } catch (Exception e) {
+          factory.useSslProtocol(SSLContext.getDefault());
+      }
     factory.setUri(E2EState.env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
