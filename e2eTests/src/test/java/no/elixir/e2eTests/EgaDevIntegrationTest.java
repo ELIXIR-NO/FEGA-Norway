@@ -6,7 +6,7 @@ import no.elixir.e2eTests.utils.CommonUtils;
 import org.junit.jupiter.api.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class FEGAEgaDevTest {
+public class EgaDevIntegrationTest {
 
     @BeforeAll
     static void setup() throws Exception {
