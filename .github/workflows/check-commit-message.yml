@@ -1,10 +1,6 @@
 name: Check Commit Messages
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
+  push:
     branches:
       - main
 
@@ -36,8 +32,8 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
-      - name: Check typo in component names
-        id: check-typos
+      - name: Check matches in component names
+        id: check-match
         if: steps.check-commit-messages.outputs.all_matches != ''
         run: |
           read -r -a components <<< "$COMPONENTS"
@@ -45,16 +41,28 @@ jobs:
           bumps_pattern=$(IFS='|'; echo "${bumps[*]}")
           components_pattern=$(IFS='|'; echo "${components[*]}")
           pattern="#(${bumps_pattern})_(${components_pattern})$"
-          wrong_matches=$(echo "${{ steps.check-commit-messages.outputs.all_matches }}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -Ev "$pattern" || true)
+          all=$(echo "${{ steps.check-commit-messages.outputs.all_matches }}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          wrong=$(echo "$all" | grep -Ev "$pattern" || true)
+          valid=$(echo "$all" | grep -E "$pattern" || true)
+
           {
             echo "wrong_matches<<EOF"
-            echo "$wrong_matches"
+            echo "$wrong"
+            echo "EOF"
+            echo "valid_matches<<EOF"
+            echo "$valid"
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
+      - name: Available valid bumps
+        if: steps.check-match.outputs.valid_matches != ''
+        run: |
+          echo "Valid commit messages found:"
+          echo "${{ steps.check-match.outputs.valid_matches }}"
+
       - name: Fail if typos found
-        if: steps.check-typos.outputs.wrong_matches != ''
+        if: steps.check-match.outputs.wrong_matches != ''
         run: |
           echo "Typos found in commit messages:"
-          echo "${{ steps.check-typos.outputs.wrong_matches }}"
+          echo "${{ steps.check-match.outputs.wrong_matches }}"
           exit 1
