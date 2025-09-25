@@ -14,7 +14,7 @@ dependencies {
     implementation(project(":lib:tsd-file-api-client"))
     implementation("org.apache.httpcomponents:httpclient:4.5.14")
     implementation("com.squareup.okhttp3:okhttp:5.1.0")
-    implementation("org.apache.commons:commons-lang3:3.18.0")
+    implementation("org.apache.commons:commons-lang3:3.19.0")
     implementation("org.apache.commons:commons-collections4:4.5.0")
     implementation("com.google.code.gson:gson:2.13.2")
     implementation("org.springframework.boot:spring-boot-starter-security")
