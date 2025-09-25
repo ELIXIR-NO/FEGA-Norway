@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Remove old images
-        uses: snok/container-retention-policy@v3.0.0
+        uses: snok/container-retention-policy@v3.0.1
         with:
           account: '${{ github.repository_owner }}'
           cut-off: '8w'
@@ -17,7 +17,7 @@ jobs:
           token: ${{ secrets.PACKAGE_TOKEN }}
 
       - name: Remove untagged images
-        uses: snok/container-retention-policy@v3.0.0
+        uses: snok/container-retention-policy@v3.0.1
         with:
           account: '${{ github.repository_owner }}'
           token: ${{ secrets.PACKAGE_TOKEN }}
