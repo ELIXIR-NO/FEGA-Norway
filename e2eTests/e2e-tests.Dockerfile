@@ -1,5 +1,5 @@
 # Use Temurin 21 as the base image for Java 21
-FROM eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin:25-jdk-alpine
 
 # Install bash
 RUN apk add --no-cache bash
