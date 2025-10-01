@@ -2,7 +2,6 @@ package no.elixir.crypt4gh.pojo.body;
 
 import java.security.GeneralSecurityException;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Optional;
 import lombok.Data;
 import lombok.ToString;
@@ -45,15 +44,16 @@ public abstract class Segment implements Crypt4GHEntity {
       byte[] unencryptedData, DataEncryptionParameters dataEncryptionParameters)
       throws GeneralSecurityException {
     DataEncryptionMethod dataEncryptionMethod = dataEncryptionParameters.getDataEncryptionMethod();
-    if (Objects.requireNonNull(dataEncryptionMethod)
-        == DataEncryptionMethod.CHACHA20_IETF_POLY1305) {
-      return new ChaCha20IETFPoly1305Segment(
-          unencryptedData,
-          (ChaCha20IETFPoly1305EncryptionParameters) dataEncryptionParameters,
-          true);
+    switch (dataEncryptionMethod) {
+      case CHACHA20_IETF_POLY1305:
+        return new ChaCha20IETFPoly1305Segment(
+            unencryptedData,
+            (ChaCha20IETFPoly1305EncryptionParameters) dataEncryptionParameters,
+            true);
+      default:
+        throw new GeneralSecurityException(
+            "Data Encryption Method not found for code: " + dataEncryptionMethod.getCode());
     }
-    throw new GeneralSecurityException(
-        "Data Encryption Method not found for code: " + dataEncryptionMethod.getCode());
   }
 
   /**
@@ -100,19 +100,21 @@ public abstract class Segment implements Crypt4GHEntity {
       byte[] encryptedData, DataEncryptionParameters dataEncryptionParameters)
       throws GeneralSecurityException {
     DataEncryptionMethod dataEncryptionMethod = dataEncryptionParameters.getDataEncryptionMethod();
-    if (Objects.requireNonNull(dataEncryptionMethod)
-        == DataEncryptionMethod.CHACHA20_IETF_POLY1305) {
-      try {
-        return Optional.of(
-            new ChaCha20IETFPoly1305Segment(
-                encryptedData,
-                (ChaCha20IETFPoly1305EncryptionParameters) dataEncryptionParameters,
-                false));
-      } catch (GeneralSecurityException e) {
-        return Optional.empty();
+    switch (dataEncryptionMethod) {
+      case CHACHA20_IETF_POLY1305 -> {
+        try {
+          return Optional.of(
+              new ChaCha20IETFPoly1305Segment(
+                  encryptedData,
+                  (ChaCha20IETFPoly1305EncryptionParameters) dataEncryptionParameters,
+                  false));
+        } catch (GeneralSecurityException e) {
+          return Optional.empty();
+        }
       }
+      default ->
+          throw new GeneralSecurityException(
+              "Data Encryption Method not found for code: " + dataEncryptionMethod.getCode());
     }
-    throw new GeneralSecurityException(
-        "Data Encryption Method not found for code: " + dataEncryptionMethod.getCode());
   }
 }
