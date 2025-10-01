@@ -101,7 +101,7 @@ public abstract class Segment implements Crypt4GHEntity {
       throws GeneralSecurityException {
     DataEncryptionMethod dataEncryptionMethod = dataEncryptionParameters.getDataEncryptionMethod();
     switch (dataEncryptionMethod) {
-      case CHACHA20_IETF_POLY1305:
+      case CHACHA20_IETF_POLY1305 -> {
         try {
           return Optional.of(
               new ChaCha20IETFPoly1305Segment(
@@ -111,9 +111,10 @@ public abstract class Segment implements Crypt4GHEntity {
         } catch (GeneralSecurityException e) {
           return Optional.empty();
         }
-      default:
-        throw new GeneralSecurityException(
-            "Data Encryption Method not found for code: " + dataEncryptionMethod.getCode());
+      }
+      default ->
+          throw new GeneralSecurityException(
+              "Data Encryption Method not found for code: " + dataEncryptionMethod.getCode());
     }
   }
 }
