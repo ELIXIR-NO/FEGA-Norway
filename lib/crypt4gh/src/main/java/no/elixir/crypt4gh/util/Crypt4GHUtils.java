@@ -9,7 +9,6 @@ import java.security.PublicKey;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import no.elixir.crypt4gh.pojo.header.Header;
 import no.elixir.crypt4gh.pojo.header.HeaderEncryptionMethod;
 import no.elixir.crypt4gh.pojo.header.HeaderPacket;
@@ -98,17 +97,18 @@ public class Crypt4GHUtils {
     List<HeaderPacket> result = new ArrayList<>();
     for (HeaderPacket headerPacket : header.getHeaderPackets()) {
       HeaderEncryptionMethod packetEncryption = headerPacket.getPacketEncryption();
-      if (Objects.requireNonNull(packetEncryption)
-          == HeaderEncryptionMethod.X25519_CHACHA20_IETF_POLY1305) {
-        HeaderPacket newHeaderPacket =
-            new X25519ChaCha20IETFPoly1305HeaderPacket(
-                headerPacket.getEncryptablePayload(),
-                privateKeyForDecryption,
-                newRecipientPublicKey);
-        result.add(newHeaderPacket);
-      } else {
-        throw new GeneralSecurityException(
-            "Header Encryption Method not supported: " + packetEncryption.getCode());
+      switch (packetEncryption) {
+        case X25519_CHACHA20_IETF_POLY1305 -> {
+          HeaderPacket newHeaderPacket =
+              new X25519ChaCha20IETFPoly1305HeaderPacket(
+                  headerPacket.getEncryptablePayload(),
+                  privateKeyForDecryption,
+                  newRecipientPublicKey);
+          result.add(newHeaderPacket);
+        }
+        default ->
+            throw new GeneralSecurityException(
+                "Header Encryption Method not supported: " + packetEncryption.getCode());
       }
     }
     return result;
