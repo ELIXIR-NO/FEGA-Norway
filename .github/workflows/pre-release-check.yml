@@ -62,7 +62,7 @@ jobs:
           arguments: deploy --dry-run -c lib/${{matrix.component}}/jreleaser.yml
 
       - name: Print Logs
-        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
+        if: ${{ always() && (matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh')}}
         run: |
           echo "TRACE LOG:"
           cat lib/${{matrix.component}}/out/jreleaser/trace.log || echo "No trace log found"
