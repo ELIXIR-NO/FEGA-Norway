@@ -43,18 +43,19 @@ public abstract class HeaderPacket implements Crypt4GHEntity {
     HeaderEncryptionMethod packetEncryption =
         HeaderEncryptionMethod.getByCode(packetEncryptionCode);
     byte[] encryptedPayload = inputStream.readNBytes(packetLength - 4 - 4);
-      switch (packetEncryption) {
-          case X25519_CHACHA20_IETF_POLY1305 -> {
-              try {
-                  return Optional.of(
-                          new X25519ChaCha20IETFPoly1305HeaderPacket(
-                                  packetLength, encryptedPayload, readerPrivateKey));
-              } catch (GeneralSecurityException e) {
-                  return Optional.empty();
-              }
-          }
-          default -> throw new GeneralSecurityException(
-                  "Header Encryption Method not found for code: " + packetEncryption);
+    switch (packetEncryption) {
+      case X25519_CHACHA20_IETF_POLY1305 -> {
+        try {
+          return Optional.of(
+              new X25519ChaCha20IETFPoly1305HeaderPacket(
+                  packetLength, encryptedPayload, readerPrivateKey));
+        } catch (GeneralSecurityException e) {
+          return Optional.empty();
+        }
       }
+      default ->
+          throw new GeneralSecurityException(
+              "Header Encryption Method not found for code: " + packetEncryption);
+    }
   }
 }
