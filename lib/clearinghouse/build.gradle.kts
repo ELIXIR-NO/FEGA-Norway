@@ -4,7 +4,7 @@ plugins {
     id("java")
     id("maven-publish")
     id("signing")
-    id("io.freefair.lombok") version "8.14.2"
+    id("io.freefair.lombok") version "9.0.0"
     id("formatting-conventions")
 }
 
@@ -23,7 +23,7 @@ java {
 
 dependencies {
     implementation("org.apache.commons:commons-collections4:4.5.0")
-    implementation("org.apache.commons:commons-lang3:3.18.0")
+    implementation("org.apache.commons:commons-lang3:3.19.0")
     implementation("com.google.code.gson:gson:2.13.2")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
 
@@ -32,7 +32,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:5.1.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.13.4")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.bouncycastle:bcprov-jdk15to18:1.82")
     testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.82")
