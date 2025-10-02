@@ -44,8 +44,7 @@ jobs:
 
       - name: Run e2e tests
         run: |
-          ./gradlew clean
-          ./gradlew start-docker-containers
+          ./dev.sh start
 
           # Wait for the e2e-tests container to complete
           echo "Waiting for e2e-tests container to complete..."

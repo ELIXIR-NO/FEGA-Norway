@@ -80,12 +80,49 @@ function show_header() {
 
 function start() {
     show_header
-    log_step "Starting development environment"
-
-    if ./gradlew clean && bash -c "./gradlew start-docker-containers"; then
-        log_success "Development environment started successfully!"
+    log_step "Preparing E2E test environment"
+    # Make bootstrap script executable
+    chmod +x ./e2eTests/scripts/bootstrap.sh
+    # Cleanup workspace
+    log_step "Cleaning up workspace"
+    if ! ./e2eTests/scripts/bootstrap.sh cleanup_workspace; then
+        log_error "Failed to cleanup workspace"
+        return 1
+    fi
+    # Run tests on Java modules only (exclude Go packages)
+    if ./gradlew \
+      :cli:lega-commander:test \
+      :lib:crypt4gh:test \
+      :lib:clearinghouse:test \
+      :lib:tsd-file-api-client:test \
+      :services:cega-mock:test \
+      :services:tsd-api-mock:test \
+      :services:mq-interceptor:test \
+      :services:localega-tsd-proxy:test \
+      --parallel; then
+        log_success "Tests passed successfully!"
     else
-        log_error "Failed to start development environment"
+        log_error "Tests failed"
+        return 1
+    fi
+    # Apply configurations
+    log_step "Applying configurations"
+    if ! ./e2eTests/scripts/bootstrap.sh apply_configs; then
+        log_error "Failed to apply configurations"
+        return 1
+    fi
+    # Check requirements
+    log_step "Checking requirements"
+    if ! ./e2eTests/scripts/bootstrap.sh check_requirements; then
+        log_error "Failed requirements check"
+        return 1
+    fi
+    # Start Docker containers
+    log_step "Starting Docker containers"
+    if cd e2eTests/ && docker compose up --pull missing -d && docker compose up --wait; then
+        log_success "E2E test environment started successfully!"
+    else
+        log_error "Failed to start Docker containers"
         return 1
     fi
 }
@@ -93,8 +130,7 @@ function start() {
 function stop() {
     show_header
     log_step "Stopping development environment"
-
-    if ./gradlew stop-docker-containers; then
+    if docker compose -f e2eTests/docker-compose.yml down --rmi local -v; then
         log_success "Development environment stopped successfully!"
     else
         log_error "Failed to stop development environment"
