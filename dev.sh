@@ -80,24 +80,13 @@ function show_header() {
 
 # Service management functions
 
-function start() {
+function test() {
     show_header
-    log_step "Preparing E2E test environment"
-    # Make bootstrap script executable
-    chmod +x ./e2eTests/scripts/bootstrap.sh
-    # Cleanup workspace
-    log_step "Cleaning up workspace"
-    if ! ./e2eTests/scripts/bootstrap.sh cleanup_workspace; then
-        log_error "Failed to cleanup workspace"
-        return 1
-    fi
-    # Run tests on Java modules only (exclude Go packages)
+    log_step "Running unit tests"
     if ./gradlew \
-      :cli:lega-commander:test \
       :lib:crypt4gh:test \
       :lib:clearinghouse:test \
       :lib:tsd-file-api-client:test \
-      :services:cega-mock:test \
       :services:tsd-api-mock:test \
       :services:mq-interceptor:test \
       :services:localega-tsd-proxy:test \
@@ -107,21 +96,17 @@ function start() {
         log_error "Tests failed"
         return 1
     fi
-    # Apply configurations
-    log_step "Applying configurations"
-    if ! ./e2eTests/scripts/bootstrap.sh apply_configs; then
-        log_error "Failed to apply configurations"
-        return 1
-    fi
-    # Check requirements
-    log_step "Checking requirements"
-    if ! ./e2eTests/scripts/bootstrap.sh check_requirements; then
-        log_error "Failed requirements check"
-        return 1
-    fi
-    # Start Docker containers
+}
+
+function start() {
+    show_header
+    log_step "Preparing E2E test environment"
+    chmod +x ./e2eTests/scripts/bootstrap.sh
+    ./e2eTests/scripts/bootstrap.sh cleanup_workspace || return 1
+    ./e2eTests/scripts/bootstrap.sh apply_configs || return 1
+    ./e2eTests/scripts/bootstrap.sh check_requirements || return 1
     log_step "Starting Docker containers"
-    if cd e2eTests/ && docker compose up --pull missing -d && docker compose up --wait; then
+    if cd e2eTests/ && docker compose up --pull missing --build -d && docker compose up --wait; then
         log_success "E2E test environment started successfully!"
     else
         log_error "Failed to start Docker containers"

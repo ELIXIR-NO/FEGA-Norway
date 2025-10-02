@@ -25,6 +25,12 @@ jobs:
             services/mq-interceptor/go.sum
             services/cega-mock/go.sum
 
+      - name: Build with Gradle
+        run: ./gradlew assemble
+
+      - name: Run tests
+        run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test
+
       - name: Run e2e tests
         run: |
           ./dev.sh start
