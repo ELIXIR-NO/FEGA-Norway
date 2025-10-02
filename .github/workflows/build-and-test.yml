@@ -25,8 +25,18 @@ jobs:
             services/mq-interceptor/go.sum
             services/cega-mock/go.sum
 
-      - name: Build with Gradle
-        run: ./gradlew assemble
+#      - name: Cache gradle packages
+#        uses: actions/cache@v4
+#        with:
+#          path: |
+#            ~/.gradle/cache
+#            ~/.gradle/wrapper
+#          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+#          restore-keys: |
+#            ${{ runner.os }}-gradle-
+
+#      - name: Build with Gradle
+#        run: ./gradlew assemble
 
       - name: Run tests
         run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test
