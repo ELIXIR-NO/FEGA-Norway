@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:25-jdk-alpine AS builder
 WORKDIR /app
 
 COPY build.gradle.kts settings.gradle.kts gradlew ./
@@ -9,7 +9,7 @@ COPY lib/tsd-file-api-client ./lib/tsd-file-api-client
 COPY services/localega-tsd-proxy ./services/localega-tsd-proxy
 RUN ./gradlew :services:localega-tsd-proxy:clean :services:localega-tsd-proxy:build -x test --no-daemon
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 COPY --from=builder app/services/localega-tsd-proxy/build/libs/localega-tsd-proxy.jar /app/app.jar
 EXPOSE 8080
