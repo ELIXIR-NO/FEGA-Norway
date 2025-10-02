@@ -2,6 +2,8 @@
 
 set -Eeuo pipefail
 
+export TERM=${TERM:-xterm}
+
 source ./e2eTests/env.sh
 
 # Cross-platform compatibility checks
