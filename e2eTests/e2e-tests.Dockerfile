@@ -9,7 +9,9 @@ COPY e2eTests/ ./e2eTests
 
 RUN gradle clean :lib:crypt4gh:assemble :e2eTests:jar --no-daemon
 
-FROM eclipse-temurin:21-jre-alpine
+# Use JDK instead of JRE because the entrypoint requires
+# 'keytool' to import certificates at runtime
+FROM eclipse-temurin:21-jdk-alpine
 
 # Install bash
 RUN apk add --no-cache bash
