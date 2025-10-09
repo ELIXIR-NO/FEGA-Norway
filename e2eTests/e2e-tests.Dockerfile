@@ -14,7 +14,7 @@ RUN gradle clean :lib:crypt4gh:assemble :e2eTests:jar --no-daemon
 FROM eclipse-temurin:21-jdk-alpine
 
 # Install bash
-RUN apk add --no-cache bash tree
+RUN apk update && apk add --no-cache bash tree
 
 # Set the working directory in the container
 WORKDIR /fega-norway

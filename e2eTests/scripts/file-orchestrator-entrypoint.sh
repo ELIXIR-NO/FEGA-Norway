@@ -10,8 +10,20 @@ chmod -R 777 /volumes &&
   ./copy_certificates_to_dest.sh &&
   ./copy_confs_to_dest.sh &&
   ./replace_template_variables.sh &&
-  ./change_ownerships.sh &&
-  # Mark the container to be ready.
-  touch /storage/ready &&
-  # Run infinitely.
-  tail -f /dev/null
+  ./change_ownerships.sh
+
+# Wait until all key subdirectories in /storage are non-empty
+for dir in certs confs; do
+  echo "Checking $dir..."
+  while [ -z "$(ls -A /storage/$dir 2>/dev/null)" ]; do
+    echo "Waiting for /storage/$dir to have content..."
+    sleep 2
+  done
+done
+
+# Mark the container ready
+touch /storage/ready
+echo "Container is ready."
+
+# Keep container alive
+tail -f /dev/null
