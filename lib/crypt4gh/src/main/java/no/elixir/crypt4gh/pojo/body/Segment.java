@@ -93,28 +93,22 @@ public abstract class Segment implements Crypt4GHEntity {
    *     key
    * @return an Optional containing the decrypted segment, or an empty Optional if the segment could
    *     not be decrypted with the provided key
-   * @throws GeneralSecurityException if the encryption method specified in the Data Encryption
-   *     Parameters is not recognized
    */
   private static Optional<Segment> tryCreate(
-      byte[] encryptedData, DataEncryptionParameters dataEncryptionParameters)
-      throws GeneralSecurityException {
+      byte[] encryptedData, DataEncryptionParameters dataEncryptionParameters) {
     DataEncryptionMethod dataEncryptionMethod = dataEncryptionParameters.getDataEncryptionMethod();
-    switch (dataEncryptionMethod) {
+    return switch (dataEncryptionMethod) {
       case CHACHA20_IETF_POLY1305 -> {
         try {
-          return Optional.of(
+          yield Optional.of(
               new ChaCha20IETFPoly1305Segment(
                   encryptedData,
                   (ChaCha20IETFPoly1305EncryptionParameters) dataEncryptionParameters,
                   false));
         } catch (GeneralSecurityException e) {
-          return Optional.empty();
+          yield Optional.empty();
         }
       }
-      default ->
-          throw new GeneralSecurityException(
-              "Data Encryption Method not found for code: " + dataEncryptionMethod.getCode());
-    }
+    };
   }
 }
