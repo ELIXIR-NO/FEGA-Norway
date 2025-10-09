@@ -2,6 +2,8 @@
 
 set -e
 
+tree /storage/
+
 # Import the root certificate if it exists
 if [ -f "/storage/certs/rootCA.pem" ]; then
     keytool -importcert -file /storage/certs/rootCA.pem \
