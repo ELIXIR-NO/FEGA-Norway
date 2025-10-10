@@ -44,16 +44,13 @@ public abstract class Segment implements Crypt4GHEntity {
       byte[] unencryptedData, DataEncryptionParameters dataEncryptionParameters)
       throws GeneralSecurityException {
     DataEncryptionMethod dataEncryptionMethod = dataEncryptionParameters.getDataEncryptionMethod();
-    switch (dataEncryptionMethod) {
-      case CHACHA20_IETF_POLY1305:
-        return new ChaCha20IETFPoly1305Segment(
-            unencryptedData,
-            (ChaCha20IETFPoly1305EncryptionParameters) dataEncryptionParameters,
-            true);
-      default:
-        throw new GeneralSecurityException(
-            "Data Encryption Method not found for code: " + dataEncryptionMethod.getCode());
-    }
+    return switch (dataEncryptionMethod) {
+      case CHACHA20_IETF_POLY1305 ->
+          new ChaCha20IETFPoly1305Segment(
+              unencryptedData,
+              (ChaCha20IETFPoly1305EncryptionParameters) dataEncryptionParameters,
+              true);
+    };
   }
 
   /**
