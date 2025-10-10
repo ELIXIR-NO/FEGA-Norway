@@ -19,10 +19,10 @@ fi
 # See the top-level classes in no.elixir.e2eTests for details.
 if [ "$INTEGRATION" = "FEGA" ]; then
     echo "Running FEGA integration tests"
-    exec java -jar e2eTests.jar --select-class no.elixir.e2eTests.FEGAIntegrationTest
+    exec java -jar e2eTests.jar execute --select-class no.elixir.e2eTests.FEGAIntegrationTest
 elif [ "$INTEGRATION" = "GDI" ]; then
     echo "Running GDI integration tests"
-    exec java -jar e2eTests.jar --select-class no.elixir.e2eTests.GDIIntegrationTest
+    exec java -jar e2eTests.jar execute --select-class no.elixir.e2eTests.GDIIntegrationTest
 else
     echo "Error: Unknown or unset INTEGRATION value: $INTEGRATION"
     echo "Please set INTEGRATION=FEGA or INTEGRATION=GDI"
