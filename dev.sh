@@ -106,7 +106,7 @@ function start() {
     ./e2eTests/scripts/bootstrap.sh apply_configs || return 1
     ./e2eTests/scripts/bootstrap.sh check_requirements || return 1
     log_step "Starting Docker containers"
-    if cd e2eTests/ && docker compose up --pull missing --build -d && docker compose up --wait; then
+    if cd e2eTests/ && docker compose up --pull always --build -d; then
         log_success "E2E test environment started successfully!"
     else
         log_error "Failed to start Docker containers"
