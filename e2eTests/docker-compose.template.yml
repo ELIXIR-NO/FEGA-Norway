@@ -644,8 +644,8 @@ services:
     container_name: e2e-tests
     hostname: e2e_tests
     build:
-      context: .
-      dockerfile: e2e-tests.Dockerfile
+      context: ..
+      dockerfile: e2eTests/e2e-tests.Dockerfile
     depends_on:
       proxy:
         condition: service_healthy

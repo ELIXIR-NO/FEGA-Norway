@@ -1,0 +1,20 @@
+name: fega-norway
+
+services:
+  tsd:
+    build:
+      target: runtime
+      args:
+        BUILDER_IMAGE: ${BUILDER_IMAGE}
+
+  proxy:
+    build:
+      target: runtime
+      args:
+        BUILDER_IMAGE: ${BUILDER_IMAGE}
+
+  e2e-tests:
+    build:
+      target: runtime
+      args:
+        BUILDER_IMAGE: ${BUILDER_IMAGE}

@@ -27,69 +27,6 @@ dependencies {
     testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
 }
 
-// Start setup scripts.
-
-tasks.register<Exec>("make-executable") {
-    commandLine("chmod", "+x", "./scripts/bootstrap.sh")
-}
-
-tasks.register<Exec>("cleanup") {
-    dependsOn("make-executable")
-    commandLine("sh", "-c", "./scripts/bootstrap.sh cleanup_workspace")
-}
-
-tasks.register<Exec>("assemble-binaries") {
-    dependsOn("cleanup")
-    commandLine(
-        "../gradlew",
-        ":e2eTests:jar",
-        ":cli:lega-commander:build",
-        ":lib:crypt4gh:build",
-        ":lib:clearinghouse:build",
-        ":lib:tsd-file-api-client:build",
-        ":services:cega-mock:build",
-        ":services:tsd-api-mock:build",
-        ":services:mq-interceptor:build",
-        ":services:localega-tsd-proxy:build",
-        "-x",
-        "test",
-        "--parallel"
-    )
-}
-
-tasks.register<Exec>("check-requirements") {
-    dependsOn("assemble-binaries")
-    commandLine("sh", "-c", "./scripts/bootstrap.sh apply_configs")
-}
-
-tasks.register<Exec>("apply-configs") {
-    dependsOn("check-requirements")
-    commandLine("sh", "-c", "./scripts/bootstrap.sh check_requirements")
-}
-
-tasks.register<Exec>("start-docker-containers") {
-    dependsOn("apply-configs")
-    commandLine("docker", "compose", "up", "--pull", "always", "--build", "-d")
-}
-
-tasks.register<Exec>("stop-docker-containers") {
-    commandLine("docker", "compose", "down", "--rmi", "local", "-v")
-}
-
-tasks.test {
-    useJUnitPlatform()
-    // test tasks are completed
-    mustRunAfter(
-        ":lib:crypt4gh:test",
-        ":lib:clearinghouse:test",
-        ":lib:tsd-file-api-client:test",
-        ":services:tsd-api-mock:test",
-        ":services:mq-interceptor:test",
-        ":services:localega-tsd-proxy:test"
-    )
-    testLogging.showStandardStreams = true
-}
-
 tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE // This will exclude duplicate files
     manifest {

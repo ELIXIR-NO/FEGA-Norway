@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Get the directory where this script resides
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Change to the parent directory e2eTests/
+cd "$SCRIPT_DIR/.."
+
 source env.sh
 
 # Utility functions --
@@ -107,8 +112,7 @@ function check_requirements() {
 }
 
 function cleanup_workspace() {
-    rm -f *.raw *.raw.enc &&
-      ../gradlew clean
+    rm -f *.raw *.raw.enc
 }
 
 # Entrypoint --
