@@ -2,6 +2,8 @@
 
 set -Eeuo pipefail
 
+export TERM=${TERM:-xterm}
+
 source ./e2eTests/env.sh
 
 # Cross-platform compatibility checks
@@ -78,14 +80,36 @@ function show_header() {
 
 # Service management functions
 
+function test() {
+    show_header
+    log_step "Running unit tests"
+    if ./gradlew \
+      :lib:crypt4gh:test \
+      :lib:clearinghouse:test \
+      :lib:tsd-file-api-client:test \
+      :services:tsd-api-mock:test \
+      :services:mq-interceptor:test \
+      :services:localega-tsd-proxy:test \
+      --parallel; then
+        log_success "Tests passed successfully!"
+    else
+        log_error "Tests failed"
+        return 1
+    fi
+}
+
 function start() {
     show_header
-    log_step "Starting development environment"
-
-    if ./gradlew clean && bash -c "./gradlew start-docker-containers"; then
-        log_success "Development environment started successfully!"
+    log_step "Preparing E2E test environment"
+    chmod +x ./e2eTests/scripts/bootstrap.sh
+    ./e2eTests/scripts/bootstrap.sh cleanup_workspace || return 1
+    ./e2eTests/scripts/bootstrap.sh apply_configs || return 1
+    ./e2eTests/scripts/bootstrap.sh check_requirements || return 1
+    log_step "Starting Docker containers"
+    if cd e2eTests/ && docker compose up --pull always --build -d; then
+        log_success "E2E test environment started successfully!"
     else
-        log_error "Failed to start development environment"
+        log_error "Failed to start Docker containers"
         return 1
     fi
 }
@@ -93,8 +117,7 @@ function start() {
 function stop() {
     show_header
     log_step "Stopping development environment"
-
-    if ./gradlew stop-docker-containers; then
+    if docker compose -f e2eTests/docker-compose.yml down --rmi local -v; then
         log_success "Development environment stopped successfully!"
     else
         log_error "Failed to stop development environment"
