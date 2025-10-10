@@ -27,16 +27,11 @@ jobs:
             services/mq-interceptor/go.sum
             services/cega-mock/go.sum
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-read-only: false
-
       - name: Run unit tests
-        run: gradle test --parallel --build-cache --no-daemon
+        run: ./gradlew test --parallel --build-cache --no-daemon
 
       - name: Build artifacts
-        run: gradle assemble --parallel --build-cache --no-daemon
+        run: ./gradlew assemble --parallel --build-cache --no-daemon
 
       - name: Start E2E environment
         run: ./dev.sh start
