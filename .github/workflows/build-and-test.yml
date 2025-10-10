@@ -20,32 +20,39 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: 1.25
-          cache-dependency-path: |
-            cli/lega-commander/go.sum
-            services/mq-interceptor/go.sum
-            services/cega-mock/go.sum
 
-      - name: Cache gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/cache
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: setup gradle
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Build with Gradle
-        run: ./gradlew assemble
+        run: gradle assemble --parallel
 
       - name: Run tests
-        run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test
+        run: gradle :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test  --parallel
 
+  e2etests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.25
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Run e2e tests
         run: |
-          ./gradlew clean
-          ./gradlew start-docker-containers
+          gradle start-docker-containers
 
           # Wait for the e2e-tests container to complete
           echo "Waiting for e2e-tests container to complete..."
