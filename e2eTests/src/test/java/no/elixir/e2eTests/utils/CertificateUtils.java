@@ -67,14 +67,31 @@ public class CertificateUtils {
    */
   public static File getFileFromLocalFolder(String dir, String fileName)
       throws FileNotFoundException {
-    Path filePath = Paths.get(dir, fileName);
-    File file = filePath.toFile();
+      Path filePath = Paths.get(dir, fileName);
+      File file = filePath.toFile();
 
-    if (!file.exists()) {
-      throw new FileNotFoundException("Certificate file not found: " + file.getAbsolutePath());
-    }
+      E2EState.log.info("🔎 Checking for certificate file at: {}", file.getAbsolutePath());
+      File folder = new File(dir);
+      if (folder.exists()) {
+          File[] files = folder.listFiles();
+          if (files != null && files.length > 0) {
+              E2EState.log.info("📂 Directory contents ({}):", dir);
+              for (File f : files) {
+                  E2EState.log.info("  - {} ({} bytes)", f.getName(), f.length());
+              }
+          } else {
+              E2EState.log.warn("⚠️ Directory exists but is empty: {}", dir);
+          }
+      } else {
+          E2EState.log.error("❌ Directory does not exist: {}", dir);
+      }
 
-    return file;
+      if (!file.exists()) {
+          throw new FileNotFoundException("❌ Certificate file not found: " + file.getAbsolutePath());
+      }
+
+      E2EState.log.info("✅ Found certificate file: {}", file.getAbsolutePath());
+      return file;
   }
 
   /**
@@ -86,13 +103,20 @@ public class CertificateUtils {
    * @throws Exception If file retrieval fails.
    */
   public static File getCertificateFile(String name) throws Exception {
-    if ("local".equalsIgnoreCase(E2EState.env.getRuntime())) {
-      // Use getFileInContainer for local development
-      return CertificateUtils.getFileInContainer("file-orchestrator", "/storage/certs/" + name);
-    } else {
-      // Assuming this test code is run inside a docker container.
-      return CertificateUtils.getFileFromLocalFolder("/storage/certs/", name);
-    }
+      E2EState.log.info("🔍 Resolving certificate file: {}", name);
+      E2EState.log.info("Runtime environment: {}", E2EState.env.getRuntime());
+
+      if ("local".equalsIgnoreCase(E2EState.env.getRuntime())) {
+          E2EState.log.info("Using getFileInContainer() from 'file-orchestrator' for local dev.");
+          File file = CertificateUtils.getFileInContainer("file-orchestrator", "/storage/certs/" + name);
+          E2EState.log.info("✅ Retrieved file from container: {}", file.getAbsolutePath());
+          return file;
+      } else {
+          E2EState.log.info("Using getFileFromLocalFolder() inside Docker container runtime.");
+          File file = CertificateUtils.getFileFromLocalFolder("/storage/certs/", name);
+          E2EState.log.info("✅ Retrieved file from local folder: {}", file.getAbsolutePath());
+          return file;
+      }
   }
 
   /**
