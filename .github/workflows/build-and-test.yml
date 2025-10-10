@@ -27,16 +27,17 @@ jobs:
             services/mq-interceptor/go.sum
             services/cega-mock/go.sum
 
-      - name: Run unit tests
-        run: ./gradlew test --parallel --build-cache --no-daemon
-
-      - name: Build artifacts
-        run: ./gradlew assemble --parallel --build-cache --no-daemon
+      - name: Build builder image
+        run: docker build -f builder.Dockerfile -t temp-builder:pr-${{ github.run_id }} .
 
       - name: Start E2E environment
-        run: ./dev.sh start
-        env:
-          TERM: xterm
+        run: |
+          chmod +x ./e2eTests/scripts/bootstrap.sh
+          ./e2eTests/scripts/bootstrap.sh cleanup_workspace || return 1
+          ./e2eTests/scripts/bootstrap.sh apply_configs || return 1
+          ./e2eTests/scripts/bootstrap.sh check_requirements || return 1
+          export BUILDER_IMAGE=temp-builder:pr-${GITHUB_RUN_ID}
+          cd e2eTests/ && docker compose -f docker-compose.yml -f docker-compose.override.yml up --pull always --build -d
 
       - name: Wait for E2E tests to complete
         run: |

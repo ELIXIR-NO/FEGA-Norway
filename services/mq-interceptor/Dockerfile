@@ -10,7 +10,7 @@ RUN go build -o mq-interceptor ./main.go
 RUN echo "nobody:x:65534:65534:nobody:/:" > /app/passwd
 
 # Final stage
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:nonroot AS runtime
 
 COPY --from=builder /app/mq-interceptor /
 COPY --from=builder /app/passwd /etc/passwd

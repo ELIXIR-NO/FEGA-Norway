@@ -1,4 +1,6 @@
-FROM gradle:8-jdk21 AS builder
+ARG BUILDER_IMAGE=gradle:8-jdk21
+
+FROM ${BUILDER_IMAGE} AS builder
 
 WORKDIR /app
 
@@ -10,7 +12,7 @@ COPY services/localega-tsd-proxy ./services/localega-tsd-proxy
 
 RUN gradle clean :services:localega-tsd-proxy:assemble --no-daemon
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre-alpine AS runtime
 
 WORKDIR /app
 

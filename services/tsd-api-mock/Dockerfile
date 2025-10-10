@@ -1,4 +1,6 @@
-FROM gradle:8-jdk21 AS builder
+ARG BUILDER_IMAGE=gradle:8-jdk21
+
+FROM ${BUILDER_IMAGE} AS builder
 
 WORKDIR /app
 
@@ -8,7 +10,7 @@ COPY services/tsd-api-mock ./services/tsd-api-mock
 
 RUN gradle clean :services:tsd-api-mock:assemble --no-daemon
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre-alpine AS runtime
 
 RUN mkdir -p /etc/jwt/public_keys
 

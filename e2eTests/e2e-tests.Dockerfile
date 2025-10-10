@@ -1,4 +1,6 @@
-FROM gradle:8-jdk21 AS builder
+ARG BUILDER_IMAGE=gradle:8-jdk21
+
+FROM ${BUILDER_IMAGE} AS builder
 
 WORKDIR /app
 
@@ -11,7 +13,7 @@ RUN gradle clean :lib:crypt4gh:assemble :e2eTests:jar --no-daemon
 
 # Use JDK instead of JRE because the entrypoint requires
 # 'keytool' to import certificates at runtime
-FROM eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin:21-jdk-alpine AS runtime
 
 # Install bash
 RUN apk update && apk add --no-cache bash tree

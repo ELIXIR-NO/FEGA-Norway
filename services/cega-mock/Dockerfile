@@ -11,7 +11,7 @@ COPY main.go .
 
 RUN go build -o /app/cega-mock
 
-FROM alpine:latest
+FROM alpine:latest AS runtime
 
 WORKDIR /app
 
