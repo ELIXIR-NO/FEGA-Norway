@@ -77,8 +77,9 @@ public abstract class Segment implements Crypt4GHEntity {
     for (DataEncryptionParameters dataEncryptionParameters : dataEncryptionParametersList) {
       Optional<Segment> segmentOptional = tryCreate(encryptedData, dataEncryptionParameters);
 
-      if (segmentOptional.isPresent()) {
-        return segmentOptional.get();
+      if (segmentOptional.isPresent())       {
+        return
+                segmentOptional.get();
       }
     }
     throw new GeneralSecurityException(
