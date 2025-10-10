@@ -6,6 +6,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    container: gradle:8-jdk21
 
     steps:
       - uses: actions/checkout@v5
@@ -20,9 +21,6 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: 1.25
-
-      - name: setup gradle
-        uses: gradle/actions/setup-gradle@v5
 
       - name: Build with Gradle
         run: gradle assemble --parallel
