@@ -1,0 +1,38 @@
+name: Check formatting
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "services/**"
+      - "buildSrc/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "services/**"
+      - "buildSrc/**"
+
+jobs:
+  check-formatting:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Check formatting
+        run: ./gradlew spotlessCheck
