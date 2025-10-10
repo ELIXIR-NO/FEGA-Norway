@@ -30,7 +30,7 @@ public abstract class DataEncryptionParameters extends EncryptableHeaderPacket {
    */
   public static DataEncryptionParameters create(InputStream inputStream)
       throws IOException, GeneralSecurityException {
-      //hi test
+    // hi test
     int dataEncryptionMethodCode = Crypt4GHEntity.getInt(inputStream.readNBytes(4));
     DataEncryptionMethod dataEncryptionMethod =
         DataEncryptionMethod.getByCode(dataEncryptionMethodCode);
