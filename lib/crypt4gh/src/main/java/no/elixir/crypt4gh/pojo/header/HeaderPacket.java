@@ -32,29 +32,25 @@ public abstract class HeaderPacket implements Crypt4GHEntity {
    * @param readerPrivateKey the private key of the reader
    * @return an Optional that may contain a header packet if it could successfully be decrypted with
    *     the provided key
-   * @throws IOException if somewhing goes wrong while reading from the stream
-   * @throws GeneralSecurityException if the encryption method specified in the header packet was
-   *     not recognized
+   * @throws IOException if something goes wrong while reading from the stream
    */
   static Optional<HeaderPacket> create(InputStream inputStream, PrivateKey readerPrivateKey)
-      throws IOException, GeneralSecurityException {
+      throws IOException {
     int packetLength = Crypt4GHEntity.getInt(inputStream.readNBytes(4));
     int packetEncryptionCode = Crypt4GHEntity.getInt(inputStream.readNBytes(4));
     HeaderEncryptionMethod packetEncryption =
         HeaderEncryptionMethod.getByCode(packetEncryptionCode);
     byte[] encryptedPayload = inputStream.readNBytes(packetLength - 4 - 4);
-    switch (packetEncryption) {
-      case X25519_CHACHA20_IETF_POLY1305:
+    return switch (packetEncryption) {
+      case X25519_CHACHA20_IETF_POLY1305 -> {
         try {
-          return Optional.of(
+          yield Optional.of(
               new X25519ChaCha20IETFPoly1305HeaderPacket(
                   packetLength, encryptedPayload, readerPrivateKey));
         } catch (GeneralSecurityException e) {
-          return Optional.empty();
+          yield Optional.empty();
         }
-      default:
-        throw new GeneralSecurityException(
-            "Header Encryption Method not found for code: " + packetEncryptionCode);
-    }
+      }
+    };
   }
 }
