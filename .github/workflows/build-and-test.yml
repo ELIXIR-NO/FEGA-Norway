@@ -11,6 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Check Gradle Version
+        run: gradle --version
+
       - name: Build with Gradle
         run: gradle assemble --parallel
 
