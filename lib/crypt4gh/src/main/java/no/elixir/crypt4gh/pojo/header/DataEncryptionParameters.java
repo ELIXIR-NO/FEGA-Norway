@@ -15,11 +15,7 @@ import no.elixir.crypt4gh.pojo.Crypt4GHEntity;
 public abstract class DataEncryptionParameters extends EncryptableHeaderPacket {
 
   /** The encryption method used to encrypt the payload of this header packet. */
-                protected DataEncryptionMethod
-
-
-
-          dataEncryptionMethod;
+  protected DataEncryptionMethod dataEncryptionMethod;
 
   /**
    * Reads a Data Encryption Parameters header packet from an input stream. The packet type field of
