@@ -29,7 +29,11 @@ public class Environment {
 
     // Ega-Dev Test Environment Specific
     private final String egaDevBaseDirectory;
-    private final String egaDevPublicKeyFileName;
+
+    private final String egaDevPubKeyPath;
+
+    private final String egaDevJwtPubKeyPath;
+    private final String egaDevJwtPrivKeyPath;
 
     // Common variable to override the generated access token
     private final String LSAAIToken;
@@ -54,8 +58,11 @@ public class Environment {
         this.proxyTokenAudience = env.get("E2E_TESTS_PROXY_TOKEN_AUDIENCE");
         this.proxyAdminUsername = env.get("E2E_TESTS_PROXY_ADMIN_USERNAME");
         this.proxyAdminPassword = env.get("E2E_TESTS_PROXY_ADMIN_PASSWORD");
+
         this.egaDevBaseDirectory = env.get("E2E_TESTS_EGA_DEV_BASE_DIRECTORY");
-        this.egaDevPublicKeyFileName = env.get("E2E_TESTS_EGA_DEV_PUBLIC_KEY_FILENAME");
+        this.egaDevJwtPubKeyPath = env.get("E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH");
+        this.egaDevJwtPrivKeyPath = env.get("E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH");
+        this.egaDevPubKeyPath = env.get("E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH");
         this.LSAAIToken = env.get("E2E_TESTS_LSAAI_TOKEN");
     }
 

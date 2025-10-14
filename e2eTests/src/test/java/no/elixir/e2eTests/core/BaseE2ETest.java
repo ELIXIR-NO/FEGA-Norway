@@ -88,15 +88,24 @@ public abstract class BaseE2ETest {
 
         E2EState.log.info("Generating sender and recipient key-pairs...");
         KeyPair senderKeyPair = E2EState.keyUtils.generateKeyPair();
+        KeyPair recipientKeyPair = E2EState.keyUtils.generateKeyPair();
 
         E2EState.log.info("Encrypting the file with Crypt4GH...");
         E2EState.encFile = new File(basePath + E2EState.rawFile.getName() + ".enc");
-        PublicKey localEGAInstancePublicKey =
-                E2EState.keyUtils.readPublicKey(CertificateUtils.getFileFromLocalFolder(basePath, E2EState.env.getEgaDevPublicKeyFileName()));
+
+        // This is the archive key (public one)
+        File archiveKey = CertificateUtils.getFileFromLocalFolder(basePath, E2EState.env.getEgaDevPubKeyPath());
+
+        PublicKey egaDevPublicKey = E2EState.keyUtils.readPublicKey(archiveKey);
+
         try (FileOutputStream fileOutputStream = new FileOutputStream(E2EState.encFile);
              Crypt4GHOutputStream crypt4GHOutputStream =
                      new Crypt4GHOutputStream(
-                             fileOutputStream, senderKeyPair.getPrivate(), localEGAInstancePublicKey)) {
+                             fileOutputStream,
+                             senderKeyPair.getPrivate(),
+                             egaDevPublicKey
+                     )
+        ) {
             FileUtils.copyFile(E2EState.rawFile, crypt4GHOutputStream);
         }
 
