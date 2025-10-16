@@ -6,11 +6,13 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up JDK
+      - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: "temurin"
@@ -25,50 +27,38 @@ jobs:
             services/mq-interceptor/go.sum
             services/cega-mock/go.sum
 
-      - name: Cache gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/cache
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Run unit tests
+        run: ./gradlew test --parallel --build-cache --no-daemon
 
-      - name: Build with Gradle
-        run: ./gradlew assemble
+      - name: Build artifacts
+        run: ./gradlew assemble --parallel --build-cache --no-daemon
 
-      - name: Run tests
-        run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test
+      - name: Start E2E environment
+        run: ./dev.sh start
+        env:
+          TERM: xterm
 
-
-      - name: Run e2e tests
+      - name: Wait for E2E tests to complete
         run: |
-          ./gradlew clean
-          ./gradlew start-docker-containers
-
-          # Wait for the e2e-tests container to complete
-          echo "Waiting for e2e-tests container to complete..."
-          while [ "$(docker inspect --format='{{.State.Running}}' e2e-tests 2>/dev/null)" == "true" ]; do
-            echo "e2e-tests still running, waiting for 5 seconds..."
-            sleep 5
-          done
-
-          # Show the logs from the e2e-tests container
-          echo "=============== e2e-tests Container Logs ==============="
+          echo "Waiting for e2e-tests container..."
+          timeout 600 bash -c 'while [ "$(docker inspect --format="{{.State.Running}}" e2e-tests 2>/dev/null)" == "true" ]; do sleep 5; done'
+          
+          EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' e2e-tests 2>/dev/null || echo "255")
+          
+          echo "=============== E2E Test Logs ==============="
           docker logs e2e-tests
-          echo "========================================================"
-
-          # Get the exit code once the container has finished
-          EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' e2e-tests)
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "e2e tests failed with exit code $EXIT_CODE"
+          echo "============================================="
+          
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "E2E tests failed with exit code $EXIT_CODE"
             exit 1
-          else
-            echo "e2e tests completed successfully"
           fi
 
-      - name: Containers status
+      - name: Show diagnostics on failure
         if: failure()
         run: |
+          echo "=============== Container Status ==============="
           docker ps -a
+          echo ""
+          echo "=============== All Logs ==============="
+          docker compose -f e2eTests/docker-compose.yml logs || true
