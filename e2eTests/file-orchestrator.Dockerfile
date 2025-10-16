@@ -24,13 +24,19 @@ RUN mkdir -p "confs"
 RUN mkdir -p "certs"
 
 COPY confs confs
-COPY scripts/* .
+
+COPY scripts/generate_certs.sh .
+COPY scripts/copy_certificates_to_dest.sh .
+COPY scripts/copy_confs_to_dest.sh .
+COPY scripts/replace_template_variables.sh .
+COPY scripts/change_ownerships.sh .
+COPY scripts/file-orchestrator-entrypoint.sh .
 
 COPY "env.sh" "env.sh"
 
 RUN chmod +x *.sh
 
-ENTRYPOINT [ "./entrypoint.sh" ]
+ENTRYPOINT [ "./file-orchestrator-entrypoint.sh" ]
 
 # Add a HEALTHCHECK to verify readiness
 HEALTHCHECK --interval=5s --timeout=3s --retries=5 CMD [ "/bin/sh", "-c", "[ -f /storage/ready ] || exit 1" ]
