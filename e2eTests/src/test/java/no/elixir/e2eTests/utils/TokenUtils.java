@@ -1,6 +1,8 @@
 package no.elixir.e2eTests.utils;
 
 import com.auth0.jwt.algorithms.Algorithm;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import no.elixir.e2eTests.constants.Strings;
 import no.elixir.e2eTests.core.E2EState;
 import org.apache.commons.io.FileUtils;
@@ -19,13 +21,21 @@ public class TokenUtils {
                                            String pubKeyFilename,
                                            String privKeyFilename
     ) throws Exception {
+
+        String lsaaiToken = E2EState.env.getLSAAIToken();
+        var tokenArray = lsaaiToken.split("[.]");
+        byte[] decodedPayload = Base64.getUrlDecoder().decode(tokenArray[1]);
+        String decodedPayloadString = new String(decodedPayload);
+        JsonObject claims = new Gson().fromJson(decodedPayloadString, JsonObject.class);
+        String user = claims.get("sub").getAsString();
+        String aud = claims.get("aud").getAsString();
         RSAPublicKey publicKey = getPublicKey(pubKeyFilename);
         RSAPrivateKey privateKey = getPrivateKey(privKeyFilename);
         byte[] visaHeader = Base64.getUrlEncoder().encode(Strings.VISA_HEADER.getBytes());
         byte[] visaPayload =
                 Base64.getUrlEncoder()
                         .encode(
-                                String.format(Strings.VISA_PAYLOAD, E2EState.env.getProxyTokenAudience(), resource)
+                                String.format(Strings.VISA_PAYLOAD, user, aud, resource)
                                         .getBytes());
         byte[] visaSignature = Algorithm.RSA256(publicKey, privateKey).sign(visaHeader, visaPayload);
         return "%s.%s.%s"

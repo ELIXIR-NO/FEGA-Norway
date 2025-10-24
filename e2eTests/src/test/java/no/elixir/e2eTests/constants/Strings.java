@@ -19,7 +19,7 @@ public class Strings {
   public static final String VISA_PAYLOAD =
       """
             {
-              "sub": "dummy@elixir-europe.org",
+              "sub": "%s",
 	      "aud": "%s",
               "ga4gh_visa_v1": {
                 "asserted": 1583757401,
