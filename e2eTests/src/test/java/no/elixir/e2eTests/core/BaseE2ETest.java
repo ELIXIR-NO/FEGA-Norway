@@ -94,7 +94,7 @@ public abstract class BaseE2ETest {
         E2EState.encFile = new File(basePath + E2EState.rawFile.getName() + ".enc");
 
         // This is the archive key (public one)
-        File archiveKey = CertificateUtils.getFileFromLocalFolder(basePath, E2EState.env.getEgaDevPubKeyPath());
+        File archiveKey = CertificateUtils.getCertificateFile(E2EState.env.getEgaDevPubKeyPath());
 
         PublicKey egaDevPublicKey = E2EState.keyUtils.readPublicKey(archiveKey);
 

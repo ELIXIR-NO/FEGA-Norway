@@ -64,7 +64,7 @@ public class EgaDevIntegrationTest {
     @Test
     @Order(6)
     void DownloadTest() throws Exception {
-        DownloadWithExportRequestTest.testDownloadDatasetUsingExportRequestAndVerifyResults();
+        DownloadWithExportRequestTest.testDownloadDatasetUsingFegaExportRequestAndVerifyResults();
     }
 
 }

@@ -6,6 +6,7 @@ import kong.unirest.Unirest;
 import no.elixir.e2eTests.constants.Strings;
 import no.elixir.e2eTests.core.E2EState;
 import no.elixir.e2eTests.utils.CertificateUtils;
+import no.elixir.e2eTests.utils.TokenUtils;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -17,14 +18,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public class DownloadWithExportRequestTest {
 
     public static void testDownloadDatasetUsingExportRequestAndVerifyResults() throws Exception {
-        String accessToken = E2EState.env.getLSAAIToken();
+        String passportScopedAccessToken = E2EState.env.getLSAAIToken();
         E2EState.log.info(E2EState.encFile.getName());
 
-        HttpResponse<JsonNode> exportRequestRes = makeExportRequest(accessToken);
+        HttpResponse<JsonNode> exportRequestRes = callGdiExportRequestEndpoint(passportScopedAccessToken);
         assertEquals(200, exportRequestRes.getStatus());
 
         E2EState.log.info("Export request response: {}", exportRequestRes.getBody());
-        HttpResponse<FileListingResponse> listFilesRes = checkFilesWithRetry(accessToken);
+        HttpResponse<FileListingResponse> listFilesRes = checkFilesWithRetry(passportScopedAccessToken);
         assertNotNull(listFilesRes);
         assertEquals(200, listFilesRes.getStatus());
 
@@ -36,10 +37,41 @@ public class DownloadWithExportRequestTest {
         assertEquals(E2EState.encFile.getName(), first.get().fileName);
     }
 
-    private static HttpResponse<JsonNode> makeExportRequest(String accessToken) throws Exception {
+    public static void testDownloadDatasetUsingFegaExportRequestAndVerifyResults() throws Exception {
+        String visaToken = TokenUtils.generateVisaToken(E2EState.datasetId, "jwt.pub.pem", "jwt.priv.pem");
+        E2EState.log.info(E2EState.encFile.getName());
+
+        HttpResponse<JsonNode> exportRequestRes = callFegaExportRequestEndpoint(visaToken);
+        assertEquals(200, exportRequestRes.getStatus());
+
+        E2EState.log.info("Export request response: {}", exportRequestRes.getBody());
+        HttpResponse<FileListingResponse> listFilesRes = checkFilesWithRetry(visaToken);
+        assertNotNull(listFilesRes);
+        assertEquals(200, listFilesRes.getStatus());
+
+        E2EState.log.info("List user outbox request response: {}", listFilesRes.getBody());
+        assertFalse(listFilesRes.getBody().files.isEmpty());
+
+        Optional<TsdFile> first = listFilesRes.getBody().files.stream().findFirst();
+        assertTrue(first.isPresent());
+        assertEquals(E2EState.encFile.getName(), first.get().fileName);
+    }
+
+    private static HttpResponse<JsonNode> callFegaExportRequestEndpoint(String visaToken) throws Exception {
+        E2EState.log.info("Preparing to make fega export request");
+        String exportReqUrl = buildFegaExportUrl();
+        String payload = buildFegaExportPayload(visaToken);
+        E2EState.log.info("Export request payload: {}", payload);
+        return Unirest.post(exportReqUrl)
+                .body(payload)
+                .contentType("application/json")
+                .basicAuth(E2EState.env.getProxyAdminUsername(), E2EState.env.getProxyAdminPassword())
+                .asJson();    }
+
+    private static HttpResponse<JsonNode> callGdiExportRequestEndpoint(String accessToken) throws Exception {
         E2EState.log.info("Preparing to make export request");
-        String exportReqUrl = buildExportUrl();
-        String payload = buildExportPayload(accessToken);
+        String exportReqUrl = buildGdiExportUrl();
+        String payload = buildGdiExportPayload(accessToken);
         E2EState.log.info("Export request payload: {}", payload);
         return Unirest.post(exportReqUrl)
                 .body(payload)
@@ -78,9 +110,14 @@ public class DownloadWithExportRequestTest {
         return null;
     }
 
-    private static String buildExportUrl() {
+    private static String buildGdiExportUrl() {
         return String.format(
-                "https://%s:%s/export", E2EState.env.getProxyHost(), E2EState.env.getProxyPort());
+                "https://%s:%s/export/gdi", E2EState.env.getProxyHost(), E2EState.env.getProxyPort());
+    }
+
+    private static String buildFegaExportUrl() {
+        return String.format(
+                "https://%s:%s/export/fega", E2EState.env.getProxyHost(), E2EState.env.getProxyPort());
     }
 
     private static String buildListFilesUrl() {
@@ -89,12 +126,27 @@ public class DownloadWithExportRequestTest {
                 E2EState.env.getProxyHost(), E2EState.env.getProxyPort());
     }
 
-    private static String buildExportPayload(String accessToken) throws Exception {
-        File pubKey = CertificateUtils.getFileFromLocalFolder(E2EState.env.getEgaDevBaseDirectory(), E2EState.env.getEgaDevPublicKeyFileName());
+    private static String buildGdiExportPayload(String accessToken) throws Exception {
+        File pubKey = CertificateUtils.getCertificateFile(E2EState.env.getEgaDevPubKeyPath());
         String jwtPublicKey =
                 org.apache.commons.io.FileUtils.readFileToString(pubKey, Charset.defaultCharset());
-        return Strings.EXPORT_REQ_BODY.formatted(
+        return Strings.EXPORT_REQ_BODY_GDI.formatted(
                 E2EState.datasetId, accessToken,
+                jwtPublicKey
+                        .replace(Strings.BEGIN_PUBLIC_KEY, "")
+                        .replace(Strings.END_PUBLIC_KEY, "")
+                        .replace(System.lineSeparator(), "")
+                        .replace(" ", "")
+                        .trim()
+                , "DATASET_ID");
+    }
+
+    private static String buildFegaExportPayload(String visaToken) throws Exception {
+        File pubKey = CertificateUtils.getCertificateFile(E2EState.env.getEgaDevPubKeyPath());
+        String jwtPublicKey =
+                org.apache.commons.io.FileUtils.readFileToString(pubKey, Charset.defaultCharset());
+        return Strings.EXPORT_REQ_BODY_FEGA.formatted(
+                E2EState.datasetId, visaToken,
                 jwtPublicKey
                         .replace(Strings.BEGIN_PUBLIC_KEY, "")
                         .replace(Strings.END_PUBLIC_KEY, "")

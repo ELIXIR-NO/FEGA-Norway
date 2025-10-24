@@ -23,7 +23,7 @@ public class DownloadTest {
 
   /** Test and check that what we get out match the original inserted data at the top. */
   public static void downloadDatasetAndVerifyResults() throws Exception {
-    String token = TokenUtils.generateVisaToken(E2EState.datasetId);
+    String token = TokenUtils.generateVisaToken(E2EState.datasetId, "jwt.pub.pem", "jwt.priv.pem");
     E2EState.log.info("Visa JWT token when downloading: {}", token);
     String datasets =
         Unirest.get(

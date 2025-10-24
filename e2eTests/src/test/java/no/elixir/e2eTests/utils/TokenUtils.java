@@ -39,7 +39,7 @@ public class TokenUtils {
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         String jwtPublicKey =
                 org.apache.commons.io.FileUtils.readFileToString(
-                        CertificateUtils.getCertificateFile("jwt.pub.pem"), Charset.defaultCharset());
+                        CertificateUtils.getCertificateFile(pubKeyFilename), Charset.defaultCharset());
         String encoded = jwtPublicKey
                 .replace(Strings.BEGIN_PUBLIC_KEY, "")
                 .replace(Strings.END_PUBLIC_KEY, "")
@@ -54,7 +54,7 @@ public class TokenUtils {
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         String jwtPrivKey =
                 FileUtils.readFileToString(
-                        CertificateUtils.getCertificateFile("jwt.priv.pem"), Charset.defaultCharset());
+                        CertificateUtils.getCertificateFile(privKeyFilename), Charset.defaultCharset());
         String encoded = jwtPrivKey
                 .replace(Strings.BEGIN_PRIVATE_KEY, "")
                 .replace(Strings.END_PRIVATE_KEY, "")

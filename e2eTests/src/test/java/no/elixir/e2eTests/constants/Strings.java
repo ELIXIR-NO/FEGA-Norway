@@ -92,7 +92,7 @@ public class Strings {
             }]
             """;
 
-  public static final String EXPORT_REQ_BODY =
+  public static final String EXPORT_REQ_BODY_GDI =
       """
           {
               "id": "%s",
@@ -101,4 +101,14 @@ public class Strings {
               "type": "%s"
           }
           """;
+
+    public static final String EXPORT_REQ_BODY_FEGA =
+            """
+                {
+                    "id": "%s",
+                    "visaToken": "%s",
+                    "userPublicKey": "%s",
+                    "type": "%s"
+                }
+                """;
 }

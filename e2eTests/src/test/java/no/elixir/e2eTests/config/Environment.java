@@ -60,8 +60,8 @@ public class Environment {
         this.proxyAdminPassword = env.get("E2E_TESTS_PROXY_ADMIN_PASSWORD");
 
         this.egaDevBaseDirectory = env.get("E2E_TESTS_EGA_DEV_BASE_DIRECTORY");
-        this.egaDevJwtPubKeyPath = env.get("E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH");
-        this.egaDevJwtPrivKeyPath = env.get("E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH");
+        this.egaDevJwtPubKeyPath = env.get("E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH"); // TODO: fix
+        this.egaDevJwtPrivKeyPath = env.get("E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH"); // TODO: fix
         this.egaDevPubKeyPath = env.get("E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH");
         this.LSAAIToken = env.get("E2E_TESTS_LSAAI_TOKEN");
     }
