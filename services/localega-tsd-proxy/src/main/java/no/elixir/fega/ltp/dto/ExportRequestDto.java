@@ -14,28 +14,31 @@ import lombok.ToString;
 @NoArgsConstructor
 public class ExportRequestDto {
 
-  // This is the user's Passport Scoped Access Token.
-  @NotBlank(message = "The field 'accessToken' must not be blank.") @SerializedName("accessToken")
-  private String accessToken;
+    // This is the user's Passport Scoped Access Token.
+    @NotBlank(message = "The field 'accessToken' must not be blank.")
+    @SerializedName("accessToken")
+    private String accessToken;
 
-  // This is the visa token that DOA expects
-  @SerializedName("jwtToken")
-  private String jwtToken;
+    @SerializedName("visaToken")
+    private String visaToken;
 
-  @NotBlank(message = "The field 'id' must not be blank.") @SerializedName("id")
-  private String id;
+    @NotBlank(message = "The field 'id' must not be blank.")
+    @SerializedName("id")
+    private String id;
 
-  @NotBlank(message = "The field 'userPublicKey' must not be blank.") @SerializedName("userPublicKey")
-  private String userPublicKey;
+    @NotBlank(message = "The field 'userPublicKey' must not be blank.")
+    @SerializedName("userPublicKey")
+    private String userPublicKey;
 
-  @NotNull(message = "The field 'type' must not be null. Should be either 'fileId' or 'datasetId'.") @SerializedName("type")
-  private ExportType type = ExportType.DATASET_ID;
+    @NotNull(message = "The field 'type' must not be null. Should be either 'fileId' or 'datasetId'.")
+    @SerializedName("type")
+    private ExportType type = ExportType.DATASET_ID;
 
-  @ToString
-  @AllArgsConstructor
-  public enum ExportType {
-    FILE_ID("fileId"),
-    DATASET_ID("datasetId");
-    private final String value;
-  }
+    @ToString
+    @AllArgsConstructor
+    public enum ExportType {
+        FILE_ID("fileId"),
+        DATASET_ID("datasetId");
+        private final String value;
+    }
 }
