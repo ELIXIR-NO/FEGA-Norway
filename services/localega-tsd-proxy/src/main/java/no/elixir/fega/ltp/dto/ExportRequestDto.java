@@ -15,7 +15,6 @@ import lombok.ToString;
 public class ExportRequestDto {
 
     // This is the user's Passport Scoped Access Token.
-    @NotBlank(message = "The field 'accessToken' must not be blank.")
     @SerializedName("accessToken")
     private String accessToken;
 
