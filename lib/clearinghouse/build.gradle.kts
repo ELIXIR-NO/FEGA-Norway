@@ -25,18 +25,18 @@ dependencies {
     implementation("org.apache.commons:commons-collections4:4.5.0")
     implementation("org.apache.commons:commons-lang3:3.19.0")
     implementation("com.google.code.gson:gson:2.13.2")
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
 
     implementation("org.slf4j:slf4j-jdk14:2.0.17")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
-    implementation("com.squareup.okhttp3:okhttp:5.1.0")
+    implementation("com.squareup.okhttp3:okhttp:5.3.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.bouncycastle:bcprov-jdk15to18:1.82")
     testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.82")
-    testImplementation("com.squareup.okhttp3:mockwebserver:5.1.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.3.0")
 }
 
 publishing {
