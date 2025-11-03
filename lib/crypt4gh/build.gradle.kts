@@ -8,7 +8,7 @@ plugins {
     id("maven-publish")
     id("signing")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("org.jreleaser") version "1.20.0"
+    id("org.jreleaser") version "1.21.0"
 }
 
 group = "no.elixir"

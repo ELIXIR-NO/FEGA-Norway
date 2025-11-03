@@ -30,7 +30,7 @@ hooks:
               "${basename}.jar"
               "${basename}-sources.jar"
               "${basename}-javadoc.jar"
-              "${projectName}-tool-{projectVersion}.jar"
+              "${basename}-tool.jar"
               "${basename}.pom"
               "${basename}.module"
           )
