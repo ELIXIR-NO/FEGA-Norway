@@ -10,7 +10,7 @@ deploy:
       sonatype:
         active: ALWAYS
         url: https://central.sonatype.com/api/v1/publisher
-        sign: true
+        sign: false
         applyMavenCentralRules: true
         namespace: no.elixir
         stagingRepositories:
@@ -30,7 +30,6 @@ hooks:
               "${basename}.jar"
               "${basename}-sources.jar"
               "${basename}-javadoc.jar"
-              "${basename}-tool.jar"
               "${basename}.pom"
               "${basename}.module"
           )
