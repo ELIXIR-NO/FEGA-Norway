@@ -1,5 +1,6 @@
 package no.elixir.crypt4gh.app;
 
+import no.elixir.crypt4gh.pojo.key.Format;
 import org.apache.commons.cli.*;
 
 /** Console application for encrypting/decrypting files. */
@@ -83,10 +84,15 @@ public class Main {
       } else if (line.hasOption(VERSION)) {
         printVersion();
       } else if (line.hasOption(GENERATE)) {
+        String keyformat = line.getOptionValue(KEY_FORMAT, Format.OPENSSL.name());
+        try {
+          Format.valueOf(keyformat.toUpperCase());
+        } catch (IllegalArgumentException e) {
+          System.err.println("Key format must either OpenSSL (default) or Crypt4GH");
+          return;
+        }
         crypt4GHUtils.generateX25519KeyPair(
-            line.getOptionValue(GENERATE),
-            line.getOptionValue(KEY_FORMAT),
-            line.getOptionValue(KEY_PASSWORD));
+            line.getOptionValue(GENERATE), keyformat, line.getOptionValue(KEY_PASSWORD));
       } else {
         if (line.hasOption(ENCRYPT)) {
           if (!line.hasOption(PUBLIC_KEY)) {

@@ -8,7 +8,7 @@ plugins {
     id("maven-publish")
     id("signing")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("org.jreleaser") version "1.20.0"
+    id("org.jreleaser") version "1.21.0"
 }
 
 group = "no.elixir"
@@ -31,7 +31,7 @@ dependencies {
     implementation("commons-cli:commons-cli:1.10.0")
     implementation("commons-io:commons-io:2.20.0")
     implementation("com.rfksystems:blake2b:2.0.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.0.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

@@ -1,6 +1,7 @@
 package no.elixir.crypt4gh.app;
 
 import java.io.Console;
+import java.util.Arrays;
 
 /** Console utility class, not a public API. */
 class ConsoleUtils {
@@ -41,20 +42,32 @@ class ConsoleUtils {
   }
 
   /**
-   * Prompts the user to enter a password on the command-line. The prompt will be repeated if the
-   * length of the provided password is shorter than a specified minimum.
+   * Reads a new password from a parameter or the console. If the password provided as a parameter
+   * is non-empty and valid, it will be returned. If not, the user will be prompted to enter a new
+   * password in the console. The prompt will be repeated if the length of the provided password is
+   * shorter than a specified minimum. After a valid password has been entered, the user must repeat
+   * it to guard against accidental typos.
    *
-   * @param prompt a message to display to the user
+   * @param password A chosen password (can be null)
+   * @param prompt a message to display to the user if a new password must be entered in the console
    * @param minLength a required minimum length for the password
-   * @return A character array containing the password read from the console
+   * @return A character array containing the new password
+   * @throws IllegalArgumentException if no valid password could be returned
    */
-  char[] readPassword(String prompt, int minLength) {
+  char[] readNewPassword(String password, String prompt, int minLength)
+      throws IllegalArgumentException {
+    if (password != null) {
+      if (password.length() >= minLength) return password.toCharArray();
+      else System.out.println("Password is too short: minimum length is " + minLength);
+    }
     while (true) {
-      char[] password = System.console().readPassword(prompt);
-      if (password.length >= minLength) {
-        return password;
+      char[] newPassword = System.console().readPassword(prompt);
+      if (newPassword.length >= minLength) {
+        char[] confirmPassword = System.console().readPassword("Confirm password: ");
+        if (Arrays.equals(newPassword, confirmPassword)) return newPassword;
+        else throw new IllegalArgumentException("Passwords are not identical!");
       } else {
-        System.out.println("Passphrase is too short: min length is " + minLength);
+        System.out.println("Password is too short: minimum length is " + minLength);
       }
     }
   }

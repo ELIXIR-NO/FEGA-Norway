@@ -14,7 +14,6 @@ import no.elixir.crypt4gh.stream.Crypt4GHInputStream;
 import no.elixir.crypt4gh.stream.Crypt4GHOutputStream;
 import no.elixir.crypt4gh.util.KeyUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
 /** Encryption/decryption utility class, not a public API. */
 class Crypt4GHUtils {
@@ -55,40 +54,29 @@ class Crypt4GHUtils {
     KeyUtils keyUtils = KeyUtils.getInstance();
     KeyPair keyPair = keyUtils.generateKeyPair();
     File pubFile = new File(keyName + ".pub.pem");
-    if (!pubFile.exists()
-        || pubFile.exists()
-            && consoleUtils.promptForConfirmation(
-                "Public key file already exists: do you want to overwrite it?")) {
-      if (Format.CRYPT4GH.name().equalsIgnoreCase(keyFormat)) {
-        keyUtils.writeCrypt4GHKey(pubFile, keyPair.getPublic(), null);
-      } else {
-        keyUtils.writeOpenSSLKey(pubFile, keyPair.getPublic());
-      }
-    }
     File secFile = new File(keyName + ".sec.pem");
-    if (!secFile.exists()
-        || secFile.exists()
-            && consoleUtils.promptForConfirmation(
-                "Private key file already exists: do you want to overwrite it?")) {
-      if (Format.CRYPT4GH.name().equalsIgnoreCase(keyFormat)) {
-        char[] password;
-        if (StringUtils.isNotEmpty(keyPassword) && keyPassword.length() < minPwdLength) {
-          System.out.println("Passphrase is too short: min length is " + minPwdLength);
-          keyPassword = null; // triggers new prompt below
-        }
-        if (StringUtils.isEmpty(keyPassword)) {
-          password = consoleUtils.readPassword("Password for the private key: ", minPwdLength);
-        } else {
-          if (keyPassword.length() < minPwdLength) {
-            password = consoleUtils.readPassword("Password for the private key: ", minPwdLength);
-          } else {
-            password = keyPassword.toCharArray();
-          }
-        }
-        keyUtils.writeCrypt4GHKey(secFile, keyPair.getPrivate(), password);
-      } else {
-        keyUtils.writeOpenSSLKey(secFile, keyPair.getPrivate());
+    if (pubFile.exists() || secFile.exists()) {
+      boolean replaceKeys =
+          consoleUtils.promptForConfirmation(
+              "Key files with that name already exist. Do you want to replace them?");
+      if (!replaceKeys) return;
+    }
+
+    if (Format.CRYPT4GH.name().equalsIgnoreCase(keyFormat)) {
+      char[] password;
+      try {
+        password =
+            consoleUtils.readNewPassword(
+                keyPassword, "Password for the private key: ", minPwdLength);
+      } catch (IllegalArgumentException ex) {
+        System.err.println("ERROR: " + ex.getMessage());
+        return;
       }
+      keyUtils.writeCrypt4GHKey(secFile, keyPair.getPrivate(), password);
+      keyUtils.writeCrypt4GHKey(pubFile, keyPair.getPublic(), null);
+    } else {
+      keyUtils.writeOpenSSLKey(secFile, keyPair.getPrivate());
+      keyUtils.writeOpenSSLKey(pubFile, keyPair.getPublic());
     }
     Set<PosixFilePermission> perms = new HashSet<>();
     perms.add(PosixFilePermission.OWNER_READ);
@@ -206,7 +194,7 @@ class Crypt4GHUtils {
     try {
       privateKey = keyUtils.readPrivateKey(new File(privateKeyFilePath), null);
     } catch (IllegalArgumentException e) {
-      char[] password = consoleUtils.readPassword("Password for the private key: ", 0);
+      char[] password = System.console().readPassword("Password for the private key: ");
       privateKey = keyUtils.readPrivateKey(new File(privateKeyFilePath), password);
     }
     return privateKey;
