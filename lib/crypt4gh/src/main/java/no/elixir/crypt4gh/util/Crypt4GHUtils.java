@@ -98,17 +98,17 @@ public class Crypt4GHUtils {
     for (HeaderPacket headerPacket : header.getHeaderPackets()) {
       HeaderEncryptionMethod packetEncryption = headerPacket.getPacketEncryption();
       switch (packetEncryption) {
-        case X25519_CHACHA20_IETF_POLY1305:
+        case X25519_CHACHA20_IETF_POLY1305 -> {
           HeaderPacket newHeaderPacket =
               new X25519ChaCha20IETFPoly1305HeaderPacket(
                   headerPacket.getEncryptablePayload(),
                   privateKeyForDecryption,
                   newRecipientPublicKey);
           result.add(newHeaderPacket);
-          break;
-        default:
-          throw new GeneralSecurityException(
-              "Header Encryption Method not supported: " + packetEncryption.getCode());
+        }
+        default ->
+            throw new GeneralSecurityException(
+                "Header Encryption Method not supported: " + packetEncryption.getCode());
       }
     }
     return result;

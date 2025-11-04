@@ -33,12 +33,8 @@ public abstract class DataEncryptionParameters extends EncryptableHeaderPacket {
     int dataEncryptionMethodCode = Crypt4GHEntity.getInt(inputStream.readNBytes(4));
     DataEncryptionMethod dataEncryptionMethod =
         DataEncryptionMethod.getByCode(dataEncryptionMethodCode);
-    switch (dataEncryptionMethod) {
-      case CHACHA20_IETF_POLY1305:
-        return new ChaCha20IETFPoly1305EncryptionParameters(inputStream);
-      default:
-        throw new GeneralSecurityException(
-            "Data Encryption Method not found for code: " + dataEncryptionMethodCode);
-    }
+    return switch (dataEncryptionMethod) {
+      case CHACHA20_IETF_POLY1305 -> new ChaCha20IETFPoly1305EncryptionParameters(inputStream);
+    };
   }
 }
