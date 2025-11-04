@@ -11,11 +11,11 @@ repositories {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.13.4")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.13.4")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.13.4")
-    testRuntimeOnly("org.junit.platform:junit-platform-console-standalone:1.13.4")
-    testImplementation("com.rabbitmq:amqp-client:5.26.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.0.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-console-standalone:6.0.0")
+    testImplementation("com.rabbitmq:amqp-client:5.27.0")
     testImplementation("com.konghq:unirest-java:3.14.5")
     testImplementation("org.postgresql:postgresql:42.7.8")
     testImplementation("com.auth0:java-jwt:4.5.0")
