@@ -77,12 +77,13 @@ public class AAIAspect {
             String.format(
                 "Incorrect JWT audience! Expected '%s' but got '%s'", elixirAAIClientId, audience));
       String subject = tokenService.getSubject(passportScopedAccessToken);
+      String sanitizedSubject = subject.replaceAll("[\\r\\n]", "_");
       List<Visa> controlledAccessGrantsVisas =
           tokenService.getControlledAccessGrantsVisas(passportScopedAccessToken);
       log.info(
           "Elixir user {} authenticated and provided following valid GA4GH Visas: {}",
-          subject,
-          controlledAccessGrantsVisas);
+              sanitizedSubject,
+              controlledAccessGrantsVisas);
       request.setAttribute(ELIXIR_ID, subject);
       return joinPoint.proceed();
     } catch (Exception e) {

@@ -68,6 +68,9 @@ jobs:
             echo "e2e tests completed successfully"
           fi
 
+      - name: Proxy log
+        run: |
+          docker logs proxy
       - name: Containers status
         if: failure()
         run: |

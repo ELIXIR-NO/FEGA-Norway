@@ -40,12 +40,13 @@ public class ExportRequestService {
       throws GenericException, IllegalArgumentException {
 
     String subject = tokenService.getSubject(exportRequestDto.getAccessToken());
+    String sanitizedSubject = subject.replaceAll("[\\r\\n]", "_");
     List<Visa> controlledAccessGrantsVisas =
         tokenService.getControlledAccessGrantsVisas(exportRequestDto.getAccessToken());
     log.info(
         "Elixir user {} authenticated and provided following valid GA4GH Visas: {}",
-        subject,
-        controlledAccessGrantsVisas);
+            maskSubject(sanitizedSubject),
+            controlledAccessGrantsVisas);
 
     Set<Visa> collect =
         controlledAccessGrantsVisas.stream()
@@ -59,9 +60,9 @@ public class ExportRequestService {
     if (collect.isEmpty()) {
       log.info(
           "No visas found for user {}. Requested to export {} {}",
-          subject,
-          exportRequestDto.getId(),
-          exportRequestDto.getType());
+              maskSubject(sanitizedSubject),
+              exportRequestDto.getId(),
+              exportRequestDto.getType());
       throw new GenericException(HttpStatus.BAD_REQUEST, "No visas found");
     }
 
@@ -91,4 +92,16 @@ public class ExportRequestService {
                   routingKey);
             }));
   }
+    private String maskSubject(String subject) {
+        String username = subject.substring(0, subject.indexOf("@"));
+        log.info("The USERNAME is {}", username);
+        //mask the username
+        if (username.length() < 6)
+            subject = subject.replaceAll("(?<=.{2}).(?=.*.{1}@)", "*");
+        else subject = subject.replaceAll("(?<=.{3}).(?=.*.{2}@)", "*");
+        // mask the domain
+        log.info("The subject is {}", subject);
+        return subject.replaceAll("(?<=@)[^.]+(?=\\.[^.]+$)", "*****");
+    }
 }
+
