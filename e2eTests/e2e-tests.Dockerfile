@@ -1,19 +1,23 @@
-# Use Temurin 21 as the base image for Java 21
-FROM eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin:21-jdk-alpine AS builder
 
-# Install bash
+# imply FEGA-Norway monorepo root
+WORKDIR /FEGA-Norway
+
+# copy the entire monorepo
+COPY . .
+
+RUN ./gradlew e2eTests:jar
+
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
 RUN apk add --no-cache bash
 
-# Set the working directory in the container
-WORKDIR /fega-norway
+COPY --from=builder /FEGA-Norway/e2eTests/build/libs/e2eTests.jar .
+COPY --from=builder /FEGA-Norway/e2eTests/env.sh .
+COPY --from=builder /FEGA-Norway/e2eTests/entrypoint.sh .
 
-# Copy the application JAR and scripts
-COPY /build/libs/e2eTests.jar /fega-norway/e2eTests.jar
-COPY env.sh /fega-norway/env.sh
-COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
-# Make entrypoint executable
-RUN chmod +x /entrypoint.sh
-
-# Run the entrypoint using bash
-CMD ["/bin/bash", "/entrypoint.sh"]
+CMD ["/bin/bash", "/app/entrypoint.sh"]
