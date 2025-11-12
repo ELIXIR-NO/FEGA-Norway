@@ -12,7 +12,7 @@ tasks.register("generateChangelog") {
         // 2. Get latest tag for this module
         val tagPattern = "$moduleName-*"
         val tagProcess = ProcessBuilder(
-            "bash", "-c", "git tag --list '$tagPattern' --sort=-creatordate | head -n 1"
+            "/bin/bash", "-c", "git tag --list '$tagPattern' --sort=-creatordate | head -n 1"
         )
             .directory(project.rootDir)
             .redirectErrorStream(true)
