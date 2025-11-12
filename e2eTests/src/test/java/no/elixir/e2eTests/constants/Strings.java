@@ -7,32 +7,25 @@ public class Strings {
   public static final String BEGIN_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----";
   public static final String END_PRIVATE_KEY = "-----END PRIVATE KEY-----";
 
-  public static final String VISA_HEADER =
-      """
-            {
-              "jku": "https://login.elixir-czech.org/oidc/jwk",
-              "kid": "rsa1",
-              "typ": "JWT",
-              "alg": "RS256"
-            }""";
+  // JWT Header constants
+  public static final String JWT_JKU = "https://login.elixir-czech.org/oidc/jwk";
+  public static final String JWT_KID = "rsa1";
+  public static final String JWT_TYP = "JWT";
+  public static final String JWT_ALG = "RS256";
 
-  public static final String VISA_PAYLOAD =
-      """
-            {
-              "sub": "dummy@elixir-europe.org",
-	      "aud": "%s",
-              "ga4gh_visa_v1": {
-                "asserted": 1583757401,
-                "by": "dac",
-                "source": "https://login.elixir-czech.org/google-idp/",
-                "type": "ControlledAccessGrants",
-                "value": "https://ega.tsd.usit.uio.no/datasets/%s/"
-              },
-              "iss": "https://login.elixir-czech.org/oidc/",
-              "exp": 32503680000,
-              "iat": 1583757671,
-              "jti": "f520d56f-e51a-431c-94e1-2a3f9da8b0c9"
-            }""";
+  // JWT Payload constants
+  public static final String JWT_SUBJECT = "dummy@elixir-europe.org";
+  public static final String JWT_ISSUER = "https://login.elixir-czech.org/oidc/";
+  public static final String JWT_ID = "f520d56f-e51a-431c-94e1-2a3f9da8b0c9";
+  public static final long JWT_EXPIRATION = 32503680000L;
+  public static final long JWT_ISSUED_AT = 1583757671L;
+
+  // GA4GH Visa constants
+  public static final long VISA_ASSERTED = 1583757401L;
+  public static final String VISA_BY = "dac";
+  public static final String VISA_SOURCE = "https://login.elixir-czech.org/google-idp/";
+  public static final String VISA_TYPE = "ControlledAccessGrants";
+  public static final String VISA_VALUE_TEMPLATE = "https://ega.tsd.usit.uio.no/datasets/%s/";
 
   public static final String INGEST_MESSAGE =
       """
