@@ -11,6 +11,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.clearinghouse.model.Visa;
 import no.elixir.fega.ltp.authentication.CEGACredentialsProvider;
+import no.elixir.fega.ltp.common.Masker;
 import no.elixir.fega.ltp.dto.Credentials;
 import no.elixir.fega.ltp.services.TokenService;
 import org.apache.commons.codec.digest.Crypt;
@@ -82,7 +83,7 @@ public class AAIAspect {
           tokenService.getControlledAccessGrantsVisas(passportScopedAccessToken);
       log.info(
           "Elixir user {} authenticated and provided following valid GA4GH Visas: {}",
-              maskSubject(sanitizedSubject),
+              Masker.maskEmail(sanitizedSubject),
               controlledAccessGrantsVisas);
       request.setAttribute(ELIXIR_ID, subject);
       return joinPoint.proceed();
@@ -149,16 +150,4 @@ public class AAIAspect {
   protected Optional<String> getBearerAuth() {
     return Optional.ofNullable(request.getHeader(HttpHeaders.PROXY_AUTHORIZATION));
   }
-
-  private String maskSubject(String subject) {
-        String username = subject.substring(0, subject.indexOf("@"));
-        log.info("The USERNAME is {}", username);
-        //mask the username
-        if (username.length() < 6)
-            subject = subject.replaceAll("(?<=.{2}).(?=.*.{1}@)", "*");
-        else subject = subject.replaceAll("(?<=.{3}).(?=.*.{2}@)", "*");
-        // mask the domain
-        log.info("The subject is {}", subject);
-        return subject.replaceAll("(?<=@)[^.]+(?=\\.[^.]+$)", "*****");
-    }
 }

@@ -6,6 +6,7 @@ import static no.elixir.fega.ltp.aspects.ProcessArgumentsAspect.ELIXIR_ID;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import no.elixir.fega.ltp.common.Masker;
 import org.apache.commons.collections4.CollectionUtils;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
@@ -50,6 +51,6 @@ public class CredentialsMappingAspect {
       return;
     }
     jdbcTemplate.update("insert into mapping values (?, ?)", egaUsername, elixirId);
-    log.info("Mapped EGA account [{}] to Elixir account [{}]", egaUsername, elixirId);
+    log.info("Mapped EGA account [{}] to Elixir account [{}]", Masker.maskUsername(egaUsername), Masker.maskEmail(elixirId));
   }
 }

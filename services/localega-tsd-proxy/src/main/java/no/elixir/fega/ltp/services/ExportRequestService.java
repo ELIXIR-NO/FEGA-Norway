@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.clearinghouse.model.Visa;
+import no.elixir.fega.ltp.common.Masker;
 import no.elixir.fega.ltp.dto.ExportRequestDto;
 import no.elixir.fega.ltp.exceptions.GenericException;
 import no.elixir.fega.ltp.models.DOAExportRequest;
@@ -45,7 +46,7 @@ public class ExportRequestService {
         tokenService.getControlledAccessGrantsVisas(exportRequestDto.getAccessToken());
     log.info(
         "Elixir user {} authenticated and provided following valid GA4GH Visas: {}",
-            maskSubject(sanitizedSubject),
+            Masker.maskEmail(sanitizedSubject),
             controlledAccessGrantsVisas);
 
     Set<Visa> collect =
@@ -60,7 +61,7 @@ public class ExportRequestService {
     if (collect.isEmpty()) {
       log.info(
           "No visas found for user {}. Requested to export {} {}",
-              maskSubject(sanitizedSubject),
+              Masker.maskEmail(sanitizedSubject),
               exportRequestDto.getId(),
               exportRequestDto.getType());
       throw new GenericException(HttpStatus.BAD_REQUEST, "No visas found");
@@ -92,16 +93,5 @@ public class ExportRequestService {
                   routingKey);
             }));
   }
-    private String maskSubject(String subject) {
-        String username = subject.substring(0, subject.indexOf("@"));
-        log.info("The USERNAME is {}", username);
-        //mask the username
-        if (username.length() < 6)
-            subject = subject.replaceAll("(?<=.{2}).(?=.*.{1}@)", "*");
-        else subject = subject.replaceAll("(?<=.{3}).(?=.*.{2}@)", "*");
-        // mask the domain
-        log.info("The subject is {}", subject);
-        return subject.replaceAll("(?<=@)[^.]+(?=\\.[^.]+$)", "*****");
-    }
 }
 
