@@ -125,7 +125,7 @@ public class AAIAspect {
       if (!cegaAuth(usernameAndPassword[0], usernameAndPassword[1])) {
         throw new AuthenticationException("EGA authentication failed");
       }
-      log.info("EGA user {} authenticated", usernameAndPassword[0]);
+      log.info("EGA user {} authenticated", Masker.maskUsername(usernameAndPassword[0]));
       request.setAttribute(ProcessArgumentsAspect.EGA_USERNAME, usernameAndPassword[0]);
       return joinPoint.proceed();
     } catch (Exception e) {
