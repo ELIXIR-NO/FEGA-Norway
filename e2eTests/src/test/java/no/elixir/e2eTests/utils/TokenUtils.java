@@ -1,13 +1,14 @@
 package no.elixir.e2eTests.utils;
 
-import com.auth0.jwt.algorithms.Algorithm;
+import io.jsonwebtoken.Jwts;
 import java.nio.charset.Charset;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import no.elixir.e2eTests.constants.Strings;
 import no.elixir.e2eTests.core.E2EState;
 import org.apache.commons.io.FileUtils;
@@ -15,26 +16,33 @@ import org.apache.commons.io.FileUtils;
 public class TokenUtils {
 
   public static String generateVisaToken(String resource) throws Exception {
-    RSAPublicKey publicKey = getPublicKey();
     RSAPrivateKey privateKey = getPrivateKey();
-    byte[] visaHeader = Base64.getUrlEncoder().encode(Strings.VISA_HEADER.getBytes());
-    byte[] visaPayload =
-        Base64.getUrlEncoder()
-            .encode(
-                String.format(Strings.VISA_PAYLOAD, E2EState.env.getProxyTokenAudience(), resource)
-                    .getBytes());
-    byte[] visaSignature = Algorithm.RSA256(publicKey, privateKey).sign(visaHeader, visaPayload);
-    return "%s.%s.%s"
-        .formatted(
-            new String(visaHeader),
-            new String(visaPayload),
-            Base64.getUrlEncoder().encodeToString(visaSignature));
-  }
-
-  public static RSAPublicKey getPublicKey() throws Exception {
-    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-    byte[] decodedKey = Base64.getDecoder().decode(encodedPublicKey());
-    return (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(decodedKey));
+    // Build the GA4GH visa claim
+    Map<String, Object> ga4ghVisa = new HashMap<>();
+    ga4ghVisa.put("asserted", Strings.VISA_ASSERTED);
+    ga4ghVisa.put("by", Strings.VISA_BY);
+    ga4ghVisa.put("source", Strings.VISA_SOURCE);
+    ga4ghVisa.put("type", Strings.VISA_TYPE);
+    ga4ghVisa.put("value", String.format(Strings.VISA_VALUE_TEMPLATE, resource));
+    // Build and sign the JWT
+    return Jwts.builder()
+        .header()
+        .add("jku", Strings.JWT_JKU)
+        .add("kid", Strings.JWT_KID)
+        .add("typ", Strings.JWT_TYP)
+        .add("alg", Strings.JWT_ALG)
+        .and()
+        .subject(Strings.JWT_SUBJECT)
+        .audience()
+        .add(E2EState.env.getProxyTokenAudience())
+        .and()
+        .claim("ga4gh_visa_v1", ga4ghVisa)
+        .issuer(Strings.JWT_ISSUER)
+        .expiration(new Date(Strings.JWT_EXPIRATION * 1000))
+        .issuedAt(new Date(Strings.JWT_ISSUED_AT * 1000))
+        .id(Strings.JWT_ID)
+        .signWith(privateKey, Jwts.SIG.RS256)
+        .compact();
   }
 
   public static String encodedPublicKey() throws Exception {
