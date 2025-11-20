@@ -14,9 +14,21 @@ public class FileDescriptor {
   @ToString.Exclude
   private String user;
 
+  @SerializedName("user")
+  @ToString.Include
+  private String maskUser() {
+      return Masker.maskUsername(user);
+  }
+
   @SerializedName("filepath")
   @ToString.Exclude
   private String filePath;
+
+  @SerializedName("filepath")
+  @ToString.Include
+  private String maskFilepath() {
+      return Masker.maskEmailInPath(filePath);
+  }
 
   @SerializedName("operation")
   private String operation;
@@ -35,15 +47,4 @@ public class FileDescriptor {
 
   @SerializedName("encrypted_checksums")
   private EncryptedIntegrity[] encryptedIntegrity;
-
-  @SerializedName("user")
-  @ToString.Include
-  private String maskUser() {
-      return Masker.maskUsername(user);
-  }
-    @SerializedName("filepath")
-    @ToString.Include
-    private String maskFilepath() {
-        return Masker.maskEmailInPath(filePath);
-    }
 }

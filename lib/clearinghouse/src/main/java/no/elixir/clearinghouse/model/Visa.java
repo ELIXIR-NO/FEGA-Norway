@@ -16,6 +16,11 @@ public class Visa {
 
   @ToString.Exclude private String sub; // JWT subject
 
+  @ToString.Include
+  private String maskedSub() {
+    return Masker.maskEmail(sub);
+  }
+
   @NonNull private String type; // passport visa type
 
   @NonNull private Long asserted; // seconds since epoch
@@ -38,9 +43,4 @@ public class Visa {
    * information is not exposed.
    */
   @ToString.Exclude private transient String rawToken;
-
-  @ToString.Include
-  private String maskedSub() {
-    return Masker.maskEmail(sub);
-  }
 }
