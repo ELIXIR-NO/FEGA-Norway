@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.clearinghouse.model.Visa;
+import no.elixir.fega.ltp.common.Masker;
 import no.elixir.fega.ltp.dto.ExportRequestDto;
 import no.elixir.fega.ltp.exceptions.GenericException;
 import no.elixir.fega.ltp.models.DOAExportRequest;
@@ -40,11 +41,12 @@ public class ExportRequestService {
       throws GenericException, IllegalArgumentException {
 
     String subject = tokenService.getSubject(exportRequestDto.getAccessToken());
+    String sanitizedSubject = subject.replaceAll("[\\r\\n]", "_");
     List<Visa> controlledAccessGrantsVisas =
         tokenService.getControlledAccessGrantsVisas(exportRequestDto.getAccessToken());
     log.info(
         "Elixir user {} authenticated and provided following valid GA4GH Visas: {}",
-        subject,
+        Masker.maskEmail(sanitizedSubject),
         controlledAccessGrantsVisas);
 
     Set<Visa> collect =
@@ -59,7 +61,7 @@ public class ExportRequestService {
     if (collect.isEmpty()) {
       log.info(
           "No visas found for user {}. Requested to export {} {}",
-          subject,
+          Masker.maskEmail(sanitizedSubject),
           exportRequestDto.getId(),
           exportRequestDto.getType());
       throw new GenericException(HttpStatus.BAD_REQUEST, "No visas found");

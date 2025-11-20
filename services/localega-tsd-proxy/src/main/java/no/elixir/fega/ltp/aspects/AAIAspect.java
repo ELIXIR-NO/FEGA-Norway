@@ -11,6 +11,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.clearinghouse.model.Visa;
 import no.elixir.fega.ltp.authentication.CEGACredentialsProvider;
+import no.elixir.fega.ltp.common.Masker;
 import no.elixir.fega.ltp.dto.Credentials;
 import no.elixir.fega.ltp.services.TokenService;
 import org.apache.commons.codec.digest.Crypt;
@@ -77,11 +78,12 @@ public class AAIAspect {
             String.format(
                 "Incorrect JWT audience! Expected '%s' but got '%s'", elixirAAIClientId, audience));
       String subject = tokenService.getSubject(passportScopedAccessToken);
+      String sanitizedSubject = subject.replaceAll("[\\r\\n]", "_");
       List<Visa> controlledAccessGrantsVisas =
           tokenService.getControlledAccessGrantsVisas(passportScopedAccessToken);
       log.info(
           "Elixir user {} authenticated and provided following valid GA4GH Visas: {}",
-          subject,
+          Masker.maskEmail(sanitizedSubject),
           controlledAccessGrantsVisas);
       request.setAttribute(ELIXIR_ID, subject);
       return joinPoint.proceed();
@@ -123,7 +125,7 @@ public class AAIAspect {
       if (!cegaAuth(usernameAndPassword[0], usernameAndPassword[1])) {
         throw new AuthenticationException("EGA authentication failed");
       }
-      log.info("EGA user {} authenticated", usernameAndPassword[0]);
+      log.info("EGA user {} authenticated", Masker.maskUsername(usernameAndPassword[0]));
       request.setAttribute(ProcessArgumentsAspect.EGA_USERNAME, usernameAndPassword[0]);
       return joinPoint.proceed();
     } catch (Exception e) {
