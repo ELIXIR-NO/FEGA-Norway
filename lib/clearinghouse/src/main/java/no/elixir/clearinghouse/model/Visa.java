@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.ToString;
+import no.elixir.clearinghouse.common.Masker;
 
 /** POJO representing Crypt4GH visa. */
 @Data
@@ -13,7 +14,12 @@ import lombok.ToString;
 @NoArgsConstructor
 public class Visa {
 
-  private String sub; // JWT subject
+  @ToString.Exclude private String sub; // JWT subject
+
+  @ToString.Include
+  private String maskedSub() {
+    return Masker.maskEmail(sub);
+  }
 
   @NonNull private String type; // passport visa type
 
