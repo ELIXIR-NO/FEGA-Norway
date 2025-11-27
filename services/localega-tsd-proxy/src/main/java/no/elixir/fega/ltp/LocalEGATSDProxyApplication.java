@@ -19,7 +19,8 @@ import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -47,6 +48,7 @@ import org.springframework.web.client.RestTemplate;
 @EnableCaching
 @SpringBootApplication
 @EnableWebSecurity
+@AutoConfigureTestRestTemplate
 public class LocalEGATSDProxyApplication {
 
   @Value("${token.redirect-uri}")
