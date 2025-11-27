@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("org.springframework.boot") version "3.5.7"
+    id("org.springframework.boot") version "4.0.0"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -22,11 +22,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("org.springframework.boot:spring-boot-starter-aspectj")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-resttestclient")
+    implementation("org.springframework.boot:spring-boot-gson")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
     runtimeOnly("org.postgresql:postgresql")
@@ -38,7 +41,6 @@ dependencies {
 
 configurations {
     all {
-        exclude(group = "commons-logging", module = "commons-logging")
         exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
 }
