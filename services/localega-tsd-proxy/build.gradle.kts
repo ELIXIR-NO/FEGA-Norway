@@ -27,6 +27,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-resttestclient")
+    implementation("org.springframework.boot:spring-boot-gson")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
     testImplementation("org.springframework.security:spring-security-test")
@@ -40,7 +41,6 @@ dependencies {
 
 configurations {
     all {
-        exclude(group = "commons-logging", module = "commons-logging")
         exclude(group = "org.slf4j", module = "slf4j-jdk14")
     }
 }
