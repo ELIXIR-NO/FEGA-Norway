@@ -50,7 +50,7 @@ publishing {
             from(components["java"])
             pom {
                 name.set("Clearinghouse")
-                description.set("GA4GH passports validation and parsing")
+                description.set("GA4GH passports validation and parsing ")
                 url.set("https://github.com/ELIXIR-NO/FEGA-Norway/tree/main/lib/clearinghouse")
                 organization {
                     name.set("Elixir Norway")

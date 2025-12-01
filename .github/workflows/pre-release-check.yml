@@ -51,6 +51,11 @@ jobs:
           ./gradlew lib:${{matrix.component}}:clean lib:${{matrix.component}}:build lib:${{matrix.component}}:publishMavenJavaPublicationToLocalStagingRepository \
             -Pversion=1.0.0-DRYRUN
 
+      - name: Built files
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
+        run: |
+          ls -1 build/jreleaser/staging-deploy/no/elixir/clearinghouse/1.0.0-DRYRUN
+
       - name: Run JReleaser
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
         uses: jreleaser/release-action@v2
