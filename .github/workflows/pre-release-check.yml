@@ -32,16 +32,6 @@ jobs:
         run: |
           ./gradlew :lib:${{matrix.component}}:publish --dry-run
 
-      - name: Publish Jar Files crypt4gh
-        if: ${{ matrix.component == 'crypt4gh'}}
-        run: |
-          ./gradlew :lib:${{matrix.component}}:publishLibraryPublicationToGithubRegistry --dry-run
-
-      - name: Publish Jar Files clearinghouse
-        if: ${{ matrix.component == 'clearinghouse' }}
-        run: |
-          ./gradlew :lib:${{matrix.component}}:publishMavenJavaPublicationToGithubRegistryRepository --dry-run
-
       - name: Build and publish to local staging for JReleaser
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
         env:
