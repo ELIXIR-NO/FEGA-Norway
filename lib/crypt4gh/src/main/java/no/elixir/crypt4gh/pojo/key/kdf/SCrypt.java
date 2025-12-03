@@ -304,7 +304,7 @@ public class SCrypt {
     byte[] U = new byte[hLen];
     byte[] T = new byte[hLen];
     if (S.length > Integer.MAX_VALUE - 4) {
-        throw new IllegalArgumentException("Salt is too large");
+      throw new IllegalArgumentException("Salt is too large");
     }
     byte[] block1 = new byte[S.length + 4];
 
