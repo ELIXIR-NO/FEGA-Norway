@@ -255,7 +255,7 @@ public class SCrypt {
 
     Bi += (2 * r - 1) * 64;
 
-    n = (B[Bi + 0] & 0xff) << 0;
+    n = (B[Bi] & 0xff);
     n |= (B[Bi + 1] & 0xff) << 8;
     n |= (B[Bi + 2] & 0xff) << 16;
     n |= (B[Bi + 3] & 0xff) << 24;
@@ -303,6 +303,9 @@ public class SCrypt {
 
     byte[] U = new byte[hLen];
     byte[] T = new byte[hLen];
+    if (S.length > Integer.MAX_VALUE - 4) {
+        throw new IllegalArgumentException("Salt is too large");
+    }
     byte[] block1 = new byte[S.length + 4];
 
     int l = (int) Math.ceil((double) dkLen / hLen);
@@ -311,10 +314,10 @@ public class SCrypt {
     arraycopy(S, 0, block1, 0, S.length);
 
     for (int i = 1; i <= l; i++) {
-      block1[S.length + 0] = (byte) (i >> 24 & 0xff);
+      block1[S.length] = (byte) (i >> 24 & 0xff);
       block1[S.length + 1] = (byte) (i >> 16 & 0xff);
       block1[S.length + 2] = (byte) (i >> 8 & 0xff);
-      block1[S.length + 3] = (byte) (i >> 0 & 0xff);
+      block1[S.length + 3] = (byte) (i & 0xff);
 
       mac.update(block1);
       mac.doFinal(U, 0);
