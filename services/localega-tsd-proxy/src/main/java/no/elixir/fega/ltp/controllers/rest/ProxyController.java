@@ -197,6 +197,19 @@ public class ProxyController {
         tsdFileAPIClient.deleteResumableUpload(token.getToken(), tsdAppId, uploadId));
   }
 
+  /**
+   * Gets TSD token.
+   *
+   * @param bearerAuthorization Elixir AAI token.
+   * @return TSD token.
+   */
+  @GetMapping("/gettoken")
+  public ResponseEntity<?> getToken(@RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization) throws IOException {
+    String elixirToken = getElixirAAIToken(bearerAuthorization);
+    Token token = tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
+    return ResponseEntity.ok(token);
+  }
+
   protected String getElixirAAIToken(String bearerAuthorization) {
     return bearerAuthorization.replace("Bearer ", "");
   }
