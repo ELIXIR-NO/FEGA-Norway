@@ -630,9 +630,9 @@ public class TSDFileAPIClient {
         OkHttpClient.Builder httpClientBuilder =
             new OkHttpClient.Builder()
                 // Set connection, read, and write timeouts for the HTTP client
-                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS);
+                .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(180, java.util.concurrent.TimeUnit.SECONDS);
 
         // SSL Verification and Client Certificate Handling
         if (enableSsl
