@@ -16,7 +16,7 @@ public class Visa {
 
   @ToString.Exclude private String sub; // JWT subject
 
-  @ToString.Include
+  @ToString.Include(name = "sub")
   private String maskedSub() {
     return Masker.maskEmail(sub);
   }
