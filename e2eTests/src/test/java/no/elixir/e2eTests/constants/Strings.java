@@ -20,7 +20,7 @@ public class Strings {
       """
             {
               "sub": "%s",
-	      "aud": "%s",
+              "aud": "%s",
               "ga4gh_visa_v1": {
                 "asserted": 1583757401,
                 "by": "dac",
@@ -39,7 +39,7 @@ public class Strings {
               {
                 "type": "ingest",
                 "user": "%s",
-                "filepath": "/p11-dummy@elixir-europe.org/files/%s"
+                "filepath": "/%s-%s/files/%s"
               }
             """;
 
@@ -48,7 +48,7 @@ public class Strings {
             {
                 "type": "accession",
                 "user": "%s",
-                "filepath": "/p11-dummy@elixir-europe.org/files/%s",
+                "filepath": "/%s-%s/files/%s",
                 "accession_id": "%s",
                 "decrypted_checksums": [
                     {
@@ -102,8 +102,8 @@ public class Strings {
           }
           """;
 
-    public static final String EXPORT_REQ_BODY_FEGA =
-            """
+  public static final String EXPORT_REQ_BODY_FEGA =
+      """
                 {
                     "id": "%s",
                     "visaToken": "%s",

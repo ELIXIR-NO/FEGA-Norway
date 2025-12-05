@@ -77,6 +77,17 @@ public class CertificateUtils {
     return file;
   }
 
+  public static File getFile(String absolutePath) throws FileNotFoundException {
+    Path filePath = Paths.get(absolutePath);
+    File file = filePath.toFile();
+
+    if (!file.exists()) {
+      throw new FileNotFoundException("File not found: " + file.getAbsolutePath());
+    }
+
+    return file;
+  }
+
   /**
    * Retrieves a file from either a local Docker container or directly from the mapped volume,
    * depending on the test runtime environment.

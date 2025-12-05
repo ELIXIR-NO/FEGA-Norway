@@ -15,9 +15,13 @@ public class UploadTest {
 
   public static void uploadThroughProxy() throws Exception {
     E2EState.log.info("Uploading a file through a proxy...");
-    String token = (E2EState.env.getLSAAIToken() == null || E2EState.env.getLSAAIToken().isEmpty())
-          ? TokenUtils.generateVisaToken("upload", "jwt.pub.pem", "jwt.priv.pem")
-          : E2EState.env.getLSAAIToken();
+    String token =
+        (E2EState.env.getLSAAIToken() == null || E2EState.env.getLSAAIToken().isEmpty())
+            ? TokenUtils.generateVisaToken(
+                "upload",
+                E2EState.env.getEgaDevJwtPubKeyPath(),
+                E2EState.env.getEgaDevJwtPrivKeyPath())
+            : E2EState.env.getLSAAIToken();
     E2EState.log.info("Visa JWT token when uploading: {}", token);
     String md5Hex = DigestUtils.md5Hex(Files.newInputStream(E2EState.encFile.toPath()));
     E2EState.log.info("Encrypted MD5 checksum: {}", md5Hex);

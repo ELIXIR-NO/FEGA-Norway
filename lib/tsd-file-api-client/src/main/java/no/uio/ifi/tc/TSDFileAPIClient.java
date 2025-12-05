@@ -64,6 +64,8 @@ public class TSDFileAPIClient {
 
     try {
       Response response = client.newCall(request).execute();
+      log.info("Response: {}", response);
+      log.info("Response Code: {}", response.code());
 
       // TODO: Ensure the response body is not null
       if (response.body() != null) {

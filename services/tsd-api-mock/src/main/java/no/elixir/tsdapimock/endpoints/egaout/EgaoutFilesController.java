@@ -36,4 +36,8 @@ public class EgaoutFilesController {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
   }
+
+
+  // FIXME: have download functionality
+
 }

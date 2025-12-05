@@ -8,63 +8,61 @@ import org.junit.jupiter.api.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class EgaDevIntegrationTest {
 
-    @BeforeAll
-    static void setup() throws Exception {
-        BaseE2ETest.setupEgaDevTestEnvironment();
-    }
+  @BeforeAll
+  static void setup() throws Exception {
+    BaseE2ETest.setupEgaDevTestEnvironment();
+  }
 
-    @AfterAll
-    static void cleanup() {
-        BaseE2ETest.cleanupTestEnvironment();
-    }
+  @AfterAll
+  static void cleanup() {
+    BaseE2ETest.cleanupTestEnvironment();
+  }
 
-    @Test
-    @Order(1)
-    void UploadTest() throws Exception {
-        UploadTest.uploadThroughProxy();
-        // Wait for triggers to be set up at CEGA.
-        // Not really needed if using local CEGA container.
-        CommonUtils.waitForProcessing(5000);
-    }
+  @Test
+  @Order(1)
+  void UploadTest() throws Exception {
+    UploadTest.uploadThroughProxy();
+    // Wait for triggers to be set up at CEGA.
+    // Not really needed if using local CEGA container.
+    CommonUtils.waitForProcessing(5000);
+  }
 
-    @Test
-    @Order(2)
-        //
-    void IngestTest() throws Exception {
-        IngestTest.publishIngestionMessageToCEGA();
-        // Wait for the LEGA ingest and verify services
-        // to complete and update DB.
-        CommonUtils.waitForProcessing(5000);
-    }
+  @Test
+  @Order(2)
+  void IngestTest() throws Exception {
+    IngestTest.publishIngestionMessageToCEGA();
+    // Wait for the LEGA ingest and verify services
+    // to complete and update DB.
+    CommonUtils.waitForProcessing(5000);
+  }
 
-    @Test
-    @Order(3)
-    void AccessionTest() throws Exception {
-        AccessionTest.publishAccessionMessageOnBehalfOfCEGAToLocalEGA();
-        // Wait for LEGA finalize service to complete and update DB.
-        CommonUtils.waitForProcessing(5000);
-    }
+  @Test
+  @Order(3)
+  void AccessionTest() throws Exception {
+    AccessionTest.publishAccessionMessageOnBehalfOfCEGAToLocalEGA();
+    // Wait for LEGA finalize service to complete and update DB.
+    CommonUtils.waitForProcessing(5000);
+  }
 
-    @Test
-    @Order(4)
-    void MappingTest() throws Exception {
-        MappingTest.triggerMappingMessageFromCEGA();
-        // Wait for LEGA mapper service to store mapping
-        CommonUtils.waitForProcessing(1000);
-    }
+  @Test
+  @Order(4)
+  void MappingTest() throws Exception {
+    MappingTest.triggerMappingMessageFromCEGA();
+    // Wait for LEGA mapper service to store mapping
+    CommonUtils.waitForProcessing(1000);
+  }
 
-    @Test
-    @Order(5)
-    void ReleaseTest() throws Exception {
-        ReleaseTest.triggerReleaseMessageFromCEGA();
-        // Wait for LEGA mapper service to update dataset status
-        CommonUtils.waitForProcessing(1000);
-    }
+  @Test
+  @Order(5)
+  void ReleaseTest() throws Exception {
+    ReleaseTest.triggerReleaseMessageFromCEGA();
+    // Wait for LEGA mapper service to update dataset status
+    CommonUtils.waitForProcessing(1000);
+  }
 
-    @Test
-    @Order(6)
-    void DownloadTest() throws Exception {
-        DownloadWithExportRequestTest.testDownloadDatasetUsingFegaExportRequestAndVerifyResults();
-    }
-
+  @Test
+  @Order(6)
+  void DownloadTest() throws Exception {
+    DownloadWithExportRequestTest.testDownloadDatasetUsingFegaExportRequestAndVerifyResults();
+  }
 }

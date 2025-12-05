@@ -5,23 +5,25 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import java.nio.charset.StandardCharsets;
+import javax.net.ssl.SSLContext;
 import no.elixir.e2eTests.constants.Strings;
 import no.elixir.e2eTests.core.E2EState;
 import no.elixir.e2eTests.utils.CertificateUtils;
-
-import javax.net.ssl.SSLContext;
 
 public class ReleaseTest {
 
   public static void triggerReleaseMessageFromCEGA() throws Exception {
     E2EState.log.info("Releasing the dataset...");
     ConnectionFactory factory = new ConnectionFactory();
+    String uri = E2EState.env.getBrokerConnectionString();
+    factory.setUri(uri);
+    if (uri.startsWith("amqps")) {
       try {
-          factory.useSslProtocol(CertificateUtils.createSslContext());
+        factory.useSslProtocol(CertificateUtils.createSslContext());
       } catch (Exception e) {
-          factory.useSslProtocol(SSLContext.getDefault());
+        factory.useSslProtocol(SSLContext.getDefault());
       }
-    factory.setUri(E2EState.env.getBrokerConnectionString());
+    }
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
     AMQP.BasicProperties properties =

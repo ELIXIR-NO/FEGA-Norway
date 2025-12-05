@@ -5,24 +5,26 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import java.nio.charset.StandardCharsets;
+import javax.net.ssl.SSLContext;
 import no.elixir.e2eTests.constants.Strings;
 import no.elixir.e2eTests.core.E2EState;
 import no.elixir.e2eTests.utils.CertificateUtils;
 import no.elixir.e2eTests.utils.CommonUtils;
-
-import javax.net.ssl.SSLContext;
 
 public class AccessionTest {
 
   public static void publishAccessionMessageOnBehalfOfCEGAToLocalEGA() throws Exception {
     E2EState.log.info("Publishing accession message on behalf of CEGA to CEGA RMQ...");
     ConnectionFactory factory = new ConnectionFactory();
-    try {
+    String uri = E2EState.env.getBrokerConnectionString();
+    factory.setUri(uri);
+    if (uri.startsWith("amqps")) {
+      try {
         factory.useSslProtocol(CertificateUtils.createSslContext());
-    } catch (Exception e) {
+      } catch (Exception e) {
         factory.useSslProtocol(SSLContext.getDefault());
+      }
     }
-    factory.setUri(E2EState.env.getBrokerConnectionString());
     Connection connectionFactory = factory.newConnection();
     Channel channel = connectionFactory.createChannel();
     AMQP.BasicProperties properties =
@@ -34,10 +36,13 @@ public class AccessionTest {
             .correlationId(E2EState.correlationId)
             .build();
     String randomFileAccessionID = "EGAF5" + CommonUtils.getRandomNumber(10);
+    E2EState.stableId = randomFileAccessionID; // shortcut. see: FinalizeTest
     String message =
         String.format(
             Strings.ACCESSION_MESSAGE,
             E2EState.env.getCegaAuthUsername(),
+            E2EState.env.getTsdProject(),
+            E2EState.env.getLsaaiSubject(),
             E2EState.encFile.getName(),
             randomFileAccessionID,
             E2EState.rawSHA256Checksum,

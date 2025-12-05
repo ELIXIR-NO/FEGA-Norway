@@ -43,6 +43,7 @@ public class FinalizeTest {
     }
     E2EState.archivePath = resultSet.getString(1);
     E2EState.stableId = resultSet.getString(2);
+    // assert the file id here as well- NOT SET
     E2EState.log.info("Stable ID: {}", E2EState.stableId);
     E2EState.log.info("Archive path: {}", E2EState.archivePath);
     E2EState.log.info("Verification completed successfully");
