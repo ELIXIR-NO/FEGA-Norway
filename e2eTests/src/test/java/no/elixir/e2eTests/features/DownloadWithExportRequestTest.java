@@ -77,7 +77,7 @@ public class DownloadWithExportRequestTest {
 
   private static String buildExportUrl() {
     return String.format(
-        "https://%s:%s/export", E2EState.env.getProxyHost(), E2EState.env.getProxyPort());
+        "https://%s:%s/export/fega", E2EState.env.getProxyHost(), E2EState.env.getProxyPort());
   }
 
   private static String buildListFilesUrl() {
