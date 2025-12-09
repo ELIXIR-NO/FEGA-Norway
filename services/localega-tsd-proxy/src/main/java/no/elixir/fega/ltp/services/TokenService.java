@@ -1,8 +1,8 @@
 package no.elixir.fega.ltp.services;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.jsonwebtoken.Claims;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -75,8 +75,8 @@ public class TokenService {
    * @throws IllegalArgumentException if the JWT token is invalid or cannot be verified
    */
   public List<Visa> getControlledAccessGrantsVisas(String jwtToken) {
-    JsonObject claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
-    boolean isVisa = claims.keySet().contains("ga4gh_visa_v1");
+    JsonNode claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
+    boolean isVisa = claims.has("ga4gh_visa_v1");
     Collection<Visa> visas = new ArrayList<>();
     if (isVisa) {
       verifyVisaTokenAndTransformToVisaObject(jwtToken).ifPresent(visas::add);
@@ -97,8 +97,8 @@ public class TokenService {
    * @throws NullPointerException if the JWT does not contain a subject claim.
    */
   public String getSubject(String jwtToken) throws IllegalArgumentException {
-    JsonObject claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
-    return claims.get(Claims.SUBJECT).getAsString();
+    JsonNode claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
+    return claims.get(Claims.SUBJECT).asText();
   }
 
   /**
@@ -111,9 +111,9 @@ public class TokenService {
    * @return the audience claim (aud) as a {@link String} or null if the audience claim is missing.
    */
   public String getAudience(String jwtToken) throws IllegalArgumentException {
-    JsonObject claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
-    JsonElement audience = claims.get(Claims.AUDIENCE);
-    return (audience != null) ? audience.getAsString() : null;
+    JsonNode claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
+    JsonNode audience = claims.get(Claims.AUDIENCE);
+    return (audience != null && !audience.isNull()) ? audience.asText() : null;
   }
 
   /**
@@ -121,17 +121,17 @@ public class TokenService {
    *
    * <p>This method splits the JWT token into its constituent parts (header, payload, and
    * signature), decodes the selected fragment (as specified by the {@link TokenFragment}), and
-   * deserializes it into a {@link JsonObject}.
+   * deserializes it into a {@link ObjectNode}.
    *
    * @param jwtToken the JWT token to extract a fragment from; must be a valid JWS-encoded JWT.
    * @param tokenFragment the fragment to extract, specified using the {@link TokenFragment} enum.
    *     The enum values correspond to the ordinal positions of the fragments in the JWT (0 for
    *     header, 1 for payload, 2 for signature).
-   * @return a {@link JsonObject} representing the decoded fragment.
+   * @return a {@link ObjectNode} representing the decoded fragment.
    * @throws IllegalArgumentException if the JWT token format is invalid or the specified fragment
    *     is missing.
    */
-  private JsonObject extractFragmentFromJWT(String jwtToken, TokenFragment tokenFragment)
+  private ObjectNode extractFragmentFromJWT(String jwtToken, TokenFragment tokenFragment)
       throws IllegalArgumentException {
     var fragments = jwtToken.split("[.]");
     String fragment = fragments[tokenFragment.ordinal()];
@@ -140,7 +140,16 @@ public class TokenService {
     }
     byte[] decodedPayload = Base64.getUrlDecoder().decode(fragment);
     String decodedPayloadString = new String(decodedPayload);
-    return new Gson().fromJson(decodedPayloadString, JsonObject.class);
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode node = mapper.readTree(decodedPayloadString);
+      if (!node.isObject()) {
+        throw new IllegalArgumentException("JWT fragment is not a JSON object");
+      }
+      return (ObjectNode) node;
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Failed to parse JSON fragment", e);
+    }
   }
 
   /**

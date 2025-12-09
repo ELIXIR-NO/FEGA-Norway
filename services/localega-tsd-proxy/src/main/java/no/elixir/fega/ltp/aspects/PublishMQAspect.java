@@ -2,7 +2,6 @@ package no.elixir.fega.ltp.aspects;
 
 import static no.elixir.fega.ltp.aspects.ProcessArgumentsAspect.*;
 
-import com.google.gson.Gson;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Objects;
 import java.util.UUID;
@@ -30,8 +29,6 @@ public class PublishMQAspect {
 
   private final HttpServletRequest request;
 
-  private final Gson gson;
-
   private final RabbitTemplate tsdRabbitTemplate;
 
   @Value("${tsd.project}")
@@ -47,9 +44,8 @@ public class PublishMQAspect {
   private String routingKey;
 
   @Autowired
-  public PublishMQAspect(HttpServletRequest request, Gson gson, RabbitTemplate tsdRabbitTemplate) {
+  public PublishMQAspect(HttpServletRequest request, RabbitTemplate tsdRabbitTemplate) {
     this.request = request;
-    this.gson = gson;
     this.tsdRabbitTemplate = tsdRabbitTemplate;
   }
 
