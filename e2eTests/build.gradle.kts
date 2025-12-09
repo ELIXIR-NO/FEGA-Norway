@@ -55,7 +55,7 @@ tasks.register<Exec>("assemble-binaries") {
         ":services:localega-tsd-proxy:build",
         "-x",
         "test",
-        "--parallel"
+        "--parallel",
     )
 }
 
@@ -87,7 +87,7 @@ tasks.test {
         ":lib:tsd-file-api-client:test",
         ":services:tsd-api-mock:test",
         ":services:mq-interceptor:test",
-        ":services:localega-tsd-proxy:test"
+        ":services:localega-tsd-proxy:test",
     )
     testLogging.showStandardStreams = true
 }
@@ -96,7 +96,7 @@ tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE // This will exclude duplicate files
     manifest {
         attributes(
-            "Main-Class" to "org.junit.platform.console.ConsoleLauncher"
+            "Main-Class" to "org.junit.platform.console.ConsoleLauncher",
         )
     }
     from(sourceSets["test"].output)

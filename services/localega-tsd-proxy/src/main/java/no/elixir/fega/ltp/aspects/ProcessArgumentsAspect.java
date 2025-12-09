@@ -48,14 +48,14 @@ public class ProcessArgumentsAspect {
       Class[] parameterTypes = signature.getParameterTypes();
       for (int i = 0; i < arguments.length; i++) {
         if (parameterTypes[i].equals(String.class)) {
-            switch (parameterNames[i]) {
-                case FILE_NAME -> request.setAttribute(FILE_NAME, arguments[i]);
-                case UPLOAD_ID -> request.setAttribute(UPLOAD_ID, arguments[i]);
-                case CHUNK -> request.setAttribute(CHUNK, arguments[i]);
-                case FILE_SIZE -> request.setAttribute(FILE_SIZE, arguments[i]);
-                case MD5 -> request.setAttribute(MD5, arguments[i]);
-                case SHA256 -> request.setAttribute(SHA256, arguments[i]);
-            }
+          switch (parameterNames[i]) {
+            case FILE_NAME -> request.setAttribute(FILE_NAME, arguments[i]);
+            case UPLOAD_ID -> request.setAttribute(UPLOAD_ID, arguments[i]);
+            case CHUNK -> request.setAttribute(CHUNK, arguments[i]);
+            case FILE_SIZE -> request.setAttribute(FILE_SIZE, arguments[i]);
+            case MD5 -> request.setAttribute(MD5, arguments[i]);
+            case SHA256 -> request.setAttribute(SHA256, arguments[i]);
+          }
         }
       }
       return joinPoint.proceed(arguments);

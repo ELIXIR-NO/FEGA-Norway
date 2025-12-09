@@ -97,13 +97,14 @@ publishing {
             // this currently only works for snapshots
             name = "MavenCentral"
             val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
-            url = uri(
-                if (isSnapshot) {
-                    "https://central.sonatype.com/repository/maven-snapshots/"
-                } else {
-                    "https://central.sonatype.com/api/v1/publisher/"
-                }
-            )
+            url =
+                uri(
+                    if (isSnapshot) {
+                        "https://central.sonatype.com/repository/maven-snapshots/"
+                    } else {
+                        "https://central.sonatype.com/api/v1/publisher/"
+                    },
+                )
             credentials {
                 username = System.getenv("MAVEN_CENTRAL_TOKEN_USER") ?: ""
                 password = System.getenv("MAVEN_CENTRAL_TOKEN_PASSWORD") ?: ""
@@ -114,10 +115,12 @@ publishing {
         // These can later be pushed to Maven Central by JReleaser
         maven {
             name = "localStaging"
-            url = layout.buildDirectory.get()
-                .asFile
-                .resolve("jreleaser/staging-deploy")
-                .toURI()
+            url =
+                layout.buildDirectory
+                    .get()
+                    .asFile
+                    .resolve("jreleaser/staging-deploy")
+                    .toURI()
         }
     }
 }
@@ -163,7 +166,7 @@ tasks.withType<PublishToMavenLocal>().configureEach {
     doFirst {
         if (project.version.toString() == "unspecified") {
             throw GradleException(
-                "Cannot publish to MavenLocal with an unspecified version. Use argument: -Pversion=X.Y.Z"
+                "Cannot publish to MavenLocal with an unspecified version. Use argument: -Pversion=X.Y.Z",
             )
         }
     }

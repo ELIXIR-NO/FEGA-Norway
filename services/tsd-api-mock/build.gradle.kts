@@ -11,7 +11,7 @@ repositories {
     mavenCentral()
 }
 
-tasks.test{
+tasks.test {
     useJUnitPlatform()
 }
 

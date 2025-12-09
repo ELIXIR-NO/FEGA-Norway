@@ -50,8 +50,8 @@ public class RabbitMQConfig {
           connectionFactory.getRabbitConnectionFactory();
 
       if (props.getTruststore() != null
-              && !"null".equals(props.getTruststore())
-              && !props.getTruststore().isEmpty()) {
+          && !"null".equals(props.getTruststore())
+          && !props.getTruststore().isEmpty()) {
         // Configure SSL on the underlying factory
         rabbitConnectionFactory.useSslProtocol(createSslContext(props));
         rabbitConnectionFactory.enableHostnameVerification();

@@ -16,8 +16,9 @@ group = "no.elixir"
 // The target Java version can be overriden on the command-line with the argument "-PjavaVersion=<version>"
 // A JDK of this version must be available on your system
 private val defaultJavaVersion = JavaVersion.VERSION_21.majorVersion.toInt()
-val javaVersion = (project.findProperty("javaVersion") as String?)?.toInt()
-    ?: defaultJavaVersion
+val javaVersion =
+    (project.findProperty("javaVersion") as String?)?.toInt()
+        ?: defaultJavaVersion
 
 repositories {
     mavenCentral()
@@ -55,7 +56,7 @@ tasks.jar {
             "Implementation-Title" to project.name,
             "Implementation-Version" to project.version,
             "Implementation-Vendor" to "Elixir Norway",
-            "Main-Class" to "no.elixir.crypt4gh.app.Main"
+            "Main-Class" to "no.elixir.crypt4gh.app.Main",
         )
     }
 }
@@ -65,10 +66,10 @@ tasks.shadowJar {
     archiveBaseName.set("crypt4gh-tool")
     archiveClassifier.set("tool")
     archiveVersion.set(
-        if (project.version == "unspecified") "" else project.version.toString()
+        if (project.version == "unspecified") "" else project.version.toString(),
     )
     archiveFileName.set(
-        if (project.version == "unspecified") "crypt4gh-tool.jar" else "crypt4gh-tool-${project.version}.jar"
+        if (project.version == "unspecified") "crypt4gh-tool.jar" else "crypt4gh-tool-${project.version}.jar",
     )
     mergeServiceFiles()
 }
@@ -142,7 +143,7 @@ fun MavenPom.configureDevelopers() {
 fun groovy.util.Node.addDeveloper(
     id: String,
     name: String,
-    roles: List<String>
+    roles: List<String>,
 ) {
     val dev = appendNode("developer")
     dev.appendNode("id", id)
@@ -160,7 +161,8 @@ fun groovy.util.Node.addDeveloper(
 fun MavenPom.includeDependencies() {
     withXml {
         val dependenciesNode = asNode().appendNode("dependencies")
-        configurations.runtimeClasspath.get()
+        configurations.runtimeClasspath
+            .get()
             .allDependencies
             .filterIsInstance<ModuleDependency>()
             .filter { it.group != null && it.version != null }
@@ -227,13 +229,14 @@ publishing {
             // this currently only works for snapshots
             name = "MavenCentral"
             val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
-            url = uri(
-                if (isSnapshot) {
-                    "https://central.sonatype.com/repository/maven-snapshots/"
-                } else {
-                    "https://central.sonatype.com/api/v1/publisher/"
-                }
-            )
+            url =
+                uri(
+                    if (isSnapshot) {
+                        "https://central.sonatype.com/repository/maven-snapshots/"
+                    } else {
+                        "https://central.sonatype.com/api/v1/publisher/"
+                    },
+                )
             credentials {
                 username = System.getenv("MAVEN_CENTRAL_TOKEN_USER") ?: ""
                 password = System.getenv("MAVEN_CENTRAL_TOKEN_PASSWORD") ?: ""
@@ -243,10 +246,12 @@ publishing {
         // These can later be pushed to Maven Central by JReleaser
         maven {
             name = "localStaging"
-            url = layout.buildDirectory.get()
-                .asFile
-                .resolve("jreleaser/staging-deploy")
-                .toURI()
+            url =
+                layout.buildDirectory
+                    .get()
+                    .asFile
+                    .resolve("jreleaser/staging-deploy")
+                    .toURI()
         }
     }
 }
@@ -282,8 +287,13 @@ jreleaser {
                     url.set("https://central.sonatype.com/api/v1/publisher")
                     username.set(System.getenv("MAVEN_CENTRAL_TOKEN_USER") ?: "")
                     password.set(System.getenv("MAVEN_CENTRAL_TOKEN_PASSWORD") ?: "")
-                    stagingRepository(layout.buildDirectory.get().asFile.resolve("jreleaser/staging-deploy")
-                        .absolutePath)
+                    stagingRepository(
+                        layout.buildDirectory
+                            .get()
+                            .asFile
+                            .resolve("jreleaser/staging-deploy")
+                            .absolutePath,
+                    )
                 }
             }
         }
@@ -316,7 +326,7 @@ tasks.withType<PublishToMavenLocal>().configureEach {
     doFirst {
         if (project.version.toString() == "unspecified") {
             throw GradleException(
-                "Cannot publish to MavenLocal with an unspecified version. Use argument: -Pversion=X.Y.Z"
+                "Cannot publish to MavenLocal with an unspecified version. Use argument: -Pversion=X.Y.Z",
             )
         }
     }

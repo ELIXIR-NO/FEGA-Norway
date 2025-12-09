@@ -4,20 +4,18 @@ public final class Masker {
 
   public static String maskUsername(String username) {
     try {
-      if (username.length() < 6)
-        return username.replaceAll("(?<=.{2}).(?=.)", "*");
+      if (username.length() < 6) return username.replaceAll("(?<=.{2}).(?=.)", "*");
       else return username.replaceAll("(?<=.{3}).(?=.{2})", "*");
     } catch (Exception e) {
       return username;
     }
   }
-  
+
   public static String maskEmail(String email) {
     try {
-      String username = email.substring(0, email.indexOf("@"));
-      //mask the username
-      if (username.length() < 6)
-        email = email.replaceAll("(?<=.{2}).(?=.*.{1}@)", "*");
+      String username = email.substring(0, email.indexOf('@'));
+      // mask the username
+      if (username.length() < 6) email = email.replaceAll("(?<=.{2}).(?=.*.{1}@)", "*");
       else email = email.replaceAll("(?<=.{3}).(?=.*.{2}@)", "*");
       // mask the domain
       return email.replaceAll("(?<=@)[^.]+(?=\\.[^.]+$)", "*****");
