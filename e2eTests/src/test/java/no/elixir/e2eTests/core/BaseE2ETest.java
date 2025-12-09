@@ -92,8 +92,8 @@ public abstract class BaseE2ETest {
     E2EState.log.info("Raw MD5 checksum: {}", E2EState.rawMD5Checksum);
 
     E2EState.log.info("Generating sender and recipient key-pairs...");
-    KeyPair senderKeyPair = E2EState.keyUtils.generateKeyPair();
-    KeyPair recipientKeyPair = E2EState.keyUtils.generateKeyPair();
+    E2EState.senderKeypair = E2EState.keyUtils.generateKeyPair();
+    E2EState.recipientKeypair = E2EState.keyUtils.generateKeyPair();
 
     E2EState.log.info("Encrypting the file with Crypt4GH...");
 
@@ -111,7 +111,7 @@ public abstract class BaseE2ETest {
     try (FileOutputStream fileOutputStream = new FileOutputStream(E2EState.encFile);
         Crypt4GHOutputStream crypt4GHOutputStream =
             new Crypt4GHOutputStream(
-                fileOutputStream, senderKeyPair.getPrivate(), egaDevPublicKey)) {
+                fileOutputStream, E2EState.senderKeypair.getPrivate(), egaDevPublicKey)) {
       FileUtils.copyFile(E2EState.rawFile, crypt4GHOutputStream);
     }
 
