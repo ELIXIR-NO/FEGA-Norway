@@ -3,9 +3,15 @@ package no.elixir.e2eTests.features;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
@@ -57,9 +63,39 @@ public class DownloadWithExportRequestTest {
     E2EState.log.info("List user outbox request response: {}", listFilesRes.getBody());
     assertFalse(listFilesRes.getBody().files.isEmpty());
 
-    Optional<TsdFile> first = listFilesRes.getBody().files.stream().findFirst();
-    assertTrue(first.isPresent());
-    assertEquals(E2EState.encFile.getName(), first.get().fileName);
+    Stream<TsdFile> stream =
+        listFilesRes.getBody().files.stream()
+            .filter(file -> E2EState.encFile.getName().equals(file.fileName));
+    List<TsdFile> files = stream.toList();
+    assertEquals(1, files.size());
+    assertEquals(E2EState.encFile.getName(), files.getFirst().fileName);
+
+    String basedir = E2EState.env.getEgaDevBaseDirectory();
+    if (!basedir.endsWith("/")) {
+      basedir += "/";
+    }
+    Path filePath =
+        downloadFileViaProxy(
+            E2EState.encFile.getName(),
+            passportScopedAccessToken,
+            basedir + "out/" + E2EState.encFile.getName());
+        assertAll("File validation",
+            () -> assertTrue(Files.exists(filePath), "File should exist"),
+            () -> assertTrue(Files.isRegularFile(filePath), "Should be a regular file"),
+            () -> assertTrue(Files.size(filePath) > 0, "File should not be empty")
+    );
+  }
+
+  private static Path downloadFileViaProxy(String fileName, String accessToken, String outputPath)
+      throws IOException {
+    E2EState.log.info("Downloading file via proxy... fileName: {}, outputPath: {}", fileName, outputPath);
+    HttpResponse<byte[]> downloadRes =
+        Unirest.get(buildProxyDownloadUrl(fileName))
+            .header("Proxy-Authorization", "Bearer " + accessToken)
+            .asBytes();
+    assertEquals(200, downloadRes.getStatus(), "proxy was not happy when downloading...");
+    byte[] bytes = downloadRes.getBody();
+    return Files.write(Paths.get(outputPath), bytes);
   }
 
   private static HttpResponse<JsonNode> callFegaExportRequestEndpoint(String visaToken)
@@ -131,6 +167,12 @@ public class DownloadWithExportRequestTest {
   private static String buildFegaExportUrl() {
     return String.format(
         "https://%s:%s/export/fega", E2EState.env.getProxyHost(), E2EState.env.getProxyPort());
+  }
+
+  private static String buildProxyDownloadUrl(String fileName) {
+    return String.format(
+        "https://%s:%s/stream/%s",
+        E2EState.env.getProxyHost(), E2EState.env.getProxyPort(), fileName);
   }
 
   private static String buildListFilesUrl() {
