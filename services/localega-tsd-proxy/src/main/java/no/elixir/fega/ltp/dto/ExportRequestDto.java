@@ -21,8 +21,8 @@ public class ExportRequestDto {
   private String accessToken;
 
   // This is the visa token that DOA expects
-  @JsonProperty("jwtToken")
-  private String jwtToken;
+  @JsonProperty("visaToken")
+  private String visaToken;
 
   @NotBlank(message = "The field 'id' must not be blank.") @JsonProperty("id")
   private String id;
