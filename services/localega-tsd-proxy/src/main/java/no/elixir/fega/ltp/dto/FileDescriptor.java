@@ -1,6 +1,6 @@
 package no.elixir.fega.ltp.dto;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.ToString;
 import no.elixir.fega.ltp.common.Masker;
@@ -10,39 +10,41 @@ import no.elixir.fega.ltp.common.Masker;
 @Data
 public class FileDescriptor {
 
-  @SerializedName("user")
+  @JsonProperty("user")
   @ToString.Exclude
   private String user;
 
+  @JsonProperty("user")
   @ToString.Include(name = "user")
   private String maskUser() {
     return Masker.maskUsername(user);
   }
 
-  @SerializedName("filepath")
+  @JsonProperty("filepath")
   @ToString.Exclude
   private String filePath;
 
+  @JsonProperty("filepath")
   @ToString.Include(name = "filepath")
   private String maskFilepath() {
     return Masker.maskEmailInPath(filePath);
   }
 
-  @SerializedName("operation")
+  @JsonProperty("operation")
   private String operation;
 
-  @SerializedName("filesize")
+  @JsonProperty("filesize")
   private Long fileSize;
 
-  @SerializedName("oldpath")
+  @JsonProperty("oldpath")
   private String oldPath;
 
-  @SerializedName("file_last_modified")
+  @JsonProperty("file_last_modified")
   private Long fileLastModified;
 
-  @SerializedName("content")
+  @JsonProperty("content")
   private String content;
 
-  @SerializedName("encrypted_checksums")
+  @JsonProperty("encrypted_checksums")
   private EncryptedIntegrity[] encryptedIntegrity;
 }

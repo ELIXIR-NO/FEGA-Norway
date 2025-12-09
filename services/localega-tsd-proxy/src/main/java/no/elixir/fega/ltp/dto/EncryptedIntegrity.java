@@ -1,6 +1,6 @@
 package no.elixir.fega.ltp.dto;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.ToString;
 
@@ -9,9 +9,9 @@ import lombok.ToString;
 @Data
 public class EncryptedIntegrity {
 
-  @SerializedName("type")
+  @JsonProperty("type")
   private final String algorithm;
 
-  @SerializedName("value")
+  @JsonProperty("value")
   private final String checksum;
 }

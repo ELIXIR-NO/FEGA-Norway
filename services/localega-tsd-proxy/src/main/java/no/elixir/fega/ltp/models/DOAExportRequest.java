@@ -1,6 +1,6 @@
 package no.elixir.fega.ltp.models;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,16 +13,16 @@ import no.elixir.fega.ltp.dto.ExportRequestDto;
 @NoArgsConstructor
 public class DOAExportRequest {
 
-  @SerializedName("jwtToken")
+  @JsonProperty("jwtToken")
   private String jwtToken;
 
-  @SerializedName("datasetId")
+  @JsonProperty("datasetId")
   private String datasetId;
 
-  @SerializedName("fileId")
+  @JsonProperty("fileId")
   private String fileId;
 
-  @SerializedName("publicKey")
+  @JsonProperty("publicKey")
   private String publicKey;
 
   // Static factory method to create DOAExportRequest from ExportRequestDto
