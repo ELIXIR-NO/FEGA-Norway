@@ -113,7 +113,23 @@ public class TokenService {
   public String getAudience(String jwtToken) throws IllegalArgumentException {
     JsonNode claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
     JsonNode audience = claims.get(Claims.AUDIENCE);
-    return (audience != null && !audience.isNull()) ? audience.asText() : null;
+    if (audience == null || audience.isNull()) {
+      return null;
+    }
+    // Handle both string and array cases (JWT aud can be either)
+    String audValue;
+    if (audience.isArray()) {
+      // If it's an array, get the first element
+      if (audience.size() > 0) {
+        audValue = audience.get(0).asText();
+      } else {
+        return null; // Empty array should be treated as no audience
+      }
+    } else {
+      audValue = audience.asText();
+    }
+    // Return null if empty string (empty string should be treated as no audience)
+    return audValue.isEmpty() ? null : audValue;
   }
 
   /**
