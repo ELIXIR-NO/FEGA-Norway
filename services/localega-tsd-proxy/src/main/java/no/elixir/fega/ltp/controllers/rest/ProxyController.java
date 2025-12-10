@@ -22,10 +22,13 @@ public class ProxyController {
 
   @Value("${tsd-auth.token-type}")
   private String tokenType;
+
   @Value("${tsd-auth.oidc-provider-name}")
   private String oidcType;
+
   @Value("${tsd.app-id}")
   private String tsdAppId;
+
   @Value("${tsd.app-out-id}")
   private String tsdAppOutId;
 
@@ -122,23 +125,23 @@ public class ProxyController {
    */
   @GetMapping("/files")
   public ResponseEntity<?> getFiles(
-          @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
-          @RequestParam(value = "inbox", defaultValue = "true") boolean inbox,
-          @RequestParam(value = "page", defaultValue = "1") int page,
-          @RequestParam(value = "per_page", defaultValue = "100") int perPage)
-          throws IOException {
+      @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
+      @RequestParam(value = "inbox", defaultValue = "true") boolean inbox,
+      @RequestParam(value = "page", defaultValue = "1") int page,
+      @RequestParam(value = "per_page", defaultValue = "100") int perPage)
+      throws IOException {
 
     Token token =
-            tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
+        tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
 
     TSDFiles tsdFiles =
-            tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId, page, perPage);
+        tsdFileAPIClient.listFiles(token.getToken(), inbox ? tsdAppId : tsdAppOutId, page, perPage);
 
-    log.info("Files returned: {}, page: {}, perPage: {}", tsdFiles.getFiles().size(), page, perPage);
+    log.info(
+        "Files returned: {}, page: {}, perPage: {}", tsdFiles.getFiles().size(), page, perPage);
 
     return ResponseEntity.ok(tsdFiles);
   }
-
 
   /**
    * Deletes uploaded file.
@@ -204,9 +207,12 @@ public class ProxyController {
    * @return TSD token.
    */
   @GetMapping("/gettoken")
-  public ResponseEntity<?> getToken(@RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization) throws IOException {
+  public ResponseEntity<?> getToken(
+      @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization)
+      throws IOException {
     String elixirToken = getElixirAAIToken(bearerAuthorization);
-    Token token = tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
+    Token token =
+        tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
     return ResponseEntity.ok(token);
   }
 
