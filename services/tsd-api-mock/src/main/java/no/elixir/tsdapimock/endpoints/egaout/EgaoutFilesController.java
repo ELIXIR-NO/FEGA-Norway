@@ -1,7 +1,7 @@
 package no.elixir.tsdapimock.endpoints.egaout;
 
-import no.elixir.tsdapimock.endpoints.egaout.dto.OutboxFileListingDto;
 import no.elixir.tsdapimock.core.exceptions.CredentialsMismatchException;
+import no.elixir.tsdapimock.endpoints.egaout.dto.OutboxFileListingDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

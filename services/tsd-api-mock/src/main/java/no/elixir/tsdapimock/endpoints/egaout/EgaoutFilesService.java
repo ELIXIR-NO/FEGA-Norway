@@ -9,11 +9,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import no.elixir.tsdapimock.endpoints.egaout.dto.OutboxFileListingDto;
-import no.elixir.tsdapimock.endpoints.egaout.dto.TSDFileDto;
 import no.elixir.tsdapimock.core.exceptions.CredentialsMismatchException;
 import no.elixir.tsdapimock.core.resumables.Resumables;
 import no.elixir.tsdapimock.core.utils.JwtService;
+import no.elixir.tsdapimock.endpoints.egaout.dto.OutboxFileListingDto;
+import no.elixir.tsdapimock.endpoints.egaout.dto.TSDFileDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -3,10 +3,10 @@ package no.elixir.tsdapimock.endpoints.auth.elixir;
 import static javax.management.timer.Timer.ONE_HOUR;
 
 import lombok.extern.slf4j.Slf4j;
-import no.elixir.tsdapimock.endpoints.auth.elixir.dto.ElixirTokenRequestDto;
-import no.elixir.tsdapimock.endpoints.auth.elixir.dto.ElixirTokenResponseDto;
 import no.elixir.tsdapimock.core.exceptions.CredentialsMismatchException;
 import no.elixir.tsdapimock.core.utils.JwtService;
+import no.elixir.tsdapimock.endpoints.auth.elixir.dto.ElixirTokenRequestDto;
+import no.elixir.tsdapimock.endpoints.auth.elixir.dto.ElixirTokenResponseDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

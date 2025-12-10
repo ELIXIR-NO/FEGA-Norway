@@ -47,10 +47,16 @@ public class CredentialsMappingAspect {
         jdbcTemplate.queryForList(
             "select elixir_id from mapping where ega_id = ?", String.class, egaUsername);
     if (CollectionUtils.isNotEmpty(existingEntries)) {
-      log.info("EGA account [{}] is already mapped to Elixir account [{}]", Masker.maskUsername(egaUsername), Masker.maskEmail(elixirId));
+      log.info(
+          "EGA account [{}] is already mapped to Elixir account [{}]",
+          Masker.maskUsername(egaUsername),
+          Masker.maskEmail(elixirId));
       return;
     }
     jdbcTemplate.update("insert into mapping values (?, ?)", egaUsername, elixirId);
-    log.info("Mapped EGA account [{}] to Elixir account [{}]", Masker.maskUsername(egaUsername), Masker.maskEmail(elixirId));
+    log.info(
+        "Mapped EGA account [{}] to Elixir account [{}]",
+        Masker.maskUsername(egaUsername),
+        Masker.maskEmail(elixirId));
   }
 }

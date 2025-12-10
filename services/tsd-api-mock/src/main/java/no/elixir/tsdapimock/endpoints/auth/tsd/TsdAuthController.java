@@ -1,8 +1,8 @@
 package no.elixir.tsdapimock.endpoints.auth.tsd;
 
 import jakarta.validation.Valid;
-import no.elixir.tsdapimock.endpoints.auth.tsd.dto.TsdTokenRequestDto;
 import no.elixir.tsdapimock.core.exceptions.CredentialsMismatchException;
+import no.elixir.tsdapimock.endpoints.auth.tsd.dto.TsdTokenRequestDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
