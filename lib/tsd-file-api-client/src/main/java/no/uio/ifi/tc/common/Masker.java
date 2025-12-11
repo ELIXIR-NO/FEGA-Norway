@@ -1,18 +1,9 @@
-package no.elixir.fega.ltp.common;
+package no.uio.ifi.tc.common;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class Masker {
-
-  public static String maskUsername(String username) {
-    try {
-      if (username.length() < 6) return username.replaceAll("(?<=.{2}).(?=.)", "*");
-      else return username.replaceAll("(?<=.{3}).(?=.{2})", "*");
-    } catch (Exception e) {
-      return username;
-    }
-  }
 
   public static String maskEmail(String email) {
     try {
@@ -27,18 +18,18 @@ public final class Masker {
     }
   }
 
-  public static String maskEmailInPath(String path) {
+  public static String maskEmailInUri(String uri) {
     try {
       String regex = "/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})/";
       Pattern pattern = Pattern.compile(regex);
-      Matcher matcher = pattern.matcher(path);
+      Matcher matcher = pattern.matcher(uri);
       if (matcher.find()) {
         return matcher.replaceFirst(
             Matcher.quoteReplacement("/" + maskEmail(matcher.group(1)) + "/"));
       }
-      return path;
+      return uri;
     } catch (Exception e) {
-      return path;
+      return uri;
     }
   }
 }

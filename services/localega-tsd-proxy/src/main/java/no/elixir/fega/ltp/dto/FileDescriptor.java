@@ -14,8 +14,7 @@ public class FileDescriptor {
   @ToString.Exclude
   private String user;
 
-  @SerializedName("user")
-  @ToString.Include
+  @ToString.Include(name = "user")
   private String maskUser() {
     return Masker.maskUsername(user);
   }
@@ -24,8 +23,7 @@ public class FileDescriptor {
   @ToString.Exclude
   private String filePath;
 
-  @SerializedName("filepath")
-  @ToString.Include
+  @ToString.Include(name = "filepath")
   private String maskFilepath() {
     return Masker.maskEmailInPath(filePath);
   }

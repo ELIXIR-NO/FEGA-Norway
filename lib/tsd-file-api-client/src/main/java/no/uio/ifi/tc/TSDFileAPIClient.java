@@ -19,6 +19,7 @@ import javax.net.ssl.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import no.uio.ifi.tc.common.Masker;
 import no.uio.ifi.tc.model.Environment;
 import no.uio.ifi.tc.model.pojo.*;
 import okhttp3.*;
@@ -65,7 +66,7 @@ public class TSDFileAPIClient {
     // Add page and per_page as query parameters
     String url =
         getURL(getEndpoint(token, appId, "/files")) + "?page=" + page + "&per_page=" + perPage;
-    log.info("TSDFileAPIClient making request: {}", url);
+    log.info("TSDFileAPIClient making request: {}", Masker.maskEmailInUri(url));
 
     Request request =
         new Request.Builder().url(url).addHeader("Authorization", BEARER + token).build();
