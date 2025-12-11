@@ -61,6 +61,7 @@ public class DownloadWithExportRequestTest {
     String passportScopedAccessToken = E2EState.env.getLSAAIToken();
 
     HttpResponse<JsonNode> exportRequestRes = callFegaExportRequestEndpoint(visaToken);
+    E2EState.log.info("Export request response: {}", exportRequestRes);
     assertEquals(200, exportRequestRes.getStatus());
 
     E2EState.log.info("Export request response: {}", exportRequestRes.getBody());
