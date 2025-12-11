@@ -41,7 +41,7 @@ public class ExportRequestDto {
     @JsonValue private final String value;
 
     @JsonCreator
-    public static ExportType fromValue(String value) {
+    public static ExportType fromValue(@JsonProperty String value) {
       for (ExportType type : ExportType.values()) {
         if (type.value.equals(value)) {
           return type;
