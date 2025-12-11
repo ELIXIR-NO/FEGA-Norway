@@ -1,6 +1,5 @@
 package no.elixir.fega.ltp.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,7 +29,7 @@ public class HeartbeatService {
     this.redisTemplate = redisTemplate;
   }
 
-  public Heartbeat getHeartbeat() throws JsonProcessingException {
+  public Heartbeat getHeartbeat() {
 
     Heartbeat heartbeat = new Heartbeat();
 

@@ -1,8 +1,5 @@
 package no.elixir.fega.ltp.services;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.jsonwebtoken.Claims;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,6 +13,9 @@ import no.elixir.clearinghouse.model.Visa;
 import no.elixir.clearinghouse.model.VisaType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 @Slf4j
 @Service

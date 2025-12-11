@@ -28,7 +28,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-resttestclient")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
     runtimeOnly("org.postgresql:postgresql")
