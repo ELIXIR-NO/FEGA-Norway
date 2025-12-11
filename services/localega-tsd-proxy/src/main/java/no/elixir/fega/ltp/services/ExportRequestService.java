@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.clearinghouse.model.Visa;
-import no.elixir.fega.ltp.dto.GdiExportRequestDto;
 import no.elixir.fega.ltp.dto.FegaExportRequestDto;
+import no.elixir.fega.ltp.dto.GdiExportRequestDto;
 import no.elixir.fega.ltp.exceptions.GenericException;
 import no.elixir.fega.ltp.models.DOAExportRequest;
 import org.apache.http.entity.ContentType;
@@ -94,7 +94,8 @@ public class ExportRequestService {
           gdiExportRequestDto.getId());
     }
 
-    DOAExportRequest message = DOAExportRequest.fromExportRequestDto(gdiExportRequestDto, selectedVisa.getRawToken());
+    DOAExportRequest message =
+        DOAExportRequest.fromExportRequestDto(gdiExportRequestDto, selectedVisa.getRawToken());
 
     sendToRabbitMQ(message);
 
@@ -136,5 +137,4 @@ public class ExportRequestService {
         routingKey,
         message);
   }
-
 }

@@ -6,8 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import no.elixir.fega.ltp.dto.ExportRequestType;
-import no.elixir.fega.ltp.dto.GdiExportRequestDto;
 import no.elixir.fega.ltp.dto.FegaExportRequestDto;
+import no.elixir.fega.ltp.dto.GdiExportRequestDto;
 
 @Data
 @ToString
@@ -28,30 +28,26 @@ public class DOAExportRequest {
   private String publicKey;
 
   // Static factory method to create DOAExportRequest from ExportRequestDto
-  public static DOAExportRequest fromExportRequestDto(GdiExportRequestDto gdiExportRequestDto, String jwtToken) {
+  public static DOAExportRequest fromExportRequestDto(
+      GdiExportRequestDto gdiExportRequestDto, String jwtToken) {
     return createDOAExportRequest(
-            jwtToken,
-            gdiExportRequestDto.getUserPublicKey(),
-            gdiExportRequestDto.getId(),
-            gdiExportRequestDto.getType() == ExportRequestType.DATASET_ID
-    );
+        jwtToken,
+        gdiExportRequestDto.getUserPublicKey(),
+        gdiExportRequestDto.getId(),
+        gdiExportRequestDto.getType() == ExportRequestType.DATASET_ID);
   }
 
   public static DOAExportRequest fromExportRequestDto(FegaExportRequestDto exportRequestDto) {
     return createDOAExportRequest(
-            exportRequestDto.getVisaToken(),
-            exportRequestDto.getUserPublicKey(),
-            exportRequestDto.getId(),
-            exportRequestDto.getType() == ExportRequestType.DATASET_ID
-    );
+        exportRequestDto.getVisaToken(),
+        exportRequestDto.getUserPublicKey(),
+        exportRequestDto.getId(),
+        exportRequestDto.getType() == ExportRequestType.DATASET_ID);
   }
 
   // Private helper method containing the shared logic
   private static DOAExportRequest createDOAExportRequest(
-          String jwtToken,
-          String publicKey,
-          String id,
-          boolean isDatasetId) {
+      String jwtToken, String publicKey, String id, boolean isDatasetId) {
     DOAExportRequest doaRequest = new DOAExportRequest();
     doaRequest.setJwtToken(jwtToken);
     doaRequest.setPublicKey(publicKey);

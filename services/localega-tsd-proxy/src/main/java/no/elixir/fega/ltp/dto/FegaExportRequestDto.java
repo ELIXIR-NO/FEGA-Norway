@@ -14,20 +14,15 @@ import lombok.ToString;
 @NoArgsConstructor
 public class FegaExportRequestDto {
 
-    @NotBlank(message = "The field 'visaToken' must not be blank.")
-    @JsonProperty("visaToken")
-    private String visaToken;
+  @NotBlank(message = "The field 'visaToken' must not be blank.") @JsonProperty("visaToken")
+  private String visaToken;
 
-    @NotBlank(message = "The field 'id' must not be blank.")
-    @JsonProperty("id")
-    private String id;
+  @NotBlank(message = "The field 'id' must not be blank.") @JsonProperty("id")
+  private String id;
 
-    @NotBlank(message = "The field 'userPublicKey' must not be blank.")
-    @JsonProperty("userPublicKey")
-    private String userPublicKey;
+  @NotBlank(message = "The field 'userPublicKey' must not be blank.") @JsonProperty("userPublicKey")
+  private String userPublicKey;
 
-    @NotNull(message = "The field 'type' must not be null. Should be either 'fileId' or 'datasetId'.")
-    @JsonProperty("type")
-    private ExportRequestType type = ExportRequestType.DATASET_ID;
-
+  @NotNull(message = "The field 'type' must not be null. Should be either 'fileId' or 'datasetId'.") @JsonProperty("type")
+  private ExportRequestType type = ExportRequestType.DATASET_ID;
 }
