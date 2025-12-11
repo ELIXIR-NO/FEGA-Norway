@@ -7,7 +7,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.clearinghouse.model.Visa;
-import no.elixir.fega.ltp.dto.ExportRequestDto;
+import no.elixir.fega.ltp.dto.GdiExportRequestDto;
+import no.elixir.fega.ltp.dto.FegaExportRequestDto;
 import no.elixir.fega.ltp.exceptions.GenericException;
 import no.elixir.fega.ltp.models.DOAExportRequest;
 import org.apache.http.entity.ContentType;
@@ -38,20 +39,20 @@ public class ExportRequestService {
     this.tsdRabbitTemplate = tsdRabbitTemplate;
   }
 
-  public void exportRequestGDI(ExportRequestDto exportRequestDto)
+  public void exportRequestGDI(GdiExportRequestDto gdiExportRequestDto)
       throws GenericException, IllegalArgumentException {
 
     // Validate input
-    if (exportRequestDto == null) {
+    if (gdiExportRequestDto == null) {
       throw new IllegalArgumentException("Export request cannot be null");
     }
-    if (!StringUtils.hasText(exportRequestDto.getAccessToken())) {
+    if (!StringUtils.hasText(gdiExportRequestDto.getAccessToken())) {
       throw new IllegalArgumentException("Access token cannot be null or empty");
     }
 
-    String subject = tokenService.getSubject(exportRequestDto.getAccessToken());
+    String subject = tokenService.getSubject(gdiExportRequestDto.getAccessToken());
     List<Visa> controlledAccessGrantsVisas =
-        tokenService.getControlledAccessGrantsVisas(exportRequestDto.getAccessToken());
+        tokenService.getControlledAccessGrantsVisas(gdiExportRequestDto.getAccessToken());
 
     log.info(
         "Elixir user {} authenticated and provided {} valid GA4GH Visa(s)",
@@ -62,12 +63,12 @@ public class ExportRequestService {
       log.warn(
           "No visas found for user {}. Requested to export {} {}",
           subject,
-          exportRequestDto.getId(),
-          exportRequestDto.getType());
+          gdiExportRequestDto.getId(),
+          gdiExportRequestDto.getType());
       throw new GenericException(HttpStatus.FORBIDDEN, "No valid visas found for this resource");
     }
 
-    String escapedId = Pattern.quote(exportRequestDto.getId());
+    String escapedId = Pattern.quote(gdiExportRequestDto.getId());
     Set<Visa> matchingVisas =
         controlledAccessGrantsVisas.stream()
             .filter(visa -> visa.getValue().matches(".*" + escapedId + ".*"))
@@ -77,7 +78,7 @@ public class ExportRequestService {
       log.warn(
           "No matching visas found for user {} and resource ID {}. User has {} visa(s) but none match.",
           subject,
-          exportRequestDto.getId(),
+          gdiExportRequestDto.getId(),
           controlledAccessGrantsVisas.size());
       throw new GenericException(
           HttpStatus.FORBIDDEN, "No valid visa found for the requested resource");
@@ -90,33 +91,32 @@ public class ExportRequestService {
       log.info(
           "Found {} matching visa(s) for resource {}. Using the first visa.",
           matchingVisas.size(),
-          exportRequestDto.getId());
+          gdiExportRequestDto.getId());
     }
 
-    exportRequestDto.setVisaToken(selectedVisa.getRawToken());
-    DOAExportRequest message = DOAExportRequest.fromExportRequestDto(exportRequestDto);
+    DOAExportRequest message = DOAExportRequest.fromExportRequestDto(gdiExportRequestDto, selectedVisa.getRawToken());
 
     sendToRabbitMQ(message);
 
     log.info(
         "Export request sent successfully for user {} | Resource: {} | Type: {}",
         subject,
-        exportRequestDto.getId(),
-        exportRequestDto.getType());
+        gdiExportRequestDto.getId(),
+        gdiExportRequestDto.getType());
   }
 
-  public void exportRequestFEGA(ExportRequestDto exportRequestDto) throws AmqpException {
-    if (exportRequestDto == null) {
+  public void exportRequestFEGA(FegaExportRequestDto fegaExportRequestDto) throws AmqpException {
+    if (fegaExportRequestDto == null) {
       throw new IllegalArgumentException("Export request cannot be null");
     }
 
-    DOAExportRequest message = DOAExportRequest.fromExportRequestDto(exportRequestDto);
+    DOAExportRequest message = DOAExportRequest.fromExportRequestDto(fegaExportRequestDto);
     sendToRabbitMQ(message);
 
     log.info(
         "FEGA export request sent successfully | Resource: {} | Type: {}",
-        exportRequestDto.getId(),
-        exportRequestDto.getType());
+        fegaExportRequestDto.getId(),
+        fegaExportRequestDto.getType());
   }
 
   private void sendToRabbitMQ(DOAExportRequest message) throws AmqpException {
@@ -136,4 +136,5 @@ public class ExportRequestService {
         routingKey,
         message);
   }
+
 }
