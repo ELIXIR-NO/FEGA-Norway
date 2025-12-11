@@ -127,8 +127,8 @@ public class ProxyController {
   public ResponseEntity<?> getFiles(
       @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
       @RequestParam(value = "inbox", defaultValue = "true") boolean inbox,
-      @RequestParam(value = "page", defaultValue = "1") int page,
-      @RequestParam(value = "per_page", defaultValue = "100") int perPage)
+      @RequestParam(value = "page", defaultValue = "0") int page,
+      @RequestParam(value = "per_page", defaultValue = "50000") int perPage)
       throws IOException {
 
     Token token =
