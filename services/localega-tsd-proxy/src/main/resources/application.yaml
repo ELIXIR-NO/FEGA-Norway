@@ -102,3 +102,12 @@ server.ssl:
   key-store-type: PKCS12
   key-store: file:/etc/ega/ssl/server.p12
   key-store-password: ${SERVER_CERT_PASSWORD}
+
+logging:
+  level:
+    no.elixir.fega.ltp: ${APP_LOG_LEVEL:INFO}
+    org.springframework.web: ${APP_LOG_LEVEL:INFO}
+    org.springframework.security.web.firewall: ${APP_LOG_LEVEL:INFO}
+    org.springframework.web.servlet.DispatcherServlet: ${APP_LOG_LEVEL:INFO}
+    com.fasterxml.jackson: ${APP_LOG_LEVEL:INFO}
+    root: ${APP_LOG_LEVEL:INFO}
