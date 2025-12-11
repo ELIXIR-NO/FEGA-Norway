@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.clearinghouse.model.Visa;
+import no.elixir.fega.ltp.common.Masker;
 import no.elixir.fega.ltp.dto.FegaExportRequestDto;
 import no.elixir.fega.ltp.dto.GdiExportRequestDto;
 import no.elixir.fega.ltp.exceptions.GenericException;
@@ -51,18 +52,19 @@ public class ExportRequestService {
     }
 
     String subject = tokenService.getSubject(gdiExportRequestDto.getAccessToken());
+    String sanitizedSubject = subject.replaceAll("[\r\n]", "_");
     List<Visa> controlledAccessGrantsVisas =
         tokenService.getControlledAccessGrantsVisas(gdiExportRequestDto.getAccessToken());
 
     log.info(
         "Elixir user {} authenticated and provided {} valid GA4GH Visa(s)",
-        subject,
+        Masker.maskEmail(sanitizedSubject),
         controlledAccessGrantsVisas != null ? controlledAccessGrantsVisas.size() : 0);
 
     if (controlledAccessGrantsVisas == null || controlledAccessGrantsVisas.isEmpty()) {
       log.warn(
           "No visas found for user {}. Requested to export {} {}",
-          subject,
+          Masker.maskEmail(sanitizedSubject),
           gdiExportRequestDto.getId(),
           gdiExportRequestDto.getType());
       throw new GenericException(HttpStatus.FORBIDDEN, "No valid visas found for this resource");
@@ -77,7 +79,7 @@ public class ExportRequestService {
     if (matchingVisas.isEmpty()) {
       log.warn(
           "No matching visas found for user {} and resource ID {}. User has {} visa(s) but none match.",
-          subject,
+          Masker.maskEmail(sanitizedSubject),
           gdiExportRequestDto.getId(),
           controlledAccessGrantsVisas.size());
       throw new GenericException(
@@ -101,7 +103,7 @@ public class ExportRequestService {
 
     log.info(
         "Export request sent successfully for user {} | Resource: {} | Type: {}",
-        subject,
+        Masker.maskEmail(sanitizedSubject),
         gdiExportRequestDto.getId(),
         gdiExportRequestDto.getType());
   }
