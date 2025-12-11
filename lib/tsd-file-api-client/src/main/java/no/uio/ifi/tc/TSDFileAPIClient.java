@@ -34,6 +34,8 @@ public class TSDFileAPIClient {
 
   private final Gson gson = new Gson();
 
+  private OkHttpClient client;
+
   private String protocol;
   private String host;
   private Environment environment;
@@ -41,7 +43,9 @@ public class TSDFileAPIClient {
   private String project;
   private String accessKey;
 
-  public TSDFileAPIClient(OkHttpClient httpClient) {}
+  public TSDFileAPIClient(OkHttpClient httpClient) {
+    this.client = httpClient;
+  }
 
   /**
    * Lists uploaded files.
@@ -51,7 +55,6 @@ public class TSDFileAPIClient {
    * @return API response.
    */
   public TSDFiles listFiles(String token, String appId) {
-    OkHttpClient client = new OkHttpClient();
     String url = getURL(getEndpoint(token, appId, "/files"));
 
     Request request =
@@ -89,7 +92,6 @@ public class TSDFileAPIClient {
    */
   public Message uploadFile(String token, String appId, InputStream inputStream, String fileName)
       throws IOException {
-    OkHttpClient client = new OkHttpClient();
     String url = getURL(getEndpoint(token, appId, "/files/" + fileName));
 
     // Read all bytes from inputStream
@@ -132,7 +134,6 @@ public class TSDFileAPIClient {
   public Message deleteFile(String token, String appId, String fileName) throws IOException {
     String url = getURL(getEndpoint(token, appId, "/files/" + fileName));
 
-    OkHttpClient client = new OkHttpClient();
     Request request =
         new Request.Builder().url(url).addHeader("Authorization", BEARER + token).delete().build();
 
@@ -162,7 +163,6 @@ public class TSDFileAPIClient {
   public ResumableUploads listResumableUploads(String token, String appId) throws IOException {
     String url = getURL(getEndpoint(token, appId, "/resumables"));
 
-    OkHttpClient client = new OkHttpClient();
     Request request =
         new Request.Builder().url(url).addHeader("Authorization", BEARER + token).get().build();
 
@@ -215,7 +215,6 @@ public class TSDFileAPIClient {
       String token, String appId, byte[] firstChunk, String fileName) throws IOException {
     String url = getURL(getEndpoint(token, appId, "/files/" + fileName + "?chunk=1"));
 
-    OkHttpClient client = new OkHttpClient();
     RequestBody requestBody =
         RequestBody.create(firstChunk, MediaType.parse("application/octet-stream"));
     Request request =
@@ -267,7 +266,6 @@ public class TSDFileAPIClient {
                     + "&id="
                     + uploadId));
 
-    OkHttpClient client = new OkHttpClient();
     RequestBody requestBody =
         RequestBody.create(chunk, MediaType.parse("application/octet-stream"));
     Request request =
@@ -311,7 +309,6 @@ public class TSDFileAPIClient {
                 appId,
                 "/files/" + resumableUpload.getFileName() + "?chunk=end&id=" + uploadId));
 
-    OkHttpClient client = new OkHttpClient();
     Request request =
         new Request.Builder()
             .url(url)
@@ -351,7 +348,6 @@ public class TSDFileAPIClient {
             getEndpoint(
                 token, appId, "/resumables/" + resumableUpload.getFileName() + "?id=" + uploadId));
 
-    OkHttpClient client = new OkHttpClient();
     Request request =
         new Request.Builder().url(url).addHeader("Authorization", BEARER + token).delete().build();
 
@@ -382,7 +378,6 @@ public class TSDFileAPIClient {
    */
   public TSDFileAPIResponse downloadFile(
       String token, String appId, String fileName, OutputStream outputStream) throws IOException {
-    OkHttpClient client = new OkHttpClient();
     String url = getURL(getEndpoint(token, appId, "/files/" + fileName));
 
     Request request =
@@ -418,7 +413,6 @@ public class TSDFileAPIClient {
             String.format("/auth/%s/token?type=", oidcProvider.toLowerCase())
                 + tokenType.toLowerCase());
     log.info(url);
-    OkHttpClient client = new OkHttpClient();
     MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     RequestBody body =
         RequestBody.create(String.format("{\"%s\":\"%s\"}", ID_TOKEN, idToken), JSON);
@@ -603,7 +597,12 @@ public class TSDFileAPIClient {
       if (this.OkhttpClient != null) {
         httpClient = this.OkhttpClient;
       } else {
-        OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder();
+        OkHttpClient.Builder httpClientBuilder =
+            new OkHttpClient.Builder()
+                // Set connection, read, and write timeouts for the HTTP client
+                .connectTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(90, java.util.concurrent.TimeUnit.SECONDS);
 
         // SSL Verification and Client Certificate Handling
         if (enableSsl
