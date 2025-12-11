@@ -1,6 +1,5 @@
 package no.elixir.fega.ltp.controllers.rest;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import no.elixir.fega.ltp.dto.Heartbeat;
 import no.elixir.fega.ltp.services.HeartbeatService;
 import org.springframework.http.HttpStatus;
@@ -26,7 +25,7 @@ public class HeartbeatController {
                   ? HttpStatus.OK
                   : HttpStatus.SERVICE_UNAVAILABLE)
           .body(heartbeat);
-    } catch (JsonProcessingException e) {
+    } catch (Exception e) {
       return ResponseEntity.internalServerError().build();
     }
   }
