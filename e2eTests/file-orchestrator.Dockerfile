@@ -16,7 +16,7 @@ RUN echo "Installing mkcert locally..." && \
 
 # Install crypt4gh
 RUN echo "Installing crypt4gh locally..." && \
-    curl -fsSL "https://raw.githubusercontent.com/neicnordic/crypt4gh/master/install.sh" | sh -s -- -b "$LOCAL_BIN" && \
+    curl -fsSL "https://raw.githubusercontent.com/neicnordic/crypt4gh/master/install.sh" | sh -s -- -b "$LOCAL_BIN" -- 'latest' && \
     chmod +x "$LOCAL_BIN/crypt4gh" && \
     echo "crypt4gh installed successfully for the current user."
 
