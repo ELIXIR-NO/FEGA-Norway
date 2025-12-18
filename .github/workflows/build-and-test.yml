@@ -26,7 +26,7 @@ jobs:
             services/cega-mock/go.sum
 
       - name: Cache gradle packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/cache
