@@ -16,7 +16,7 @@ public class AccessionTest {
   public static void publishAccessionMessageOnBehalfOfCEGAToLocalEGA() throws Exception {
     E2EState.log.info("Publishing accession message on behalf of CEGA to CEGA RMQ...");
     ConnectionFactory factory = new ConnectionFactory();
-    String uri = E2EState.env.getBrokerConnectionString();
+    String uri = E2EState.env.getCegaConnString();
     factory.setUri(uri);
     if (uri.startsWith("amqps")) {
       try {
