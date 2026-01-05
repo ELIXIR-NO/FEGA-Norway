@@ -18,7 +18,7 @@ public class MappingTest {
     E2EState.log.info("Mapping file to a dataset...");
     E2EState.datasetId = "EGAD" + CommonUtils.getRandomNumber(11);
     ConnectionFactory factory = new ConnectionFactory();
-    String uri = E2EState.env.getBrokerConnectionString();
+    String uri = E2EState.env.getCegaConnString();
     factory.setUri(uri);
     if (uri.startsWith("amqps")) {
       try {

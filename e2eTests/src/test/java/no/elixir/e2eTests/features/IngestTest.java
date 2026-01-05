@@ -16,7 +16,7 @@ public class IngestTest {
   public static void publishIngestionMessageToCEGA() throws Exception {
     E2EState.log.info("Publishing ingestion message to CentralEGA...");
     ConnectionFactory factory = new ConnectionFactory();
-    String uri = E2EState.env.getBrokerConnectionString();
+    String uri = E2EState.env.getCegaConnString();
     factory.setUri(uri);
     if (uri.startsWith("amqps")) {
       try {
