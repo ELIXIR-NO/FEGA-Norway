@@ -88,19 +88,19 @@ public class DownloadWithExportRequestTest {
             E2EState.encFile.getName(),
             passportScopedAccessToken,
             basedir + "out/" + E2EState.encFile.getName());
-        assertAll("File validation",
-            () -> assertTrue(Files.exists(filePath), "File should exist"),
-            () -> assertTrue(Files.isRegularFile(filePath), "Should be a regular file"),
-            () -> assertTrue(Files.size(filePath) > 0, "File should not be empty")
-    );
+    assertAll(
+        "File validation",
+        () -> assertTrue(Files.exists(filePath), "File should exist"),
+        () -> assertTrue(Files.isRegularFile(filePath), "Should be a regular file"),
+        () -> assertTrue(Files.size(filePath) > 0, "File should not be empty"));
 
     E2EState.log.info("Decrypting the downloaded file...");
 
     // Decrypt using recipient's private key
     ByteArrayOutputStream decryptedOutput = new ByteArrayOutputStream();
     try (InputStream encryptedInputStream = Files.newInputStream(filePath);
-         Crypt4GHInputStream crypt4GHInputStream =
-                 new Crypt4GHInputStream(encryptedInputStream, E2EState.recipientKeypair.getPrivate())) {
+        Crypt4GHInputStream crypt4GHInputStream =
+            new Crypt4GHInputStream(encryptedInputStream, E2EState.recipientKeypair.getPrivate())) {
       IOUtils.copyLarge(crypt4GHInputStream, decryptedOutput);
     }
 
@@ -114,19 +114,24 @@ public class DownloadWithExportRequestTest {
     E2EState.log.info("Decrypted MD5 checksum: {}", decryptedMD5);
 
     // Verify checksums match the original file
-    assertAll("Checksum validation",
-            () -> assertEquals(E2EState.rawSHA256Checksum, decryptedSHA256,
-                    "SHA256 checksum should match original file"),
-            () -> assertEquals(E2EState.rawMD5Checksum, decryptedMD5,
-                    "MD5 checksum should match original file")
-    );
+    assertAll(
+        "Checksum validation",
+        () ->
+            assertEquals(
+                E2EState.rawSHA256Checksum,
+                decryptedSHA256,
+                "SHA256 checksum should match original file"),
+        () ->
+            assertEquals(
+                E2EState.rawMD5Checksum, decryptedMD5, "MD5 checksum should match original file"));
 
     E2EState.log.info("File successfully decrypted and checksums verified!");
   }
 
   private static Path downloadFileViaProxy(String fileName, String accessToken, String outputPath)
       throws IOException {
-    E2EState.log.info("Downloading file via proxy... fileName: {}, outputPath: {}", fileName, outputPath);
+    E2EState.log.info(
+        "Downloading file via proxy... fileName: {}, outputPath: {}", fileName, outputPath);
     HttpResponse<byte[]> downloadRes =
         Unirest.get(buildProxyDownloadUrl(fileName))
             .header("Proxy-Authorization", "Bearer " + accessToken)
@@ -241,9 +246,7 @@ public class DownloadWithExportRequestTest {
     // Convert to Base64-encoded string (DER format)
     String base64PublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
     return Strings.EXPORT_REQ_BODY_FEGA.formatted(
-            E2EState.datasetId,
-            visaToken,
-            base64PublicKey, "DATASET_ID");
+        E2EState.datasetId, visaToken, base64PublicKey, "DATASET_ID");
   }
 
   record FileListingResponse(Collection<TsdFile> files, String page) {}
