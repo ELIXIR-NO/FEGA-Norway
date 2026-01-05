@@ -15,7 +15,7 @@ public class ReleaseTest {
   public static void triggerReleaseMessageFromCEGA() throws Exception {
     E2EState.log.info("Releasing the dataset...");
     ConnectionFactory factory = new ConnectionFactory();
-    String uri = E2EState.env.getBrokerConnectionString();
+    String uri = E2EState.env.getCegaConnString();
     factory.setUri(uri);
     if (uri.startsWith("amqps")) {
       try {

@@ -24,6 +24,7 @@ public class Environment {
   private String sdaDbDatabaseName;
   private String truststorePassword;
   private String runtime;
+  private String integration;
   private String proxyTokenAudience;
   private String proxyAdminUsername;
   private String proxyAdminPassword;
@@ -48,6 +49,7 @@ public class Environment {
   public Environment() {
     this.env = System.getenv();
     this.runtime = env.get("E2E_TESTS_RUNTIME");
+    this.integration = env.get("E2E_TESTS_INTEGRATION");
     this.cegaAuthUsername = env.get("E2E_TESTS_CEGAAUTH_USERNAME");
     this.cegaAuthPassword = env.get("E2E_TESTS_CEGAAUTH_PASSWORD");
     this.cegaConnString = env.get("E2E_TESTS_CEGAMQ_CONN_STR");
@@ -78,7 +80,4 @@ public class Environment {
     this.egaDevPubKeyPath = env.get("E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH");
   }
 
-  public String getBrokerConnectionString() {
-    return cegaConnString;
-  }
 }
