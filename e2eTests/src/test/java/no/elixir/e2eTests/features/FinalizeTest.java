@@ -1,5 +1,6 @@
 package no.elixir.e2eTests.features;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
@@ -42,7 +43,9 @@ public class FinalizeTest {
       fail("Verification failed");
     }
     E2EState.archivePath = resultSet.getString(1);
-    E2EState.stableId = resultSet.getString(2);
+    // E2EState.stableId = resultSet.getString(2);
+    // assert the file id here as well - NOT SET
+    assertEquals(E2EState.stableId, resultSet.getString(2));
     E2EState.log.info("Stable ID: {}", E2EState.stableId);
     E2EState.log.info("Archive path: {}", E2EState.archivePath);
     E2EState.log.info("Verification completed successfully");
