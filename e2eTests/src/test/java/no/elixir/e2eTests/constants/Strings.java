@@ -4,8 +4,6 @@ public class Strings {
 
   public static final String BEGIN_PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----";
   public static final String END_PUBLIC_KEY = "-----END PUBLIC KEY-----";
-  public static final String BEGIN_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----";
-  public static final String END_PRIVATE_KEY = "-----END PRIVATE KEY-----";
 
   // JWT Header constants
   public static final String JWT_JKU = "https://login.elixir-czech.org/oidc/jwk";
@@ -32,7 +30,7 @@ public class Strings {
               {
                 "type": "ingest",
                 "user": "%s",
-                "filepath": "/p11-dummy@elixir-europe.org/files/%s"
+                "filepath": "/%s-%s/files/%s"
               }
             """;
 
@@ -41,7 +39,7 @@ public class Strings {
             {
                 "type": "accession",
                 "user": "%s",
-                "filepath": "/p11-dummy@elixir-europe.org/files/%s",
+                "filepath": "/%s-%s/files/%s",
                 "accession_id": "%s",
                 "decrypted_checksums": [
                     {
@@ -85,7 +83,7 @@ public class Strings {
             }]
             """;
 
-  public static final String EXPORT_REQ_BODY =
+  public static final String EXPORT_REQ_BODY_GDI =
       """
           {
               "id": "%s",
@@ -94,4 +92,14 @@ public class Strings {
               "type": "%s"
           }
           """;
+
+  public static final String EXPORT_REQ_BODY_FEGA =
+      """
+                {
+                    "id": "%s",
+                    "visaToken": "%s",
+                    "userPublicKey": "%s",
+                    "type": "%s"
+                }
+                """;
 }
