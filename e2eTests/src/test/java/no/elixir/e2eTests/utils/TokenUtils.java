@@ -1,6 +1,5 @@
 package no.elixir.e2eTests.utils;
 
-import com.auth0.jwt.algorithms.Algorithm;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.io.StringReader;
@@ -11,10 +10,10 @@ import java.security.Security;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import no.elixir.e2eTests.constants.Strings;
 import no.elixir.e2eTests.core.E2EState;
@@ -25,15 +24,22 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 
 public class TokenUtils {
 
-    public static String generateVisaTokenV2(String resource, String pubKeyPath, String privKeyPath) throws Exception {
-
-        RSAPublicKey publicKey = getPublicKey(pubKeyPath);
+    public static String generateVisaToken(String resource, String pubKeyPath, String privKeyPath) throws Exception {
         RSAPrivateKey privateKey = getPrivateKey(privKeyPath);
-
-        HashMap<String, String> details = extractDetailsFromLSAAIToken(E2EState.env.getLSAAIToken());
-        String user = details.get("sub");
-        String aud = details.get("aud");
-
+        String user, aud;
+        // if the passport scoped access token is present and if the
+        // integration is set to EGA_DEV environment, we get some
+        // details from that provided token.
+        if (E2EState.env.getLSAAIToken() != null
+                && !E2EState.env.getLSAAIToken().isEmpty()
+                && E2EState.env.getIntegration().equals("EGA_DEV")) {
+          HashMap<String, String> details = extractDetailsFromLSAAIToken(E2EState.env.getLSAAIToken());
+          user = details.get("sub");
+          aud = details.get("aud");
+        } else {
+          user = Strings.JWT_SUBJECT;
+          aud = E2EState.env.getProxyTokenAudience();
+        }
         // Build the GA4GH visa claim
         Map<String, Object> ga4ghVisa = new HashMap<>();
         ga4ghVisa.put("asserted", Strings.VISA_ASSERTED);
@@ -41,7 +47,6 @@ public class TokenUtils {
         ga4ghVisa.put("source", Strings.VISA_SOURCE);
         ga4ghVisa.put("type", Strings.VISA_TYPE);
         ga4ghVisa.put("value", String.format(Strings.VISA_VALUE_TEMPLATE, resource));
-
         // Build and sign the JWT
         return Jwts.builder()
                 .header()
@@ -50,9 +55,9 @@ public class TokenUtils {
                 .add("typ", Strings.JWT_TYP)
                 .add("alg", Strings.JWT_ALG)
                 .and()
-                .subject(Strings.JWT_SUBJECT)
+                .subject(user)
                 .audience()
-                .add(E2EState.env.getProxyTokenAudience())
+                .add(aud)
                 .and()
                 .claim("ga4gh_visa_v1", ga4ghVisa)
                 .issuer(Strings.JWT_ISSUER)
@@ -63,29 +68,11 @@ public class TokenUtils {
                 .compact();
     }
 
-  public static String generateVisaToken(String resource, String pubKeyPath, String privKeyPath)
-      throws Exception {
-
-    HashMap<String, String> details = extractDetailsFromLSAAIToken(E2EState.env.getLSAAIToken());
-    String user = details.get("sub");
-    String aud = details.get("aud");
-    RSAPublicKey publicKey = getPublicKey(pubKeyPath);
-    RSAPrivateKey privateKey = getPrivateKey(privKeyPath);
-    byte[] visaHeader = Base64.getUrlEncoder().encode(Strings.VISA_HEADER.getBytes());
-    byte[] visaPayload =
-        Base64.getUrlEncoder()
-            .encode(String.format(Strings.VISA_PAYLOAD, user, aud, resource).getBytes());
-    byte[] visaSignature = Algorithm.RSA256(publicKey, privateKey).sign(visaHeader, visaPayload);
-    return "%s.%s.%s"
-        .formatted(
-            new String(visaHeader),
-            new String(visaPayload),
-            Base64.getUrlEncoder().encodeToString(visaSignature));
-  }
-
   public static RSAPublicKey getPublicKey(String pubKeyPath) throws Exception {
-    String keyContent =
-        FileUtils.readFileToString(CertificateUtils.getFile(pubKeyPath), Charset.defaultCharset());
+      String keyContent =
+              FileUtils.readFileToString(E2EState.env.getIntegration().equals("EGA_DEV")
+                      ? CertificateUtils.getFile(pubKeyPath)
+                      : CertificateUtils.getCertificateFile(pubKeyPath), Charset.defaultCharset());
 
     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
@@ -104,11 +91,12 @@ public class TokenUtils {
 
   public static RSAPrivateKey getPrivateKey(String privKeyPath) throws Exception {
     String keyContent =
-        FileUtils.readFileToString(CertificateUtils.getFile(privKeyPath), Charset.defaultCharset());
+        FileUtils.readFileToString(E2EState.env.getIntegration().equals("EGA_DEV")
+                ? CertificateUtils.getFile(privKeyPath)
+                : CertificateUtils.getCertificateFile(privKeyPath), Charset.defaultCharset());
 
     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
-    // Check which format we have
     if (keyContent.contains("BEGIN RSA PRIVATE KEY")) {
       // PKCS#1 format
       return handlePKCS1PrivateKey(keyContent);
@@ -123,6 +111,27 @@ public class TokenUtils {
       byte[] decodedKey = Base64.getDecoder().decode(encoded);
       return (RSAPrivateKey) keyFactory.generatePrivate(new PKCS8EncodedKeySpec(decodedKey));
     }
+  }
+
+  /**
+   * Introduced with EGA_DEV runtime tests. Extracts specific details
+   * from a given passport scoped access token.
+   *
+   * @param passportScopedAccessToken token to decode
+   * @return Map containing the `sub` and `aud`
+   */
+  public static HashMap<String, String> extractDetailsFromLSAAIToken(
+      String passportScopedAccessToken) {
+    var tokenArray = passportScopedAccessToken.split("[.]");
+    byte[] decodedPayload = Base64.getUrlDecoder().decode(tokenArray[1]);
+    String decodedPayloadString = new String(decodedPayload);
+    JsonObject claims = new Gson().fromJson(decodedPayloadString, JsonObject.class);
+    return new HashMap<>() {
+      {
+        put("sub", claims.get("sub").getAsString());
+        put("aud", claims.get("aud").getAsString());
+      }
+    };
   }
 
   private static RSAPrivateKey handlePKCS1PrivateKey(String keyContent) throws Exception {
@@ -143,28 +152,15 @@ public class TokenUtils {
       return (RSAPrivateKey) converter.getPrivateKey((PrivateKeyInfo) object);
     } else if (object instanceof org.bouncycastle.asn1.pkcs.RSAPrivateKey rsaPrivKey) {
       org.bouncycastle.asn1.x509.AlgorithmIdentifier algId =
-          new org.bouncycastle.asn1.x509.AlgorithmIdentifier(
-              org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers.rsaEncryption);
+              new org.bouncycastle.asn1.x509.AlgorithmIdentifier(
+                      org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers.rsaEncryption);
       PrivateKeyInfo privKeyInfo = new PrivateKeyInfo(algId, rsaPrivKey);
       return (RSAPrivateKey) converter.getPrivateKey(privKeyInfo);
     }
 
     throw new IllegalArgumentException(
-        "Unable to parse private key. Object type: "
-            + (object != null ? object.getClass().getName() : "null"));
+            "Unable to parse private key. Object type: "
+                    + (object != null ? object.getClass().getName() : "null"));
   }
 
-  public static HashMap<String, String> extractDetailsFromLSAAIToken(
-      String passportScopedAccessToken) {
-    var tokenArray = passportScopedAccessToken.split("[.]");
-    byte[] decodedPayload = Base64.getUrlDecoder().decode(tokenArray[1]);
-    String decodedPayloadString = new String(decodedPayload);
-    JsonObject claims = new Gson().fromJson(decodedPayloadString, JsonObject.class);
-    return new HashMap<>() {
-      {
-        put("sub", claims.get("sub").getAsString());
-        put("aud", claims.get("aud").getAsString());
-      }
-    };
-  }
 }
