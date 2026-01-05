@@ -57,7 +57,6 @@ public class UploadTest {
     assertEquals(201, jsonResponse.getObject().get("statusCode"));
   }
 
-
   private static String resolveUploadToken() throws Exception {
     // if a passport scoped access token is not provided we generate a fake one
     if (E2EState.env.getLSAAIToken() == null || E2EState.env.getLSAAIToken().isEmpty()) {
@@ -70,5 +69,4 @@ public class UploadTest {
       return E2EState.env.getLSAAIToken();
     }
   }
-
 }

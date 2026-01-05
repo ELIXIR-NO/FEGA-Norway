@@ -79,5 +79,4 @@ public class Environment {
     this.egaDevJwtPrivKeyPath = env.get("E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH");
     this.egaDevPubKeyPath = env.get("E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH");
   }
-
 }
