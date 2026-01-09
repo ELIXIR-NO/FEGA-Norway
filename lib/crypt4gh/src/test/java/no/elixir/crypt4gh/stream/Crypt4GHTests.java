@@ -308,6 +308,72 @@ public class Crypt4GHTests {
   }
 
   /**
+   * Tests re-encryption of a file on a file-system with DataEditList. The edit list here has an odd
+   * number of values, which means that the final value is a segment to exclude. According to the
+   * specification, the rest of the file after this excluded segment should then be included.
+   *
+   * @throws Exception In case something fails.
+   */
+  @Test
+  public void fileReencryptionWithOddValuedDataEditListTest() throws Exception {
+    PrivateKey writerPrivateKey =
+        keyUtils.readPrivateKey(
+            new File(
+                Objects.requireNonNull(getClass().getClassLoader().getResource("writer.sec.pem"))
+                    .getFile()),
+            null);
+    PrivateKey readerPrivateKey =
+        keyUtils.readPrivateKey(
+            new File(
+                Objects.requireNonNull(getClass().getClassLoader().getResource("reader.sec.pem"))
+                    .getFile()),
+            null);
+    PublicKey readerPublicKey =
+        keyUtils.readPublicKey(
+            new File(
+                Objects.requireNonNull(getClass().getClassLoader().getResource("reader.pub.pem"))
+                    .getFile()));
+
+    File unencryptedFile =
+        new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
+                .getFile());
+    File encryptedFile = Files.createTempFile("test", "enc").toFile();
+    File decryptedFile = Files.createTempFile("test", "dec").toFile();
+    try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
+        FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
+      try (Crypt4GHOutputStream crypt4GHOutputStream =
+          new Crypt4GHOutputStream(outputStream, writerPrivateKey, readerPublicKey)) {
+        IOUtils.copy(inputStream, crypt4GHOutputStream);
+      }
+    }
+    DataEditList dataEditList = new DataEditList(new long[] {950, 837, 510, 847, 363});
+    try (FileInputStream encryptedInputStream = new FileInputStream(encryptedFile);
+        Crypt4GHInputStream crypt4GHInputStream =
+            new Crypt4GHInputStream(encryptedInputStream, dataEditList, readerPrivateKey);
+        FileInputStream unencryptedInputStream = new FileInputStream(unencryptedFile)) {
+      List<String> lines = IOUtils.readLines(crypt4GHInputStream, Charset.defaultCharset());
+      assertNotNull(lines);
+      assertEquals(217, lines.size());
+      unencryptedInputStream.skip(950);
+      String firstLine = new String(unencryptedInputStream.readNBytes(837)).trim();
+      assertEquals(firstLine, lines.get(0));
+      unencryptedInputStream.skip(510);
+      String secondLine = new String(unencryptedInputStream.readNBytes(847)).trim();
+      assertEquals(secondLine, lines.get(1));
+      unencryptedInputStream.skip(363);
+      String remainingLines = new String(unencryptedInputStream.readNBytes(66718)).trim();
+      String[] remainingLinesArray = remainingLines.lines().toArray(String[]::new);
+      for (int i = 0; i < 215; i++) {
+        assertEquals(remainingLinesArray[i], lines.get(2 + i));
+      }
+    } finally {
+      encryptedFile.delete();
+      decryptedFile.delete();
+    }
+  }
+
+  /**
    * Tests re-encryption of a file on a file-system with DataEditList injected to OutputStream and
    * skipping forward to some specified byte.
    *
