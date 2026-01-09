@@ -73,3 +73,4 @@ Crypt4GH encryption/decryption tool
 Read more about the format at
 http://samtools.github.io/hts-specs/crypt4gh.pdf
 ```
+
