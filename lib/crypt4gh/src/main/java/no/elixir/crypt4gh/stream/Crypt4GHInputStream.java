@@ -44,6 +44,11 @@ public class Crypt4GHInputStream extends FilterInputStream {
       lengths.add(new DataEditListEntry(length, skip));
       skip = !skip; // alternate between skipping and keeping segments from the edit list
     }
+    // if the edit list has an odd number of values (thus ending with an "exclude" segment),
+    // then add an extra "include" segment that covers the rest of the stream
+    if (!skip) {
+      this.lengths.add(new DataEditListEntry(Long.MAX_VALUE, false));
+    }
   }
 
   /**
@@ -64,6 +69,9 @@ public class Crypt4GHInputStream extends FilterInputStream {
     for (long length : lengthsArray) {
       this.lengths.add(new DataEditListEntry(length, skip));
       skip = !skip;
+    }
+    if (!skip) {
+      this.lengths.add(new DataEditListEntry(Long.MAX_VALUE, false));
     }
   }
 
