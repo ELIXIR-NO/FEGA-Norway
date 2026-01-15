@@ -35,6 +35,8 @@ var inboxOptions struct {
 	List   bool   `short:"l" long:"list" description:"Lists uploaded files"`
 	Delete string `short:"d" long:"delete" description:"Deletes uploaded file by name"`
 	PerPage  int    `short:"p" long:"per-page" default:"100"  description:"Items per page (max 50000)"`
+	// Pagination note: --page is user-facing and 1-based (page=1 is the first page).
+    // Internally we convert to 0-based before calling the proxy/TSD API.
     Page     int    `long:"page"             default:"1"    description:"Page number"`
     All      bool   `long:"all"                          description:"Fetch *every* page. Ignores --page."`
 }
@@ -102,6 +104,7 @@ func main() {
 		if inboxOptions.List {
 			fileList, err := fileManager.ListFiles(
                 true,
+                // Convert user-facing 1-based page to backend 0-based index.
                 inboxOptions.Page-1,
                 inboxOptions.PerPage,
                 inboxOptions.All,
@@ -155,6 +158,7 @@ func main() {
 		if outboxOptions.List {
 			fileList, err := fileManager.ListFiles(
                 false,
+                // Convert user-facing 1-based page to backend 0-based index
                 outboxOptions.Page-1,
                 outboxOptions.PerPage,
                 outboxOptions.All,
@@ -257,6 +261,7 @@ func main() {
 			fmt.Println(aurora.Blue("File to export is not specified. Downloading the whole outbox folder."))
 			fileList, err := fileManager.ListFiles(
 			    false,
+			    // Convert user-facing 1-based page to backend 0-based index
                 outboxOptions.Page-1,
                 outboxOptions.PerPage,
                 outboxOptions.All,
