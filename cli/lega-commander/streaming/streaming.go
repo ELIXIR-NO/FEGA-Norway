@@ -191,9 +191,10 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 	fileName := filepath.Base(file.Name())
 
 	// List user's files already in inbox to avoid accidental overwrites
+	// Backend pagination is 0-based; start at page=0
 	filesList, err := s.fileManager.ListFiles(
 	true,
-    1,
+    0,
     50000,
     true, )
 	if err != nil {
@@ -330,9 +331,10 @@ func (s defaultStreamer) Download(fileName string) error {
 	if fileExists(fileName) {
 		return errors.New("File " + fileName + " exists locally, aborting.")
 	}
+    // Backend pagination is 0-based; start at page=0
 	filesList, err := s.fileManager.ListFiles(
     false,
-    1,
+    0,
     50000,
     true,
     )
@@ -431,8 +433,9 @@ func (s defaultStreamer) getTSDtoken(c conf.Configuration) (string, jwt.MapClaim
 
 func (s *defaultStreamer) uploadFileWithoutProxy(file *os.File, stat os.FileInfo, uploadID *string, offset, startChunk int64) error {
 	fileName := filepath.Base(file.Name())
+	// Backend pagination is 0-based; start at page=0
 	filesList, err := s.fileManager.ListFiles(
-    true, 1, 50000, true,
+    true, 0, 50000, true,
 	)
 	if err != nil {
 		return err
