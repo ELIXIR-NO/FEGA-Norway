@@ -29,6 +29,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-resttestclient")
     implementation("org.springframework.boot:spring-boot-restclient")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
+    implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
     runtimeOnly("org.postgresql:postgresql")
