@@ -81,6 +81,7 @@ public class LocalEGATSDProxyApplication {
                     .authenticated()
                     .requestMatchers("/user")
                     .authenticated())
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
         .oauth2Login(
             auth ->
                 auth.redirectionEndpoint(endpoint -> endpoint.baseUri("/oidc-protected"))
