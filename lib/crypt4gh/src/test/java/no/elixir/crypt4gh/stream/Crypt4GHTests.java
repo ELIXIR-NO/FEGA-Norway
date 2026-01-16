@@ -228,7 +228,6 @@ public class Crypt4GHTests {
             Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
         FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
       try (Crypt4GHOutputStream crypt4GHOutputStream =
@@ -245,7 +244,6 @@ public class Crypt4GHTests {
       assertArrayEquals(unencryptedInputStream.readAllBytes(), crypt4GHInputStream.readAllBytes());
     } finally {
       encryptedFile.delete();
-      decryptedFile.delete();
     }
   }
 
@@ -279,7 +277,6 @@ public class Crypt4GHTests {
             Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
         FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
       try (Crypt4GHOutputStream crypt4GHOutputStream =
@@ -303,7 +300,6 @@ public class Crypt4GHTests {
       assertEquals(secondLine, lines.get(1));
     } finally {
       encryptedFile.delete();
-      decryptedFile.delete();
     }
   }
 
@@ -339,7 +335,6 @@ public class Crypt4GHTests {
             Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
         FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
       try (Crypt4GHOutputStream crypt4GHOutputStream =
@@ -369,7 +364,6 @@ public class Crypt4GHTests {
       }
     } finally {
       encryptedFile.delete();
-      decryptedFile.delete();
     }
   }
 
@@ -404,7 +398,6 @@ public class Crypt4GHTests {
             Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     DataEditList dataEditList = new DataEditList(new long[] {950, 837, 510, 847});
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
         FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
@@ -427,7 +420,6 @@ public class Crypt4GHTests {
       assertEquals(line, lines.get(0));
     } finally {
       encryptedFile.delete();
-      decryptedFile.delete();
     }
   }
 
@@ -462,7 +454,6 @@ public class Crypt4GHTests {
             Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
         FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
       try (Crypt4GHOutputStream crypt4GHOutputStream =
@@ -484,7 +475,6 @@ public class Crypt4GHTests {
       assertEquals(line, lines.get(0));
     } finally {
       encryptedFile.delete();
-      decryptedFile.delete();
     }
   }
 
@@ -520,7 +510,6 @@ public class Crypt4GHTests {
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
     File encryptedFileWithAddedRecipient = Files.createTempFile("test2", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     DataEditList dataEditList = new DataEditList(new long[] {950, 837, 510, 847});
     Header header;
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
@@ -561,7 +550,6 @@ public class Crypt4GHTests {
     } finally {
       encryptedFile.delete();
       encryptedFileWithAddedRecipient.delete();
-      decryptedFile.delete();
     }
   }
 
@@ -597,7 +585,6 @@ public class Crypt4GHTests {
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
     File encryptedFileWithAddedRecipient = Files.createTempFile("test2", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     DataEditList dataEditList = new DataEditList(new long[] {950, 837, 510, 847});
     Header header;
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
@@ -638,7 +625,6 @@ public class Crypt4GHTests {
     } finally {
       encryptedFile.delete();
       encryptedFileWithAddedRecipient.delete();
-      decryptedFile.delete();
     }
   }
 
