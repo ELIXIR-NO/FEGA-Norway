@@ -30,6 +30,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-restclient")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
     runtimeOnly("org.postgresql:postgresql")
