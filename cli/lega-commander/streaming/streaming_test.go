@@ -78,7 +78,7 @@ func (mockClient) DoRequest(
     // list files (inbox / outbox)
     if strings.HasSuffix(url, "/files") {
         page := params["page"]
-        if page != "" && page != "1" {
+        if page != "" && page != "0" {
             empty := ioutil.NopCloser(strings.NewReader(`{"files":[]}`))
             return &http.Response{StatusCode: http.StatusOK, Body: empty}, nil
         }
