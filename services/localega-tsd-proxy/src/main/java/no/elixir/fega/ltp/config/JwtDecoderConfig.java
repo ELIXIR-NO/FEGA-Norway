@@ -13,11 +13,30 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 @Configuration
 public class JwtDecoderConfig {
 
+  private final int maxCacheSize;
+  private final long timeToLive;
+  private final TimeUnit timeUnit;
+  private final String aaiBase;
+
+  public JwtDecoderConfig(
+      @Value("${jwk-cache.max-size}") int maxCacheSize,
+      @Value("${jwk-cache.duration}") long timeToLive,
+      @Value("${jwk-cache.time-unit}") TimeUnit timeUnit,
+      @Value("${aai.service-base-url}") String aaiBase) {
+    this.maxCacheSize = maxCacheSize;
+    this.timeToLive = timeToLive;
+    this.timeUnit = timeUnit;
+    this.aaiBase = aaiBase;
+  }
+
   @Bean
-  public JwtDecoder jwtDecoder(@Value("${aai.service-base-url}") String aaiBase) {
+  public JwtDecoder jwtDecoder() {
 
     com.github.benmanes.caffeine.cache.Cache<Object, Object> nativeCache =
-        Caffeine.newBuilder().expireAfterWrite(60, TimeUnit.MINUTES).maximumSize(100).build();
+        Caffeine.newBuilder()
+            .expireAfterWrite(timeToLive, timeUnit)
+            .maximumSize(maxCacheSize)
+            .build();
 
     Cache jwkCache = new CaffeineCache("jwkCache", nativeCache);
 
