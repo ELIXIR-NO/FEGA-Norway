@@ -58,9 +58,9 @@ class WebLayerTest {
 
       var clientId = responseJson.get("client_id");
       assertThat(clientId).isNotNull();
-      assertThat(clientId.textValue()).isNotBlank();
+      assertThat(clientId.asString()).isNotBlank();
 
-      client.setId(clientId.textValue());
+      client.setId(clientId.asString());
     }
 
     @Nested
@@ -88,7 +88,7 @@ class WebLayerTest {
         assertThat(response.getBody()).isNotNull();
 
         var responseJson = new ObjectMapper().readTree(response.getBody());
-        var confirmationToken = responseJson.get("confirmation_token").asText();
+        var confirmationToken = responseJson.get("confirmation_token").asString();
         assertThat(confirmationToken).isNotBlank();
 
         client.setConfirmationToken(confirmationToken);
@@ -111,7 +111,7 @@ class WebLayerTest {
         assertThat(response.getBody()).isNotNull();
 
         var responseJson = new ObjectMapper().readTree(response.getBody());
-        var token = responseJson.get("token").asText();
+        var token = responseJson.get("token").asString();
         assertThat(token).isNotBlank();
       }
 
@@ -138,7 +138,7 @@ class WebLayerTest {
           assertThat(response.getBody()).isNotNull();
 
           var responseJson = new ObjectMapper().readTree(response.getBody());
-          var password = responseJson.get("password").asText();
+          var password = responseJson.get("password").asString();
           assertThat(password).isNotBlank();
 
           client.setPassword(password);
@@ -167,7 +167,7 @@ class WebLayerTest {
             assertThat(response.getBody()).isNotNull();
 
             var responseJson = new ObjectMapper().readTree(response.getBody());
-            var apiKey = responseJson.get("api_key").asText();
+            var apiKey = responseJson.get("api_key").asString();
             assertThat(apiKey).isNotBlank();
           }
         }
@@ -204,7 +204,7 @@ class WebLayerTest {
       var responseJson = new ObjectMapper().readTree(response.getBody());
       var token = responseJson.get("token");
       assertThat(token).isNotNull();
-      assertThat(token.textValue()).isNotBlank();
+      assertThat(token.asString()).isNotBlank();
     }
   }
 
@@ -250,7 +250,7 @@ class WebLayerTest {
       var responseJson = new ObjectMapper().readTree(response.getBody());
       var token = responseJson.get("token");
       assertThat(token).isNotNull();
-      assertThat(token.textValue()).isNotBlank();
+      assertThat(token.asString()).isNotBlank();
     }
   }
 
