@@ -3,7 +3,6 @@ package no.elixir.tsdapimock;
 import static javax.management.timer.Timer.ONE_HOUR;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import no.elixir.tsdapimock.core.utils.JwtService;
 import no.elixir.tsdapimock.endpoints.auth.basic.Client;
 import org.junit.jupiter.api.BeforeAll;
@@ -15,6 +14,7 @@ import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRe
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
+import tools.jackson.databind.ObjectMapper;
 
 @ActiveProfiles("test")
 @AutoConfigureTestRestTemplate
