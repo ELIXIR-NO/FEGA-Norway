@@ -228,7 +228,6 @@ public class Crypt4GHTests {
             Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
         FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
       try (Crypt4GHOutputStream crypt4GHOutputStream =
@@ -245,7 +244,6 @@ public class Crypt4GHTests {
       assertArrayEquals(unencryptedInputStream.readAllBytes(), crypt4GHInputStream.readAllBytes());
     } finally {
       encryptedFile.delete();
-      decryptedFile.delete();
     }
   }
 
@@ -279,7 +277,6 @@ public class Crypt4GHTests {
             Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
         FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
       try (Crypt4GHOutputStream crypt4GHOutputStream =
@@ -303,7 +300,84 @@ public class Crypt4GHTests {
       assertEquals(secondLine, lines.get(1));
     } finally {
       encryptedFile.delete();
-      decryptedFile.delete();
+    }
+  }
+
+  /**
+   * Tests re-encryption of a file on a file-system with DataEditList. The edit list here has an odd
+   * number of values, which means that the final value is a segment to exclude. According to the
+   * specification, the rest of the file after this excluded segment should then be included.
+   *
+   * @throws Exception In case something fails.
+   */
+  @Test
+  public void fileReencryptionWithOddValuedDataEditListTest() throws Exception {
+    PrivateKey writerPrivateKey =
+        keyUtils.readPrivateKey(
+            new File(
+                Objects.requireNonNull(getClass().getClassLoader().getResource("writer.sec.pem"))
+                    .getFile()),
+            null);
+    PrivateKey readerPrivateKey =
+        keyUtils.readPrivateKey(
+            new File(
+                Objects.requireNonNull(getClass().getClassLoader().getResource("reader.sec.pem"))
+                    .getFile()),
+            null);
+    PublicKey readerPublicKey =
+        keyUtils.readPublicKey(
+            new File(
+                Objects.requireNonNull(getClass().getClassLoader().getResource("reader.pub.pem"))
+                    .getFile()));
+
+    // Preparing the full sample unencrypted file which selected data/lines will be extracted from
+    // by using a DataEditList
+    File unencryptedFile =
+        new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
+                .getFile());
+    // Encrypting the full sample file into the test.enc file
+    File encryptedFile = Files.createTempFile("test", "enc").toFile();
+    try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
+        FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
+      try (Crypt4GHOutputStream crypt4GHOutputStream =
+          new Crypt4GHOutputStream(outputStream, writerPrivateKey, readerPublicKey)) {
+        IOUtils.copy(inputStream, crypt4GHOutputStream);
+      }
+    }
+    // The odd-numbered DataEditList to be tested for extracting two data segments/lines from the
+    // sample.txt file (2nd and 4th number of bytes) plus the rest of the file/lines after
+    // the last excluded number of bytes (5th number). These edit values will cut out lines 1-2,
+    // keep line 3, cut lines 4-6, keep line 7, cut lines 8-10 and implicitly keep lines 11-225.
+    DataEditList dataEditList = new DataEditList(new long[] {950, 837, 510, 847, 363});
+    // 1. Setup the crypt4GHInputStream with the dataEditList
+    // 2. Read in all lines of crypt4GHInputStream, returning the unencrypted results after
+    //    dataEditList has been applied. This should be 1+1+215=217 lines.
+    // 3. Manually traverse the raw unencryptedInputStream with the same steps of bytes and
+    //    extracted number of bytes as specified in the dataEditList
+    // 4. Assert that the results from step 2 and 3 match for each of the three extracted parts
+    //    (line 3, line 7 and lines 11-225)
+    try (FileInputStream encryptedInputStream = new FileInputStream(encryptedFile);
+        Crypt4GHInputStream crypt4GHInputStream =
+            new Crypt4GHInputStream(encryptedInputStream, dataEditList, readerPrivateKey);
+        FileInputStream unencryptedInputStream = new FileInputStream(unencryptedFile)) {
+      List<String> lines = IOUtils.readLines(crypt4GHInputStream, Charset.defaultCharset());
+      assertNotNull(lines);
+      assertEquals(217, lines.size());
+      unencryptedInputStream.skip(950);
+      String firstLine = new String(unencryptedInputStream.readNBytes(837)).trim();
+      assertEquals(firstLine, lines.get(0));
+      unencryptedInputStream.skip(510);
+      String secondLine = new String(unencryptedInputStream.readNBytes(847)).trim();
+      assertEquals(secondLine, lines.get(1));
+      unencryptedInputStream.skip(363);
+      String remainingLines = new String(unencryptedInputStream.readNBytes(66718)).trim();
+      String[] remainingLinesArray = remainingLines.lines().toArray(String[]::new);
+      for (int i = 0; i < 215; i++) {
+        assertEquals(remainingLinesArray[i], lines.get(2 + i));
+      }
+    } finally {
+      encryptedFile.delete();
     }
   }
 
@@ -338,7 +412,6 @@ public class Crypt4GHTests {
             Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     DataEditList dataEditList = new DataEditList(new long[] {950, 837, 510, 847});
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
         FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
@@ -361,7 +434,68 @@ public class Crypt4GHTests {
       assertEquals(line, lines.get(0));
     } finally {
       encryptedFile.delete();
-      decryptedFile.delete();
+    }
+  }
+
+  /**
+   * Tests re-encryption of a file on a file-system with DataEditList injected to OutputStream and
+   * forward skipping. The edit list has an odd number of values, so the rest of the file after the
+   * final excluded segment should implicitly be included. The second forward skip lands within this
+   * implicitly included segment.
+   *
+   * @throws Exception In case something fails.
+   */
+  @Test
+  public void partialFileReencryptionWithOddValuedDataEditListInOutputStreamTest()
+      throws Exception {
+    PrivateKey writerPrivateKey =
+        keyUtils.readPrivateKey(
+            new File(
+                Objects.requireNonNull(getClass().getClassLoader().getResource("writer.sec.pem"))
+                    .getFile()),
+            null);
+    PrivateKey readerPrivateKey =
+        keyUtils.readPrivateKey(
+            new File(
+                Objects.requireNonNull(getClass().getClassLoader().getResource("reader.sec.pem"))
+                    .getFile()),
+            null);
+    PublicKey readerPublicKey =
+        keyUtils.readPublicKey(
+            new File(
+                Objects.requireNonNull(getClass().getClassLoader().getResource("reader.pub.pem"))
+                    .getFile()));
+
+    File unencryptedFile =
+        new File(
+            Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
+                .getFile());
+    File encryptedFile = Files.createTempFile("test", "enc").toFile();
+    DataEditList dataEditList = new DataEditList(new long[] {950, 837, 510, 847, 3000});
+    try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
+        FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
+      try (Crypt4GHOutputStream crypt4GHOutputStream =
+          new Crypt4GHOutputStream(outputStream, dataEditList, writerPrivateKey, readerPublicKey)) {
+        IOUtils.copy(inputStream, crypt4GHOutputStream);
+      }
+    }
+
+    try (FileInputStream encryptedInputStream = new FileInputStream(encryptedFile);
+        Crypt4GHInputStream crypt4GHInputStream =
+            new Crypt4GHInputStream(encryptedInputStream, readerPrivateKey);
+        FileInputStream unencryptedInputStream = new FileInputStream(unencryptedFile)) {
+      unencryptedInputStream.skip(950 + 837 + 510 + 13);
+      crypt4GHInputStream.skip(850);
+      String unencryptedData = new String(unencryptedInputStream.readNBytes(700));
+      String decryptedData = new String(crypt4GHInputStream.readNBytes(700));
+      assertEquals(unencryptedData, decryptedData);
+      unencryptedInputStream.skip(134 + 3000 + 4866);
+      crypt4GHInputStream.skip(5000);
+      unencryptedData = new String(unencryptedInputStream.readNBytes(59215));
+      decryptedData = new String(crypt4GHInputStream.readNBytes(59215));
+      assertEquals(unencryptedData, decryptedData);
+    } finally {
+      encryptedFile.delete();
     }
   }
 
@@ -396,7 +530,6 @@ public class Crypt4GHTests {
             Objects.requireNonNull(getClass().getClassLoader().getResource("sample.txt"))
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
         FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
       try (Crypt4GHOutputStream crypt4GHOutputStream =
@@ -418,7 +551,6 @@ public class Crypt4GHTests {
       assertEquals(line, lines.get(0));
     } finally {
       encryptedFile.delete();
-      decryptedFile.delete();
     }
   }
 
@@ -454,7 +586,6 @@ public class Crypt4GHTests {
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
     File encryptedFileWithAddedRecipient = Files.createTempFile("test2", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     DataEditList dataEditList = new DataEditList(new long[] {950, 837, 510, 847});
     Header header;
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
@@ -495,7 +626,6 @@ public class Crypt4GHTests {
     } finally {
       encryptedFile.delete();
       encryptedFileWithAddedRecipient.delete();
-      decryptedFile.delete();
     }
   }
 
@@ -531,7 +661,6 @@ public class Crypt4GHTests {
                 .getFile());
     File encryptedFile = Files.createTempFile("test", "enc").toFile();
     File encryptedFileWithAddedRecipient = Files.createTempFile("test2", "enc").toFile();
-    File decryptedFile = Files.createTempFile("test", "dec").toFile();
     DataEditList dataEditList = new DataEditList(new long[] {950, 837, 510, 847});
     Header header;
     try (FileInputStream inputStream = new FileInputStream(unencryptedFile);
@@ -572,7 +701,6 @@ public class Crypt4GHTests {
     } finally {
       encryptedFile.delete();
       encryptedFileWithAddedRecipient.delete();
-      decryptedFile.delete();
     }
   }
 
