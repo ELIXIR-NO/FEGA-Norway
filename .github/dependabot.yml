@@ -39,6 +39,10 @@ updates:
       - /e2eTests
       - /services/tsd-api-mock
       - /services/localega-tsd-proxy
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "tuesday"
@@ -70,6 +74,10 @@ updates:
     directories:
       - /services/mq-interceptor
       - /services/cega-mock
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "wednesday"
