@@ -22,7 +22,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-restclient")
-    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.20.1")
     testImplementation("org.springframework.boot:spring-boot-resttestclient")
     implementation("jakarta.validation:jakarta.validation-api")
     compileOnly("org.projectlombok:lombok")
