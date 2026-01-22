@@ -3,11 +3,11 @@ import java.util.Base64
 plugins {
     id("java")
     id("extra-java-module-info")
-    id("io.freefair.lombok") version "9.1.0"
+    id("io.freefair.lombok") version "9.2.0"
     id("formatting-conventions")
     id("maven-publish")
     id("signing")
-    id("com.gradleup.shadow") version "9.3.0"
+    id("com.gradleup.shadow") version "9.3.1"
     id("org.jreleaser") version "1.21.0"
 }
 
@@ -32,7 +32,7 @@ dependencies {
     implementation("commons-cli:commons-cli:1.11.0")
     implementation("commons-io:commons-io:2.21.0")
     implementation("com.rfksystems:blake2b:2.0.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
