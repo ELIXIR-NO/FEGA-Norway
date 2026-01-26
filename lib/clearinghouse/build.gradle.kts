@@ -157,7 +157,10 @@ tasks.withType<PublishToMavenRepository>().configureEach {
                 logger.lifecycle("Skipping SNAPSHOT publishing to GitHub Packages")
                 onlyIf { false }
             }
-            else -> logger.lifecycle("Publishing ${project.name} $versionStr to $repoName")
+
+            else -> {
+                logger.lifecycle("Publishing ${project.name} $versionStr to $repoName")
+            }
         }
     }
 }
