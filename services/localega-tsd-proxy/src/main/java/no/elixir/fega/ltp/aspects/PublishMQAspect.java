@@ -84,7 +84,7 @@ public class PublishMQAspect {
     fileDescriptor.setUser(request.getAttribute(EGA_USERNAME).toString());
     String fileName = request.getAttribute(FILE_NAME).toString();
     fileDescriptor.setFilePath(
-        String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
+        String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(EGA_USERNAME).toString())
             + fileName); // absolute path to the file
     fileDescriptor.setFileSize(Long.parseLong(request.getAttribute(FILE_SIZE).toString()));
     fileDescriptor.setFileLastModified(System.currentTimeMillis() / 1000);
@@ -127,7 +127,7 @@ public class PublishMQAspect {
     fileDescriptor.setUser(request.getAttribute(EGA_USERNAME).toString());
     String fileName = request.getAttribute(FILE_NAME).toString();
     fileDescriptor.setFilePath(
-        String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
+        String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(EGA_USERNAME).toString())
             + fileName);
     fileDescriptor.setOperation(Operation.REMOVE.name().toLowerCase());
     publishMessage(fileDescriptor, Operation.REMOVE.name().toLowerCase());
