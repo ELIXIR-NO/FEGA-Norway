@@ -1,5 +1,6 @@
 package no.elixir.fega.ltp.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.ToString;
@@ -14,7 +15,7 @@ public class FileDescriptor {
   @ToString.Exclude
   private String user;
 
-  @JsonProperty("user")
+  @JsonIgnore
   @ToString.Include(name = "user")
   private String maskUser() {
     return Masker.maskUsername(user);
@@ -24,7 +25,7 @@ public class FileDescriptor {
   @ToString.Exclude
   private String filePath;
 
-  @JsonProperty("filepath")
+  @JsonIgnore
   @ToString.Include(name = "filepath")
   private String maskFilepath() {
     return Masker.maskEmailInPath(filePath);
