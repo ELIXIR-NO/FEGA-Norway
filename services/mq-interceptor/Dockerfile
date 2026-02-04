@@ -14,6 +14,7 @@ FROM gcr.io/distroless/static:nonroot
 
 COPY --from=builder /app/mq-interceptor /
 COPY --from=builder /app/passwd /etc/passwd
+COPY --from=builder /etc/ssl/certs/ /etc/ssl/certs/
 
 USER 65534
 
