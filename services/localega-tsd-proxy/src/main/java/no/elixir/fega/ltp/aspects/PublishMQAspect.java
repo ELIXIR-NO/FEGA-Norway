@@ -81,7 +81,7 @@ public class PublishMQAspect {
     }
 
     FileDescriptor fileDescriptor = new FileDescriptor();
-    fileDescriptor.setUser(request.getAttribute(EGA_USERNAME).toString());
+    fileDescriptor.setUser(request.getAttribute(ELIXIR_ID).toString());
     String fileName = request.getAttribute(FILE_NAME).toString();
     fileDescriptor.setFilePath(
         String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
@@ -124,7 +124,7 @@ public class PublishMQAspect {
     }
 
     FileDescriptor fileDescriptor = new FileDescriptor();
-    fileDescriptor.setUser(request.getAttribute(EGA_USERNAME).toString());
+    fileDescriptor.setUser(request.getAttribute(ELIXIR_ID).toString());
     String fileName = request.getAttribute(FILE_NAME).toString();
     fileDescriptor.setFilePath(
         String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
