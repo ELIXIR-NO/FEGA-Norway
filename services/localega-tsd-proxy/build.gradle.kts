@@ -31,7 +31,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
-    implementation("org.wiremock.integrations:wiremock-spring-boot:3.10.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
     runtimeOnly("org.postgresql:postgresql")
