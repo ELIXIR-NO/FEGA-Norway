@@ -107,6 +107,7 @@ services:
       - TSD_MQ_ENABLE_TLS=<<PROXY_TSD_MQ_ENABLE_TLS>>
       - TRUSTSTORE=<<PROXY_TRUSTSTORE>>
       - TRUSTSTORE_PASSWORD=<<PROXY_TRUSTSTORE_PASSWORD>>
+      - ACCEPT_DIRECT_VISA_TOKEN=<<PROXY_ACCEPT_DIRECT_VISA_TOKEN>>
     volumes:
       - proxy-certs:/etc/ega/
       #- custom_path:/app/static/ # Serves from a directory

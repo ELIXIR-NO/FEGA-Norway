@@ -86,6 +86,7 @@ export PROXY_TRUSTSTORE_PASSWORD=$KEYTOOL_TRUSTSTORE_PASSWORD
 export PROXY_ADMIN_USER=admin
 export PROXY_ADMIN_PASSWORD=aDm!n_01x.
 export PROXY_TOKEN_AUDIENCE=test
+export PROXY_ACCEPT_DIRECT_VISA_TOKEN=true
 
 # Interceptor
 # ---------------------------------------------------------------------------
