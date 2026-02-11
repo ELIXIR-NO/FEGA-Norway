@@ -32,17 +32,22 @@ public class TokenService {
   @Value("${ga4gh.visa.public-key-path}")
   private String visaPublicKeyPath;
 
+  @Value("${ga4gh.visa.accept-direct-visa-token:false}")
+  private boolean acceptDirectVisaToken;
+
   /**
    * Retrieves a list of Visa objects of type ControlledAccessGrants based on the provided JWT
    * token.
    *
    * <p>This method supports two scenarios:
    *
-   * <p>1. Direct Visa Token Input: If the JWT token includes the ga4gh_visa_v1 claim, it is treated
-   * as a direct Visa token. This approach is commonly used in our end-to-end (E2E) testing setup,
-   * where the proxy accepts a Visa token directly for testing and debugging purposes. In this case,
-   * the Visa token is verified using verifyVisaTokenAndTransformToVisaObject, and the resulting
-   * Visa object is added to the list.
+   * <p>1. Direct Visa Token Input (non-production only): If the JWT token includes the
+   * ga4gh_visa_v1 claim and {@code ga4gh.visa.accept-direct-visa-token} is set to {@code true}, it
+   * is treated as a direct Visa token. This approach is commonly used in our end-to-end (E2E)
+   * testing setup, where the proxy accepts a Visa token directly for testing and debugging
+   * purposes. In production, direct Visa tokens are rejected with an {@link
+   * IllegalArgumentException}. In non-production environments, the Visa token is verified using
+   * verifyVisaTokenAndTransformToVisaObject, and the resulting Visa object is added to the list.
    *
    * <p>2. Passport-Scoped Access Token Input: In production environments, users provide a
    * Passport-Scoped Access Token. These tokens do not include the ga4gh_visa_v1 claim. Instead, the
@@ -78,8 +83,13 @@ public class TokenService {
     JsonNode claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
     boolean isVisa = claims.has("ga4gh_visa_v1");
     Collection<Visa> visas = new ArrayList<>();
-    if (isVisa) {
+    if (isVisa && acceptDirectVisaToken) {
+      log.info("Accepting direct Visa token (non-production mode).");
       verifyVisaTokenAndTransformToVisaObject(jwtToken).ifPresent(visas::add);
+    } else if (isVisa) {
+      throw new IllegalArgumentException(
+          "Direct Visa tokens are not accepted in production. "
+              + "Use a Passport-Scoped Access Token instead.");
     } else {
       visas.addAll(fetchTheFullPassportUsingPassportScopedAccessTokenAndGetVisas(jwtToken));
     }

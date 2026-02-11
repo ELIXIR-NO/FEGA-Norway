@@ -62,6 +62,8 @@ ga4gh:
   visa:
     # First, the public key is checked. If present, it's used for validating the token. Otherwise, JKU is used instead (entry in the header).
     public-key-path: ${VISA_PUBLIC_KEY_PATH:/etc/ega/jwt/visa.pem}
+    # Allow direct Visa tokens (bypass passport flow). Only enable in non-production/E2E environments.
+    accept-direct-visa-token: ${ACCEPT_DIRECT_VISA_TOKEN:false}
 
 cega:
   auth-url: ${CEGA_AUTH_URL}
