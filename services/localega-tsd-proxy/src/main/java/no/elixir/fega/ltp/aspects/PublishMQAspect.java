@@ -35,7 +35,7 @@ public class PublishMQAspect {
   private String tsdProjectId;
 
   @Value("${tsd.inbox-location}")
-  private String tsdInboxLocation;
+  private String inboxPathFormat;
 
   @Value("${mq.tsd.exchange}")
   private String exchange;
@@ -83,9 +83,7 @@ public class PublishMQAspect {
     FileDescriptor fileDescriptor = new FileDescriptor();
     fileDescriptor.setUser(request.getAttribute(ELIXIR_ID).toString());
     String fileName = request.getAttribute(FILE_NAME).toString();
-    fileDescriptor.setFilePath(
-        String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
-            + fileName); // absolute path to the file
+    fileDescriptor.setFilePath(buildInboxPath(fileName)); // user-specific relative inbox path
     fileDescriptor.setFileSize(Long.parseLong(request.getAttribute(FILE_SIZE).toString()));
     fileDescriptor.setFileLastModified(System.currentTimeMillis() / 1000);
     fileDescriptor.setOperation(Operation.UPLOAD.name().toLowerCase());
@@ -126,11 +124,14 @@ public class PublishMQAspect {
     FileDescriptor fileDescriptor = new FileDescriptor();
     fileDescriptor.setUser(request.getAttribute(ELIXIR_ID).toString());
     String fileName = request.getAttribute(FILE_NAME).toString();
-    fileDescriptor.setFilePath(
-        String.format(tsdInboxLocation, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
-            + fileName);
+    fileDescriptor.setFilePath(buildInboxPath(fileName));
     fileDescriptor.setOperation(Operation.REMOVE.name().toLowerCase());
     publishMessage(fileDescriptor, Operation.REMOVE.name().toLowerCase());
+  }
+
+  private String buildInboxPath(String fileName) {
+    return String.format(inboxPathFormat, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
+        + fileName;
   }
 
   private void publishMessage(FileDescriptor fileDescriptor, String type) {
