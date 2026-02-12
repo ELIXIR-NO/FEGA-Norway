@@ -40,23 +40,32 @@ public class CredentialsMappingAspect {
       pointcut =
           "execution(public * no.elixir.fega.ltp.controllers.rest.ProxyController.stream(..))",
       returning = "result")
-  public void publishMessage(Object result) {
+  public void mapCredentials(Object result) {
     String egaUsername = request.getAttribute(EGA_USERNAME).toString();
     String elixirId = request.getAttribute(ELIXIR_ID).toString();
     List<String> existingEntries =
         jdbcTemplate.queryForList(
             "select elixir_id from mapping where ega_id = ?", String.class, egaUsername);
-    if (CollectionUtils.isNotEmpty(existingEntries)) {
+    if (CollectionUtils.isEmpty(existingEntries)) {
+      jdbcTemplate.update("insert into mapping values (?, ?)", egaUsername, elixirId);
       log.info(
-          "EGA account [{}] is already mapped to Elixir account [{}]",
+          "Mapped EGA account [{}] to Elixir account [{}]",
           Masker.maskUsername(egaUsername),
           Masker.maskEmail(elixirId));
       return;
     }
-    jdbcTemplate.update("insert into mapping values (?, ?)", egaUsername, elixirId);
-    log.info(
-        "Mapped EGA account [{}] to Elixir account [{}]",
-        Masker.maskUsername(egaUsername),
-        Masker.maskEmail(elixirId));
+    if (existingEntries.getFirst().equals(elixirId)) {
+      log.info(
+          "EGA account [{}] is already mapped to Elixir account [{}]",
+          Masker.maskUsername(egaUsername),
+          Masker.maskEmail(elixirId));
+    } else {
+      log.info(
+          "EGA account [{}] has a different Elixir account [{}]",
+          Masker.maskUsername(egaUsername),
+          Masker.maskEmail(elixirId));
+      throw new IllegalStateException(
+          "EGA account is already mapped to a different Elixir account");
+    }
   }
 }
