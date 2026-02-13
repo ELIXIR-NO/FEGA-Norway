@@ -201,18 +201,23 @@ export HEARTBEAT_REDIS_DB=0
 
 # E2E Test
 # ---------------------------------------------------------------------------
+
 # Determines the runtime mode for the E2E tests.
 # If set to "container", the entire test runs inside a Docker container.
 # If set to "local", you can run the test using: `./gradlew :e2eTests:test`.
 # Mainly used to switch the host/ports and file systems to fetch the certificates.
-export E2E_RUNTIME=container
+export E2E_TESTS_RUNTIME=container
+
+# Determines which integration should be run.
+# Either FEGA or GDI or EGA_DEV
+export E2E_TESTS_INTEGRATION=FEGA
 
 # Helper function to choose value based on runtime
 function _runtime_() {
   local container_value=$1
   local local_value=$2
 
-  if [ "$E2E_RUNTIME" = "container" ]; then
+  if [ "$E2E_TESTS_RUNTIME" = "container" ]; then
     echo "$container_value"
   else
     echo "$local_value"
@@ -220,19 +225,28 @@ function _runtime_() {
 }
 
 # Use the function for environment variable assignments
-export E2E_PROXY_HOST=$(_runtime_ "proxy" "localhost")
-export E2E_PROXY_PORT=$(_runtime_ "8080" "10443")
-export E2E_SDA_DOA_HOST=$(_runtime_ "doa" "localhost")
-export E2E_SDA_DOA_PORT=$(_runtime_ "8080" "80")
-export E2E_CEGAMQ_CONN_STR="amqps://$CEGAMQ_USERNAME:$CEGAMQ_PASSWORD@$(_runtime_ $CEGAMQ_HOST "localhost"):$CEGAMQ_PORT/$CEGAMQ_VHOST"
-export E2E_CEGAAUTH_USERNAME=$CEGAAUTH_CEGA_USERS_USER
-export E2E_CEGAAUTH_PASSWORD=$CEGAAUTH_CEGA_USERS_PASSWORD
-export E2E_SDA_DB_HOST=$(_runtime_ "$DB_HOST" "localhost")
-export E2E_SDA_DB_PORT=$DB_PORT
-export E2E_SDA_DB_USERNAME=$DB_POSTGRES_USER
-export E2E_SDA_DB_PASSWORD=$DB_POSTGRES_PASSWORD
-export E2E_SDA_DB_DATABASE_NAME=$DB_POSTGRES_DB
-export E2E_TRUSTSTORE_PASSWORD=$KEYTOOL_TRUSTSTORE_PASSWORD
-export E2E_PROXY_TOKEN_AUDIENCE=$PROXY_TOKEN_AUDIENCE
-export E2E_PROXY_ADMIN_USERNAME=$PROXY_ADMIN_USER
-export E2E_PROXY_ADMIN_PASSWORD=$PROXY_ADMIN_PASSWORD
+export E2E_TESTS_PROXY_HOST=$(_runtime_ "proxy" "localhost")
+export E2E_TESTS_PROXY_PORT=$(_runtime_ "8080" "10443")
+export E2E_TESTS_SDA_DOA_HOST=$(_runtime_ "doa" "localhost")
+export E2E_TESTS_SDA_DOA_PORT=$(_runtime_ "8080" "80")
+export E2E_TESTS_CEGAMQ_CONN_STR="amqps://$CEGAMQ_USERNAME:$CEGAMQ_PASSWORD@$(_runtime_ $CEGAMQ_HOST "localhost"):$CEGAMQ_PORT/$CEGAMQ_VHOST"
+export E2E_TESTS_CEGAAUTH_USERNAME=$CEGAAUTH_CEGA_USERS_USER
+export E2E_TESTS_CEGAAUTH_PASSWORD=$CEGAAUTH_CEGA_USERS_PASSWORD
+export E2E_TESTS_SDA_DB_HOST=$(_runtime_ "$DB_HOST" "localhost")
+export E2E_TESTS_SDA_DB_PORT=$DB_PORT
+export E2E_TESTS_SDA_DB_USERNAME=$DB_POSTGRES_USER
+export E2E_TESTS_SDA_DB_PASSWORD=$DB_POSTGRES_PASSWORD
+export E2E_TESTS_SDA_DB_DATABASE_NAME=$DB_POSTGRES_DB
+export E2E_TESTS_TRUSTSTORE_PASSWORD=$KEYTOOL_TRUSTSTORE_PASSWORD
+export E2E_TESTS_PROXY_TOKEN_AUDIENCE=$PROXY_TOKEN_AUDIENCE
+export E2E_TESTS_PROXY_ADMIN_USERNAME=$PROXY_ADMIN_USER
+export E2E_TESTS_PROXY_ADMIN_PASSWORD=$PROXY_ADMIN_PASSWORD
+export E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES=5
+export E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS=10
+export E2E_TESTS_TSD_PROJECT=p11
+export E2E_TESTS_LSAAI_SUBJECT=dummy@elixir-europe.org
+
+# New configs introduced for EGA DEV testing
+# export E2E_TESTS_EGA_DEV_BASE_DIRECTORY=
+# export E2E_TESTS_EGA_DEV_PUBLIC_KEY_FILENAME=
+# export E2E_TESTS_LSAAI_TOKEN=
