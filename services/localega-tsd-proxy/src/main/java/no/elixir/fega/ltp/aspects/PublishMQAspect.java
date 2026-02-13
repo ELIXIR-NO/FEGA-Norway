@@ -34,7 +34,7 @@ public class PublishMQAspect {
   @Value("${tsd.project}")
   private String tsdProjectId;
 
-  @Value("${tsd.inbox-location}")
+  @Value("${tsd.inbox-path-format}")
   private String inboxPathFormat;
 
   @Value("${mq.tsd.exchange}")
@@ -129,6 +129,14 @@ public class PublishMQAspect {
     publishMessage(fileDescriptor, Operation.REMOVE.name().toLowerCase());
   }
 
+  /**
+   * Builds the user-specific relative inbox path by formatting the inbox path format string with
+   * the TSD project ID and the Elixir user ID, then appending the filename. The resulting path
+   * follows the pattern: {@code /<tsd-project-id>-<elixir-user-id>/files/<fileName>}.
+   *
+   * @param fileName the name of the file to append to the inbox path.
+   * @return the fully constructed inbox path for the given file.
+   */
   private String buildInboxPath(String fileName) {
     return String.format(inboxPathFormat, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
         + fileName;

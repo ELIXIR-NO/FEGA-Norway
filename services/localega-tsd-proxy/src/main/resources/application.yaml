@@ -77,7 +77,8 @@ tsd:
   app-id: ${TSD_APP_ID:ega}
   app-out-id: ${TSD_APP_OUT_ID:egaout}
   access-key: ${TSD_ACCESS_KEY}
-  inbox-location: ${TSD_INBOX_LOCATION:/%s-%s/files/}
+  # Format: /<tsd-project-id>-<elixir-user-id>/files/ — the trailing slash is required because the filename is appended at the end.
+  inbox-path-format: ${TSD_INBOX_PATH_FORMAT:/%s-%s/files/}
   root-ca: ${TSD_ROOT_CERT_PATH:/etc/ega/ssl/CA.cert}
   root-ca-password: ${TSD_ROOT_CERT_PASSWORD:}
 
