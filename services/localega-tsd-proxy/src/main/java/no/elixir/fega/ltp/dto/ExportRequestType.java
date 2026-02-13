@@ -8,8 +8,8 @@ import lombok.ToString;
 /**
  * Represents the type of identifier used in an export request.
  *
- * <p>Supports deserialization from both camelCase ({@code "fileId"}, {@code "datasetId"}) and
- * upper snake case ({@code "FILE_ID"}, {@code "DATASET_ID"}) formats.
+ * <p>Supports deserialization from both camelCase ({@code "fileId"}, {@code "datasetId"}) and upper
+ * snake case ({@code "FILE_ID"}, {@code "DATASET_ID"}) formats.
  */
 @Getter
 @ToString
