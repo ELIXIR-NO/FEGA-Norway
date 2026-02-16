@@ -49,16 +49,11 @@ public class UploadViaLegaCMDTest {
 
   private static @NonNull ProcessBuilder getProcessBuilder(String token) {
     String instanceURL =
-        String.format(
-            "https://%s:%s",
-            E2EState.env.getProxyHost(), E2EState.env.getProxyPort());
+        String.format("https://%s:%s", E2EState.env.getProxyHost(), E2EState.env.getProxyPort());
 
     ProcessBuilder pb =
         new ProcessBuilder(
-            "/usr/local/bin/lega-commander",
-            "upload",
-            "-f",
-            E2EState.encFile.getAbsolutePath());
+            "/usr/local/bin/lega-commander", "upload", "-f", E2EState.encFile.getAbsolutePath());
 
     Map<String, String> env = pb.environment();
     env.put("LOCAL_EGA_INSTANCE_URL", instanceURL);
