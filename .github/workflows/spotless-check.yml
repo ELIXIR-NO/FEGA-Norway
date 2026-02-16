@@ -24,9 +24,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-          persist-credentials: false
 
       - name: Set up JDK
         uses: actions/setup-java@v5
