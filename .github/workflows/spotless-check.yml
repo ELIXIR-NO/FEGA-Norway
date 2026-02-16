@@ -1,14 +1,9 @@
 name: Check formatting
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "lib/**"
-      - "services/**"
-      - "buildSrc/**"
   pull_request:
-    branches: [main]
+    branches:
+      - main
     paths:
       - "lib/**"
       - "services/**"
@@ -17,10 +12,6 @@ on:
 jobs:
   check-formatting:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      pull-requests: write
 
     steps:
       - uses: actions/checkout@v5
