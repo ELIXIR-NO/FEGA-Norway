@@ -34,6 +34,7 @@ type Configuration interface {
 	GetLocalEGAInstanceURL() string
 	GetElixirAAIToken() string
 	GetChunkSize() int
+	GetTLSSkipVerify() bool
 }
 
 func (defaultConfiguration) ConcatenateURLPartsToString(array []string) string {
@@ -124,6 +125,13 @@ func (defaultConfiguration) GetChunkSize() int {
 		return defaultChunkSize
 	}
 	return numericChunkSize
+}
+
+// GetTLSSkipVerify returns true when LEGA_COMMANDER_TLS_SKIP_VERIFY is set to "true".
+// This disables TLS certificate verification, intended for testing environments
+// where services use self-signed certificates (e.g. e2e docker-compose setup).
+func (defaultConfiguration) GetTLSSkipVerify() bool {
+	return os.Getenv("LEGA_COMMANDER_TLS_SKIP_VERIFY") == "true"
 }
 
 // NewConfiguration constructs Configuration, accepting LocalEGA URL instance and possibly chunk size.

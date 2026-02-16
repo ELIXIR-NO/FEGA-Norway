@@ -2,8 +2,11 @@
 package requests
 
 import (
+	"crypto/tls"
 	"io"
 	"net/http"
+
+	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega-commander/conf"
 )
 
 // Client is an interface providing DoRequest method for performing HTTP requests towards LocalEGA instance.
@@ -20,6 +23,12 @@ func NewClient(client *http.Client) Client {
 	defaultClient := defaultClient{}
 	if client != nil {
 		defaultClient.client = *client
+	} else if conf.NewConfiguration().GetTLSSkipVerify() {
+		defaultClient.client = http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // #nosec G402
+			},
+		}
 	} else {
 		defaultClient.client = *http.DefaultClient
 	}
