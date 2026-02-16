@@ -20,10 +20,8 @@ public class FEGAIntegrationTest {
 
   @Test
   @Order(1)
-  void UploadTest() throws Exception {
-    UploadTest.uploadThroughProxy();
-    // Wait for triggers to be set up at CEGA.
-    // Not really needed if using local CEGA container.
+  void UploadViaLegaCMDTest() throws Exception {
+    UploadViaLegaCMDTest.uploadViaLegaCommander();
     CommonUtils.waitForProcessing(5000);
   }
 
