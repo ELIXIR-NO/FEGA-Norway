@@ -91,7 +91,10 @@ public class PublishMQAspect {
     if (elixirId == null || fileName == null || fileSize == null || sha256 == null) {
       log.error(
           "Missing required request attributes: ELIXIR_ID={}, FILE_NAME={}, FILE_SIZE={}, SHA256={}",
-          elixirId, fileName, fileSize, sha256);
+          elixirId,
+          fileName,
+          fileSize,
+          sha256);
       return;
     }
 
@@ -102,9 +105,7 @@ public class PublishMQAspect {
     fileDescriptor.setFileLastModified(System.currentTimeMillis() / 1000);
     fileDescriptor.setOperation(Operation.UPLOAD.name().toLowerCase());
     fileDescriptor.setEncryptedIntegrity(
-        new EncryptedIntegrity[] {
-          new EncryptedIntegrity(SHA256.toLowerCase(), sha256.toString())
-        });
+        new EncryptedIntegrity[] {new EncryptedIntegrity(SHA256.toLowerCase(), sha256.toString())});
     publishMessage(fileDescriptor, Operation.UPLOAD.name().toLowerCase());
   }
 
