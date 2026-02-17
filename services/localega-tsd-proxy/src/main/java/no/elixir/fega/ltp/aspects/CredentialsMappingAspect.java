@@ -46,7 +46,8 @@ public class CredentialsMappingAspect {
     if (egaUsernameAttr == null || elixirIdAttr == null) {
       log.error(
           "Missing required request attributes: EGA_USERNAME={}, ELIXIR_ID={}",
-          egaUsernameAttr, elixirIdAttr);
+          egaUsernameAttr,
+          elixirIdAttr);
       return;
     }
     String egaUsername = egaUsernameAttr.toString();
