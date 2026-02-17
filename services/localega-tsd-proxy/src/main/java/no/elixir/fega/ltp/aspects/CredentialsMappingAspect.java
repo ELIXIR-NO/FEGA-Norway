@@ -41,8 +41,16 @@ public class CredentialsMappingAspect {
           "execution(public * no.elixir.fega.ltp.controllers.rest.ProxyController.stream(..))",
       returning = "result")
   public void mapCredentials(Object result) {
-    String egaUsername = request.getAttribute(EGA_USERNAME).toString();
-    String elixirId = request.getAttribute(ELIXIR_ID).toString();
+    Object egaUsernameAttr = request.getAttribute(EGA_USERNAME);
+    Object elixirIdAttr = request.getAttribute(ELIXIR_ID);
+    if (egaUsernameAttr == null || elixirIdAttr == null) {
+      log.error(
+          "Missing required request attributes: EGA_USERNAME={}, ELIXIR_ID={}",
+          egaUsernameAttr, elixirIdAttr);
+      return;
+    }
+    String egaUsername = egaUsernameAttr.toString();
+    String elixirId = elixirIdAttr.toString();
     List<String> existingEntries =
         jdbcTemplate.queryForList(
             "select elixir_id from mapping where ega_id = ?", String.class, egaUsername);
