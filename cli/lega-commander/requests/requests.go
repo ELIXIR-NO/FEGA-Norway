@@ -4,6 +4,7 @@ package requests
 import (
 	"crypto/tls"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega-commander/conf"
@@ -24,6 +25,7 @@ func NewClient(client *http.Client) Client {
 	if client != nil {
 		defaultClient.client = *client
 	} else if conf.NewConfiguration().GetTLSSkipVerify() {
+		log.Println("WARNING: LEGA_COMMANDER_TLS_SKIP_VERIFY is enabled – TLS certificate verification is disabled for uploads. This should only be used for testing with trusted servers.")
 		defaultClient.client = http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // #nosec G402
