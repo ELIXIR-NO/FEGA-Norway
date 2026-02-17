@@ -87,6 +87,9 @@ public class ProxyController {
 
   private ResponseEntity<?> validateChunkChecksum(Token token, Chunk response, String md5)
       throws IOException {
+    if (md5 == null) {
+      return ResponseEntity.ok(response);
+    }
     ResumableUpload resumableUpload =
         tsdFileAPIClient
             .getResumableUpload(token.getToken(), tsdAppId, response.getId())

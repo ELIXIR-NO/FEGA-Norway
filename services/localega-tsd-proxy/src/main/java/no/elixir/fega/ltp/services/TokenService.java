@@ -160,7 +160,12 @@ public class TokenService {
   private ObjectNode extractFragmentFromJWT(String jwtToken, TokenFragment tokenFragment)
       throws IllegalArgumentException {
     var fragments = jwtToken.split("[.]");
-    String fragment = fragments[tokenFragment.ordinal()];
+    int index = tokenFragment.ordinal();
+    if (fragments.length < 3 || index >= fragments.length) {
+      throw new IllegalArgumentException(
+          "Invalid JWT format: expected 3 parts but got " + fragments.length);
+    }
+    String fragment = fragments[index];
     if (!isValidBase64Url(fragment)) {
       throw new IllegalArgumentException("Invalid Base64 URL string");
     }
