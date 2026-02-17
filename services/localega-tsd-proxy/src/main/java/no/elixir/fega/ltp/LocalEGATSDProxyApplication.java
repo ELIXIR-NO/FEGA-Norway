@@ -135,8 +135,10 @@ public class LocalEGATSDProxyApplication {
             .project(tsdProject)
             .accessKey(tsdAccessKey);
     if (StringUtils.hasLength(tsdRootCA) && StringUtils.hasLength(tsdRootCAPassword)) {
-      X509TrustManager trustManager =
-          trustManagerForCertificates(Files.newInputStream(Path.of(tsdRootCA)), tsdRootCAPassword);
+      X509TrustManager trustManager;
+      try (InputStream certStream = Files.newInputStream(Path.of(tsdRootCA))) {
+        trustManager = trustManagerForCertificates(certStream, tsdRootCAPassword);
+      }
       SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(null, new TrustManager[] {trustManager}, null);
       OkHttpClient httpClient =

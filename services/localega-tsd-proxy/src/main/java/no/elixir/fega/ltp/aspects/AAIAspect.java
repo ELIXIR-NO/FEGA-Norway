@@ -119,9 +119,12 @@ public class AAIAspect {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     try {
-      String[] usernameAndPassword =
-          new String(Base64.getDecoder().decode(optionalBasicAuth.get().replace("Basic ", "")))
-              .split(":");
+      String decoded =
+          new String(Base64.getDecoder().decode(optionalBasicAuth.get().replace("Basic ", "")));
+      String[] usernameAndPassword = decoded.split(":", 2);
+      if (usernameAndPassword.length < 2) {
+        throw new AuthenticationException("Invalid Basic Auth credentials format");
+      }
       if (!cegaAuth(usernameAndPassword[0], usernameAndPassword[1])) {
         throw new AuthenticationException("EGA authentication failed");
       }

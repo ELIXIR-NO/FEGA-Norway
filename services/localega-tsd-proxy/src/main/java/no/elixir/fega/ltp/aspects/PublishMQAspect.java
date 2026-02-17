@@ -3,7 +3,6 @@ package no.elixir.fega.ltp.aspects;
 import static no.elixir.fega.ltp.aspects.ProcessArgumentsAspect.*;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Objects;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.fega.ltp.dto.EncryptedIntegrity;
@@ -60,19 +59,24 @@ public class PublishMQAspect {
           "execution(@org.springframework.web.bind.annotation.PatchMapping public * no.elixir.fega.ltp.controllers.rest.ProxyController.stream(..))",
       returning = "result")
   public void publishUpload(Object result) {
+    if (!(result instanceof ResponseEntity)) {
+      log.error("Unexpected result type: {}", result != null ? result.getClass() : "null");
+      return;
+    }
     ResponseEntity genericResponseEntity = (ResponseEntity) result;
-    if (!String.valueOf(Objects.requireNonNull(genericResponseEntity).getStatusCode())
-        .startsWith("20")) {
+    if (!String.valueOf(genericResponseEntity.getStatusCode()).startsWith("20")) {
       log.error(String.valueOf(genericResponseEntity.getStatusCode()));
       log.error(String.valueOf(genericResponseEntity.getBody()));
       return;
     }
-    ResponseEntity<TSDFileAPIResponse> tsdResponseEntity =
-        (ResponseEntity<TSDFileAPIResponse>) result;
-    TSDFileAPIResponse body = tsdResponseEntity.getBody();
-    if (!String.valueOf(Objects.requireNonNull(body).getStatusCode()).startsWith("20")) {
-      log.error(String.valueOf(body.getStatusCode()));
-      log.error(String.valueOf(body.getStatusText()));
+    Object body = genericResponseEntity.getBody();
+    if (!(body instanceof TSDFileAPIResponse tsdBody)) {
+      log.error("Unexpected response body type: {}", body != null ? body.getClass() : "null");
+      return;
+    }
+    if (!String.valueOf(tsdBody.getStatusCode()).startsWith("20")) {
+      log.error(String.valueOf(tsdBody.getStatusCode()));
+      log.error(String.valueOf(tsdBody.getStatusText()));
       return;
     }
 
@@ -80,16 +84,26 @@ public class PublishMQAspect {
       return;
     }
 
+    Object elixirId = request.getAttribute(ELIXIR_ID);
+    Object fileName = request.getAttribute(FILE_NAME);
+    Object fileSize = request.getAttribute(FILE_SIZE);
+    Object sha256 = request.getAttribute(SHA256);
+    if (elixirId == null || fileName == null || fileSize == null || sha256 == null) {
+      log.error(
+          "Missing required request attributes: ELIXIR_ID={}, FILE_NAME={}, FILE_SIZE={}, SHA256={}",
+          elixirId, fileName, fileSize, sha256);
+      return;
+    }
+
     FileDescriptor fileDescriptor = new FileDescriptor();
-    fileDescriptor.setUser(request.getAttribute(ELIXIR_ID).toString());
-    String fileName = request.getAttribute(FILE_NAME).toString();
-    fileDescriptor.setFilePath(buildInboxPath(fileName)); // user-specific relative inbox path
-    fileDescriptor.setFileSize(Long.parseLong(request.getAttribute(FILE_SIZE).toString()));
+    fileDescriptor.setUser(elixirId.toString());
+    fileDescriptor.setFilePath(buildInboxPath(fileName.toString()));
+    fileDescriptor.setFileSize(Long.parseLong(fileSize.toString()));
     fileDescriptor.setFileLastModified(System.currentTimeMillis() / 1000);
     fileDescriptor.setOperation(Operation.UPLOAD.name().toLowerCase());
     fileDescriptor.setEncryptedIntegrity(
         new EncryptedIntegrity[] {
-          new EncryptedIntegrity(SHA256.toLowerCase(), request.getAttribute(SHA256).toString())
+          new EncryptedIntegrity(SHA256.toLowerCase(), sha256.toString())
         });
     publishMessage(fileDescriptor, Operation.UPLOAD.name().toLowerCase());
   }
@@ -105,26 +119,38 @@ public class PublishMQAspect {
           "execution(public * no.elixir.fega.ltp.controllers.rest.ProxyController.deleteFile(..))",
       returning = "result")
   public void publishRemove(Object result) {
+    if (!(result instanceof ResponseEntity)) {
+      log.error("Unexpected result type: {}", result != null ? result.getClass() : "null");
+      return;
+    }
     ResponseEntity genericResponseEntity = (ResponseEntity) result;
-    if (!String.valueOf(Objects.requireNonNull(genericResponseEntity).getStatusCode())
-        .startsWith("20")) {
+    if (!String.valueOf(genericResponseEntity.getStatusCode()).startsWith("20")) {
       log.error(String.valueOf(genericResponseEntity.getStatusCode()));
       log.error(String.valueOf(genericResponseEntity.getBody()));
       return;
     }
-    ResponseEntity<TSDFileAPIResponse> tsdResponseEntity =
-        (ResponseEntity<TSDFileAPIResponse>) result;
-    TSDFileAPIResponse body = tsdResponseEntity.getBody();
-    if (!String.valueOf(Objects.requireNonNull(body).getStatusCode()).startsWith("20")) {
-      log.error(String.valueOf(body.getStatusCode()));
-      log.error(String.valueOf(body.getStatusText()));
+    Object body = genericResponseEntity.getBody();
+    if (!(body instanceof TSDFileAPIResponse tsdBody)) {
+      log.error("Unexpected response body type: {}", body != null ? body.getClass() : "null");
+      return;
+    }
+    if (!String.valueOf(tsdBody.getStatusCode()).startsWith("20")) {
+      log.error(String.valueOf(tsdBody.getStatusCode()));
+      log.error(String.valueOf(tsdBody.getStatusText()));
+      return;
+    }
+
+    Object elixirId = request.getAttribute(ELIXIR_ID);
+    Object fileName = request.getAttribute(FILE_NAME);
+    if (elixirId == null || fileName == null) {
+      log.error(
+          "Missing required request attributes: ELIXIR_ID={}, FILE_NAME={}", elixirId, fileName);
       return;
     }
 
     FileDescriptor fileDescriptor = new FileDescriptor();
-    fileDescriptor.setUser(request.getAttribute(ELIXIR_ID).toString());
-    String fileName = request.getAttribute(FILE_NAME).toString();
-    fileDescriptor.setFilePath(buildInboxPath(fileName));
+    fileDescriptor.setUser(elixirId.toString());
+    fileDescriptor.setFilePath(buildInboxPath(fileName.toString()));
     fileDescriptor.setOperation(Operation.REMOVE.name().toLowerCase());
     publishMessage(fileDescriptor, Operation.REMOVE.name().toLowerCase());
   }
@@ -138,8 +164,11 @@ public class PublishMQAspect {
    * @return the fully constructed inbox path for the given file.
    */
   private String buildInboxPath(String fileName) {
-    return String.format(inboxPathFormat, tsdProjectId, request.getAttribute(ELIXIR_ID).toString())
-        + fileName;
+    Object elixirId = request.getAttribute(ELIXIR_ID);
+    if (elixirId == null) {
+      throw new IllegalStateException("ELIXIR_ID request attribute is not set");
+    }
+    return String.format(inboxPathFormat, tsdProjectId, elixirId.toString()) + fileName;
   }
 
   private void publishMessage(FileDescriptor fileDescriptor, String type) {
