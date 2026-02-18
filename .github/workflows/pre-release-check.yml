@@ -80,6 +80,8 @@ jobs:
         with:
           context: ./services/${{ matrix.component }}
           push: true
+          provenance: false
+          sbom: false
           no-cache: 'true'
           tags: |
             ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ github.event.number }}
@@ -96,6 +98,8 @@ jobs:
           context: .
           push: true
           no-cache: 'true'
+          provenance: false
+          sbom: false
           tags: |
             ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ github.event.number }}
           labels: |
