@@ -32,7 +32,7 @@ dependencies {
     implementation("commons-cli:commons-cli:1.11.0")
     implementation("commons-io:commons-io:2.21.0")
     implementation("com.rfksystems:blake2b:2.0.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.0.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
