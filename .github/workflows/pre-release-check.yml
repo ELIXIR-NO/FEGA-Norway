@@ -76,7 +76,7 @@ jobs:
 
       - name: Build and push
         if: ${{ matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v6.19.2
         with:
           context: ./services/${{ matrix.component }}
           push: true
@@ -92,7 +92,7 @@ jobs:
 
       - name: Build and push
         if: ${{ matrix.component == 'localega-tsd-proxy'  || matrix.component == 'tsd-api-mock'}}
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v6.19.2
         with:
           file: ./services/${{ matrix.component }}/Dockerfile
           context: .
