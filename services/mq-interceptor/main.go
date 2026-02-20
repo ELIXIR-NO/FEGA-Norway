@@ -156,7 +156,7 @@ func forwardDeliveryTo(fromCEGAToLEGA bool, channelFrom MQChannel, channelTo MQC
 	}
 	// Forward all messages from CEGA to a local queue handled by the SDA intercept service
 	if fromCEGAToLEGA {
-		routingKey = os.Getenv("LEGA_MQ_QUEUE")
+		routingKey = os.Getenv("LEGA_MQ_ROUTING_KEY")
 	} else if messageType != nil {
 		routingKey = messageType.(string)
 	}

@@ -22,7 +22,7 @@ var settings = map[string]string{
 	"POSTGRES_CONNECTION": "postgres://postgres:p0stgres_passw0rd@postgres:5432/postgres?sslmode=disable",
 	"LEGA_MQ_CONNECTION":  "amqps://admin:guest@mq:5671/test",
 	"LEGA_MQ_EXCHANGE":    "sda",
-	"LEGA_MQ_QUEUE":       "files",
+	"LEGA_MQ_ROUTING_KEY": "files",
 	"CEGA_MQ_CONNECTION":  "amqps://test:test@cegamq:5671/lega?cacertfile=/etc/ega/ssl/CA.cert",
 	"CEGA_MQ_EXCHANGE":    "localega.v1",
 	"CEGA_MQ_QUEUE":       "v1.files",
