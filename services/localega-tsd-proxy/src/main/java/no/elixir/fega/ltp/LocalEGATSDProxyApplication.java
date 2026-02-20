@@ -63,7 +63,7 @@ public class LocalEGATSDProxyApplication {
 
   @Bean
   @Order(2)
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(HttpSecurity http) {
     LoginUrlAuthenticationEntryPoint entryPoint =
         new LoginUrlAuthenticationEntryPoint("/oauth2/authorization/elixir-aai");
     http.portMapper(ports -> ports.http(8080).mapsTo(8080))
@@ -81,6 +81,7 @@ public class LocalEGATSDProxyApplication {
                     .authenticated()
                     .requestMatchers("/user")
                     .authenticated())
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
         .oauth2Login(
             auth ->
                 auth.redirectionEndpoint(endpoint -> endpoint.baseUri("/oidc-protected"))
