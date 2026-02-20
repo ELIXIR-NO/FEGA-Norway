@@ -3,6 +3,9 @@ updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
+    all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "thursday"
