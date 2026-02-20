@@ -1,6 +1,7 @@
 package no.elixir.e2eTests.core;
 
 import java.io.File;
+import java.security.KeyPair;
 import no.elixir.crypt4gh.util.KeyUtils;
 import no.elixir.e2eTests.config.Environment;
 import org.slf4j.Logger;
@@ -30,4 +31,6 @@ public class E2EState {
   public static String datasetId;
   public static String archivePath;
   public static String correlationId;
+  public static KeyPair senderKeypair;
+  public static KeyPair recipientKeypair;
 }

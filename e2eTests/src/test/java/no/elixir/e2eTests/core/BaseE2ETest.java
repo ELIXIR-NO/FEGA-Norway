@@ -3,13 +3,17 @@ package no.elixir.e2eTests.core;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.PublicKey;
+import java.util.HashMap;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
 import no.elixir.crypt4gh.stream.Crypt4GHOutputStream;
 import no.elixir.e2eTests.utils.CertificateUtils;
 import no.elixir.e2eTests.utils.CommonUtils;
+import no.elixir.e2eTests.utils.TokenUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -63,5 +67,56 @@ public abstract class BaseE2ETest {
     if (!E2EState.rawFile.delete() || !E2EState.encFile.delete()) {
       throw new RuntimeException("Failed to delete temporary files");
     }
+  }
+
+  /** Only execute this function in EGA Dev environment. */
+  public static void setupEgaDevTestEnvironment() throws Exception {
+
+    String basePath = E2EState.env.getEgaDevBaseDirectory();
+    HashMap<String, String> details =
+        TokenUtils.extractDetailsFromLSAAIToken(E2EState.env.getLSAAIToken());
+
+    E2EState.env.setLsaaiSubject(details.get("sub"));
+
+    long fileSize = 1024 * 1024 * 10;
+    E2EState.log.info("Generating {} bytes file to submit...", fileSize);
+
+    E2EState.rawFile = CommonUtils.createRandomFile(basePath, fileSize);
+
+    byte[] bytes = DigestUtils.sha256(Files.newInputStream(E2EState.rawFile.toPath()));
+    E2EState.rawSHA256Checksum = Hex.encodeHexString(bytes);
+    E2EState.log.info("Raw SHA256 checksum: {}", E2EState.rawSHA256Checksum);
+
+    byte[] bytes2 = DigestUtils.md5(Files.newInputStream(E2EState.rawFile.toPath()));
+    E2EState.rawMD5Checksum = Hex.encodeHexString(bytes2);
+    E2EState.log.info("Raw MD5 checksum: {}", E2EState.rawMD5Checksum);
+
+    E2EState.log.info("Generating sender and recipient key-pairs...");
+    E2EState.senderKeypair = E2EState.keyUtils.generateKeyPair();
+    E2EState.recipientKeypair = E2EState.keyUtils.generateKeyPair();
+
+    E2EState.log.info("Encrypting the file with Crypt4GH...");
+
+    Path baseDirPath = Paths.get(basePath);
+    Path encFilePath = baseDirPath.resolve(E2EState.rawFile.getName() + ".enc");
+    E2EState.encFile = encFilePath.toFile();
+
+    E2EState.log.info("Enc filename: {}", E2EState.encFile.getName());
+
+    // This is the archive key (public one)
+    File archiveKey = CertificateUtils.getFile(E2EState.env.getEgaDevPubKeyPath());
+
+    PublicKey egaDevPublicKey = E2EState.keyUtils.readPublicKey(archiveKey);
+
+    try (FileOutputStream fileOutputStream = new FileOutputStream(E2EState.encFile);
+        Crypt4GHOutputStream crypt4GHOutputStream =
+            new Crypt4GHOutputStream(
+                fileOutputStream, E2EState.senderKeypair.getPrivate(), egaDevPublicKey)) {
+      FileUtils.copyFile(E2EState.rawFile, crypt4GHOutputStream);
+    }
+
+    bytes = DigestUtils.sha256(Files.newInputStream(E2EState.encFile.toPath()));
+    E2EState.encSHA256Checksum = Hex.encodeHexString(bytes);
+    E2EState.log.info("Encrypted file SHA256 checksum: {}", E2EState.encSHA256Checksum);
   }
 }
