@@ -124,8 +124,7 @@ public class LocalEGATSDProxyApplication {
   public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
     http.securityMatcher("/gettoken", "/stream/**", "/files", "/resumables")
         .csrf(AbstractHttpConfigurer::disable)
-        .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+        .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
     return http.build();
   }
 
