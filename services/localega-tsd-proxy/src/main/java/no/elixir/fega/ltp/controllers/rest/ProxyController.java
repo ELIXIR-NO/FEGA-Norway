@@ -208,11 +208,16 @@ public class ProxyController {
    */
   @GetMapping("/gettoken")
   public ResponseEntity<?> getToken(
-      @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization)
+      @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+      @RequestHeader(value = HttpHeaders.PROXY_AUTHORIZATION, required = false)
+          String proxyAuthorization)
       throws IOException {
-    String elixirToken = getElixirAAIToken(bearerAuthorization);
-    Token token =
-        tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
+    String bearer = StringUtils.hasText(proxyAuthorization) ? proxyAuthorization : authorization;
+    if (!StringUtils.hasText(bearer) || !bearer.startsWith("Bearer ")) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    Token token = tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearer));
     return ResponseEntity.ok(token);
   }
 
