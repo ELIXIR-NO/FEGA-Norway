@@ -6,7 +6,9 @@ import (
 	"crypto/x509"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/ELIXIR-NO/FEGA-Norway/mq-interceptor/validator"
 	_ "github.com/lib/pq"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
@@ -24,8 +26,45 @@ type MQChannel interface {
 	Publish(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error
 }
 
+type Bridge struct {
+	CEGAConsumeChannel MQChannel
+	CEGAPublishChannel MQChannel
+	CEGAErrorChannel   MQChannel
+	CEGAExchange       string
+
+	LEGAConsumeChannel MQChannel
+	LEGAPublishChannel MQChannel
+	LEGAErrorChannel   MQChannel
+	LEGAExchange       string
+}
+
+func (b *Bridge) getConsumeChannel(fromCEGAToLEGA bool) MQChannel {
+	if fromCEGAToLEGA {
+		return b.CEGAConsumeChannel
+	} else {
+		return b.LEGAConsumeChannel
+	}
+}
+
+func (b *Bridge) getPublishChannel(fromCEGAToLEGA bool) MQChannel {
+	if fromCEGAToLEGA {
+		return b.LEGAPublishChannel
+	} else {
+		return b.CEGAPublishChannel
+	}
+}
+
+func (b *Bridge) getPublishExchange(fromCEGAToLEGA bool) string {
+	if fromCEGAToLEGA {
+		return b.LEGAExchange
+	} else {
+		return b.CEGAExchange
+	}
+}
+
 var db *sql.DB
 var publishMutex sync.Mutex
+var jsonValidator *validator.JSONValidator
 
 // dialRabbitMQ attempts to connect to RabbitMQ up to 10 times
 // with a delay between retries. It returns a connection
@@ -64,6 +103,9 @@ func main() {
 	db, err = sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION"))
 	failOnError(err, "Failed to connect to DB")
 
+	schemafolder := os.Getenv("SCHEMA_FOLDER")
+	jsonValidator = validator.NewJSONValidator(schemafolder)
+
 	log.Printf("Is TLS enabled? %t", os.Getenv("ENABLE_TLS") == "true")
 
 	legaMqConnString := os.Getenv("LEGA_MQ_CONNECTION")
@@ -91,17 +133,24 @@ func main() {
 		err := <-cegaNotifyCloseChannel
 		log.Fatal(err)
 	}()
-	errorPublishChannel := cegaPublishChannel
+
+	var bridge *Bridge = &Bridge{
+		CEGAConsumeChannel: cegaConsumeChannel,
+		CEGAPublishChannel: cegaPublishChannel,
+		CEGAErrorChannel:   cegaPublishChannel,
+		CEGAExchange:       os.Getenv("CEGA_MQ_EXCHANGE"),
+		LEGAConsumeChannel: legaConsumeChannel,
+		LEGAPublishChannel: legaPublishChannel,
+		LEGAErrorChannel:   legaPublishChannel,
+		LEGAExchange:       os.Getenv("LEGA_MQ_EXCHANGE"),
+	}
 
 	cegaQueue := os.Getenv("CEGA_MQ_QUEUE")
-	cegaExchange := os.Getenv("CEGA_MQ_EXCHANGE")
-	legaExchange := os.Getenv("LEGA_MQ_EXCHANGE")
-
 	cegaDeliveries, err := cegaConsumeChannel.Consume(cegaQueue, "", false, false, false, false, nil)
 	failOnError(err, "Failed to connect to CEGA queue: "+cegaQueue)
 	go func() {
 		for delivery := range cegaDeliveries {
-			forwardDeliveryTo(true, cegaConsumeChannel, legaPublishChannel, errorPublishChannel, legaExchange, "", delivery)
+			forwardDeliveryTo(true, bridge, "", delivery)
 		}
 	}()
 
@@ -109,7 +158,7 @@ func main() {
 	failOnError(err, "Failed to connect to 'error' queue")
 	go func() {
 		for delivery := range errorDeliveries {
-			forwardDeliveryTo(false, legaConsumeChannel, cegaPublishChannel, errorPublishChannel, cegaExchange, "files.error", delivery)
+			forwardDeliveryTo(false, bridge, "files.error", delivery)
 		}
 	}()
 
@@ -117,7 +166,7 @@ func main() {
 	failOnError(err, "Failed to connect to 'verified' queue")
 	go func() {
 		for delivery := range verifiedDeliveries {
-			forwardDeliveryTo(false, legaConsumeChannel, cegaPublishChannel, errorPublishChannel, cegaExchange, "files.verified", delivery)
+			forwardDeliveryTo(false, bridge, "files.verified", delivery)
 		}
 	}()
 
@@ -125,7 +174,7 @@ func main() {
 	failOnError(err, "Failed to connect to 'completed' queue")
 	go func() {
 		for delivery := range completedDeliveries {
-			forwardDeliveryTo(false, legaConsumeChannel, cegaPublishChannel, errorPublishChannel, cegaExchange, "files.completed", delivery)
+			forwardDeliveryTo(false, bridge, "files.completed", delivery)
 		}
 	}()
 
@@ -133,7 +182,7 @@ func main() {
 	failOnError(err, "Failed to connect to 'inbox' queue")
 	go func() {
 		for delivery := range inboxDeliveries {
-			forwardDeliveryTo(false, legaConsumeChannel, cegaPublishChannel, errorPublishChannel, cegaExchange, "files.inbox", delivery)
+			forwardDeliveryTo(false, bridge, "files.inbox", delivery)
 		}
 	}()
 
@@ -142,21 +191,33 @@ func main() {
 	<-forever
 }
 
-func forwardDeliveryTo(fromCEGAToLEGA bool, channelFrom MQChannel, channelTo MQChannel, errorChannel MQChannel, exchange string, routingKey string, delivery amqp.Delivery) {
+func forwardDeliveryTo(fromCEGAToLEGA bool, bridge *Bridge, routingKey string, delivery amqp.Delivery) {
 	publishMutex.Lock()
 	defer publishMutex.Unlock()
+
+	channelFrom := bridge.getConsumeChannel(fromCEGAToLEGA)
+	channelTo   := bridge.getPublishChannel(fromCEGAToLEGA)
+	exchange    := bridge.getPublishExchange(fromCEGAToLEGA)
+
 	publishing, messageType, err := buildPublishingFromDelivery(fromCEGAToLEGA, delivery)
 	if err != nil {
 		log.Printf("%s", err)
-		nackError := channelFrom.Nack(delivery.DeliveryTag, false, false)
-		failOnError(nackError, "Failed to Nack message")
-		err = publishError(delivery, err, errorChannel)
-		failOnError(err, "Failed to publish error message")
+		var valErr validator.ValidationError
+		if errors.As(err, &valErr) { // message failed JSON validation
+			// send messages that fail validation to LEGA with routing key "validation_error"
+			err = postMessage(*publishing, bridge.LEGAErrorChannel, bridge.LEGAExchange, "validation_error")
+			failOnError(err, "Failed to drop message that failed JSON validation")
+		} else { // for other errors, post an error message back to CEGA
+			nackError := channelFrom.Nack(delivery.DeliveryTag, false, false)
+			failOnError(nackError, "Failed to Nack message")
+			err = publishError(delivery, err, bridge.CEGAErrorChannel, bridge.CEGAExchange, "files.error")
+			failOnError(err, "Failed to publish error message")
+		}
 		return
 	}
 	// Forward all messages from CEGA to a local queue handled by the SDA intercept service
 	if fromCEGAToLEGA {
-		routingKey = os.Getenv("LEGA_MQ_QUEUE")
+		routingKey = os.Getenv("LEGA_MQ_ROUTING_KEY")
 	} else if messageType != nil {
 		routingKey = messageType.(string)
 	}
@@ -189,19 +250,25 @@ func buildPublishingFromDelivery(fromCEGAToLEGA bool, delivery amqp.Delivery) (*
 		Type:            delivery.Type,
 		UserId:          delivery.UserId,
 		AppId:           delivery.AppId,
+		Body:            delivery.Body,
 	}
 
 	message := make(map[string]interface{}, 0)
 	err := json.Unmarshal(delivery.Body, &message)
 	if err != nil {
-		return nil, nil, err
+		// return ValidationError if the message is not proper JSON
+		return &publishing, nil, validator.ValidationError{Message: "Message is not valid JSON", SchemaError: err}
+	}
+
+	validationError := jsonValidator.Validate(message)
+	if validationError != nil {
+		return &publishing, nil, validationError
 	}
 
 	messageType, _ := message["type"]
 
 	user, ok := message["user"]
 	if !ok {
-		publishing.Body = delivery.Body
 		return &publishing, messageType, nil
 	}
 
@@ -226,7 +293,7 @@ func buildPublishingFromDelivery(fromCEGAToLEGA bool, delivery amqp.Delivery) (*
 	return &publishing, messageType, err
 }
 
-func publishError(delivery amqp.Delivery, err error, errorChannel MQChannel) error {
+func publishError(delivery amqp.Delivery, err error, errorChannel MQChannel, exchange string, routingKey string) error {
 	errorMessage := fmt.Sprintf("{\"reason\" : \"%s\", \"original_message\" : \"%s\"}", err.Error(), string(delivery.Body))
 	publishing := amqp.Publishing{
 		ContentType:     delivery.ContentType,
@@ -234,8 +301,11 @@ func publishError(delivery amqp.Delivery, err error, errorChannel MQChannel) err
 		CorrelationId:   delivery.CorrelationId,
 		Body:            []byte(errorMessage),
 	}
-	err = errorChannel.Publish(os.Getenv("CEGA_MQ_EXCHANGE"), "files.error", false, false, publishing)
-	return err
+	return errorChannel.Publish(exchange, routingKey, false, false, publishing)
+}
+
+func postMessage(message amqp.Publishing, channel MQChannel, exchange string, routingKey string) error {
+	return channel.Publish(exchange, routingKey, false, false, message)
 }
 
 func selectElixirIdByEGAId(egaId string) (elixirId string, err error) {
