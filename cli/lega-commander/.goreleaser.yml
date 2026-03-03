@@ -19,6 +19,9 @@ builds:
       goarm:
           - "6"
           - "7"
+      ignore:
+        - goos: windows
+          goarch: arm
 
 archives:
     - name_template: >-
