@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:25-jdk-alpine AS builder
 
 # imply FEGA-Norway monorepo root
 WORKDIR /FEGA-Norway
@@ -8,7 +8,7 @@ COPY . .
 
 RUN ./gradlew e2eTests:jar
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 
