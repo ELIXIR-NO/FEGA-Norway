@@ -1,6 +1,6 @@
 module github.com/ELIXIR-NO/FEGA-Norway/cli/lega-commander
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/buger/jsonparser v1.1.1
