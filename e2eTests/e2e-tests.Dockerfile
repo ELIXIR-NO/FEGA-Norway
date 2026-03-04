@@ -1,3 +1,11 @@
+FROM golang:1.25-alpine AS go-builder
+
+WORKDIR /app
+
+COPY cli/lega-commander/ .
+
+RUN go build -o /lega-commander .
+
 FROM eclipse-temurin:21-jdk-alpine AS builder
 
 # imply FEGA-Norway monorepo root
@@ -17,6 +25,7 @@ RUN apk add --no-cache bash
 COPY --from=builder /FEGA-Norway/e2eTests/build/libs/e2eTests.jar .
 COPY --from=builder /FEGA-Norway/e2eTests/env.sh .
 COPY --from=builder /FEGA-Norway/e2eTests/entrypoint.sh .
+COPY --from=go-builder /lega-commander /usr/local/bin/lega-commander
 
 RUN chmod +x /app/entrypoint.sh
 

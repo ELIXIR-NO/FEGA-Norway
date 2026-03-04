@@ -119,6 +119,22 @@ func TestNewConfigurationNonNumericChunkSize(t *testing.T) {
 	}
 }
 
+func TestGetTLSSkipVerifyDefault(t *testing.T) {
+	t.Setenv("LEGA_COMMANDER_TLS_SKIP_VERIFY", "")
+	configuration := NewConfiguration()
+	if configuration.GetTLSSkipVerify() != false {
+		t.Error()
+	}
+}
+
+func TestGetTLSSkipVerifyEnabled(t *testing.T) {
+	t.Setenv("LEGA_COMMANDER_TLS_SKIP_VERIFY", "true")
+	configuration := NewConfiguration()
+	if configuration.GetTLSSkipVerify() != true {
+		t.Error()
+	}
+}
+
 func TestNewConfigurationGetTSDURL(t *testing.T) {
 	t.Setenv("TSD_BASE_URL", "tsd_base/")
 	t.Setenv("TSD_PROJ_NAME", "tsd_project")
