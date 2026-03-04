@@ -9,7 +9,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/logrusorgru/aurora/v4 v4.0.0
-	github.com/neicnordic/crypt4gh v1.14.2
+	github.com/neicnordic/crypt4gh v1.15.0
 )
 
 require (
