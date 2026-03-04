@@ -3,6 +3,10 @@ updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
+    groups:
+      all-modules:
+        patterns:
+          - "*"
     schedule:
       interval: "weekly"
       day: "thursday"
@@ -10,6 +14,7 @@ updates:
       timezone: "Europe/Oslo"
     commit-message:
       prefix: "[GitHub Action]"
+    open-pull-requests-limit: 1
 
   # Java
   - package-ecosystem: gradle
@@ -32,8 +37,9 @@ updates:
       timezone: "Europe/Oslo"
     commit-message:
       prefix: "[Java]"
+    open-pull-requests-limit: 1
 
-    # Docker Java
+  # Docker Java
   - package-ecosystem: docker
     directories:
       - /e2eTests
@@ -50,6 +56,7 @@ updates:
       timezone: "Europe/Oslo"
     commit-message:
       prefix: "[Docker-Java]"
+    open-pull-requests-limit: 1
 
   # Go
   - package-ecosystem: gomod
@@ -68,6 +75,7 @@ updates:
       timezone: "Europe/Oslo"
     commit-message:
       prefix: "[Go]"
+    open-pull-requests-limit: 1
 
     # Docker Go
   - package-ecosystem: docker
@@ -85,3 +93,4 @@ updates:
       timezone: "Europe/Oslo"
     commit-message:
       prefix: "[Docker-Go]"
+    open-pull-requests-limit: 1
