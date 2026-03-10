@@ -291,8 +291,12 @@ func buildPublishingFromDelivery(fromCEGAToLEGA bool, delivery amqp.Delivery) (*
 	}
 
 	publishing.Body, err = json.Marshal(message)
+	if err != nil {
+		errMsg := fmt.Sprintf("Unable to convert message to JSON: %s", err)
+		return &publishing, messageType, validator.ValidationError{Message: errMsg}
+	}
 
-	return &publishing, messageType, err
+	return &publishing, messageType, nil
 }
 
 func publishError(delivery amqp.Delivery, err error, errorChannel MQChannel, exchange string, routingKey string) error {
