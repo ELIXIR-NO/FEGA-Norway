@@ -205,13 +205,15 @@ func forwardDeliveryTo(fromCEGAToLEGA bool, bridge *Bridge, routingKey string, d
 		var valErr validator.ValidationError
 		if errors.As(err, &valErr) { // message failed JSON validation
 			// send messages that fail validation to LEGA with routing key "validation_error"
-			err = postMessage(*publishing, bridge.LEGAErrorChannel, bridge.LEGAExchange, "validation_error")
+			err = postMessage(*publishing, bridge.LEGAPublishChannel, bridge.LEGAExchange, "validation_error")
 			failOnError(err, "Failed to drop message that failed JSON validation")
-		} else { // for other errors, post an error message back to CEGA
+		} else { // for other errors, post an error message back to CEGA (and also to LEGA)
 			nackError := channelFrom.Nack(delivery.DeliveryTag, false, false)
 			failOnError(nackError, "Failed to Nack message")
-			err = publishError(delivery, err, bridge.CEGAErrorChannel, bridge.CEGAExchange, "files.error")
-			failOnError(err, "Failed to publish error message")
+			errPub := publishError(delivery, err, bridge.CEGAErrorChannel, bridge.CEGAExchange, "files.error")
+			failOnError(errPub, "Failed to publish error message to CEGA")
+			errPub = publishError(delivery, err, bridge.LEGAErrorChannel, bridge.LEGAExchange, "message_error")
+			failOnError(errPub, "Failed to publish error message to LEGA")
 		}
 		return
 	}

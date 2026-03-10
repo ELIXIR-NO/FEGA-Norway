@@ -99,7 +99,7 @@
       }
     },
      {
-      "name": "validation_error",
+      "name": "dropped_messages",
       "vhost": "VIRTUAL_HOST",
       "durable": true,
       "auto_delete": false,
@@ -225,7 +225,7 @@
     {
       "source": "sda.ae",
       "vhost": "VIRTUAL_HOST",
-      "destination": "validation_error",
+      "destination": "dropped_messages",
       "destination_type": "queue",
       "routing_key": "",
       "arguments": {

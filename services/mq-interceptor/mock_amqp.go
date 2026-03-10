@@ -142,3 +142,13 @@ func (ch *MockChannel) GetAckNack() (bool, bool) {
 	ch.nack = false
 	return ack, nack
 }
+
+// Clear all messages from queues and reset flags
+func (ch *MockChannel) Clear() {
+	for queueName := range ch.queues {
+		ch.queues[queueName] = ch.queues[queueName][:0]
+	}
+	ch.ack = false
+	ch.nack = false
+}
+

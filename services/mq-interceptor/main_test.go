@@ -27,7 +27,7 @@ var settings = map[string]string{
 	"CEGA_MQ_CONNECTION":  "amqps://test:test@cegamq:5671/lega?cacertfile=/etc/ega/ssl/CA.cert",
 	"CEGA_MQ_EXCHANGE":    "localega.v1",
 	"CEGA_MQ_QUEUE":       "v1.files",
-	"VERIFY_CERT":         "false",
+	"ENABLE_TLS":          "false",
 }
 
 func failTestOnError(err error, t *testing.T) {
@@ -362,17 +362,19 @@ func (testsuite *MQinterceptorTests) Test_forwardDeliveryTo() {
 		}
 
 		cegaErrorMessage = bridge.CEGAErrorChannel.(*MockChannel).GetMessage("v1.files.error")
-		legaErrorMessage = bridge.LEGAErrorChannel.(*MockChannel).GetMessage("validation_error")
+		legaErrorMessage = bridge.LEGAErrorChannel.(*MockChannel).GetMessage("dropped_messages")
 
 		if shouldFail {
 			assert.Falsef(t, ack, "Failed delivery %s was incorrectly ACK'ed", dirString)
 			assert.Nilf(t, forwardedMessage, "A failed delivery was incorrectly posted to queue %s", queue)
 			if strings.HasPrefix(cause, "validation") {
-				assert.NotNilf(t, legaErrorMessage, "Validation error did not result in dropped message ending up in queue 'validation_error'")
+				assert.NotNilf(t, legaErrorMessage, "Validation error did not result in message ending up in LEGA queue 'dropped_messages'")
 				assert.Equalf(t, message, legaErrorMessage.Body, "Dropped message does not equal original message")
+				assert.Nilf(t, cegaErrorMessage, "Validation error incorrectly resulted in error message being posted to CEGA")
 			} else {
 				assert.Truef(t, nack, "Failed delivery %s was not NACK'ed properly", dirString)
-				assert.NotNilf(t, cegaErrorMessage, "Failed delivery did not result in error post when forwarding message %s", dirString)
+				assert.NotNilf(t, cegaErrorMessage, "Failed delivery did not result in error post to CEGA")
+				assert.NotNilf(t, legaErrorMessage, "Failed delivery did not result in error post to LEGA ending up in the queue 'dropped_messages'")
 			}
 		} else {
 			assert.NotNilf(t, forwardedMessage, "Message forwarded %s was not found in the correct queue", dirString)
@@ -385,6 +387,12 @@ func (testsuite *MQinterceptorTests) Test_forwardDeliveryTo() {
 			assert.Nilf(t, cegaErrorMessage, "Error message posted incorrectly to CEGA when forwarding message %s", dirString)
 			assert.Nilf(t, legaErrorMessage, "Error message posted incorrectly to LEGA when forwarding message %s", dirString)
 		}
+		bridge.CEGAConsumeChannel.(*MockChannel).Clear()
+		bridge.CEGAPublishChannel.(*MockChannel).Clear()
+		bridge.CEGAErrorChannel.(*MockChannel).Clear()
+		bridge.LEGAConsumeChannel.(*MockChannel).Clear()
+		bridge.LEGAPublishChannel.(*MockChannel).Clear()
+		bridge.LEGAErrorChannel.(*MockChannel).Clear()
 	}
 }
 
