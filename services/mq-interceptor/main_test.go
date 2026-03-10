@@ -211,6 +211,36 @@ func (testsuite *MQinterceptorTests) Test_publishError() {
 	assert.Equal(t, original_message, err_msg["original_message"], "The 'original_message' field of the error post was not as expected")
 }
 
+func (testsuite *MQinterceptorTests) Test_postMessage() {
+	t := testsuite.T()
+	message := "{\"id\" : \"xyz\", \"msg\" : \"postMessage test\"}"
+	publishing := amqp091.Publishing{
+		ContentType:     "application/json",
+		ContentEncoding: "UTF-8",
+		Body:            []byte(message),
+	}
+	legaConfig, err := readJSONmap("test/legamq.json")
+	failTestOnError(err, t)
+	var publishChannel MQChannel = CreateMockChannel(legaConfig)
+	err = postMessage(publishing, publishChannel, os.Getenv("LEGA_MQ_EXCHANGE"), "ingest")
+	assert.Nil(t, err, "postMessage (to LEGA) returned an unexpected error")
+	msg := publishChannel.(*MockChannel).GetMessage("ingest")
+
+	t.Logf("Test_postMessage #1: Checking that message was posted correctly")
+	assert.NotNil(t, msg, "Message not posted correctly to LEGA ingest queue")
+
+	t.Logf("Test_postMessage #2: Checking contents of posted message")
+	assert.Equal(t, string(message), string(msg.Body), "Retrieved message was different from original posted message")
+
+	// according to the LEGA configuration loaded above, a message with an uknown routing key will be reposted
+	// to the alternate exchange (of type "fanout") and end up in the "dropped_messages" queue bound to it
+	err = postMessage(publishing, publishChannel, os.Getenv("LEGA_MQ_EXCHANGE"), "unknown")
+	assert.Nil(t, err, "postMessage (to LEGA) returned an unexpected error")
+	msgDropped := publishChannel.(*MockChannel).GetMessage("dropped_messages")
+	t.Logf("Test_postMessage #3: Checking message posted to LEGA with unrecognized routing key")
+	assert.NotNil(t, msgDropped, "Message with unknown routing key posted to LEGA did not end up in 'dropped_messages' queue")
+}
+
 func (testsuite *MQinterceptorTests) Test_buildPublishingFromDelivery() {
 	t := testsuite.T()
 	cegaExchange := os.Getenv("CEGA_MQ_EXCHANGE")
