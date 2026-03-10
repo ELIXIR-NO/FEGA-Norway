@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("org.springframework.boot") version "4.0.2"
+    id("org.springframework.boot") version "4.0.3"
     id("io.spring.dependency-management") version "1.1.7"
     id("formatting-conventions")
 }
@@ -8,6 +8,10 @@ plugins {
 group = "no.elixir.fega"
 repositories {
     mavenCentral()
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 dependencies {
@@ -29,8 +33,15 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-resttestclient")
     implementation("org.springframework.boot:spring-boot-restclient")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
+    implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")

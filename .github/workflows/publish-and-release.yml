@@ -108,7 +108,7 @@ jobs:
 
       - name: Log in to the Github Container registry
         if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -128,7 +128,7 @@ jobs:
 
       - name: Publish Go Binaries
         if: ${{matrix.component == 'lega-commander'}}
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         with:
           version: "~> v2"
           args: release --clean

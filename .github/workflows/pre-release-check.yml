@@ -68,7 +68,7 @@ jobs:
 
       - name: Log in to the Github Container registry
         if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -76,7 +76,7 @@ jobs:
 
       - name: Build and push
         if: ${{ matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v6.19.2
         with:
           context: ./services/${{ matrix.component }}
           push: true
@@ -92,7 +92,7 @@ jobs:
 
       - name: Build and push
         if: ${{ matrix.component == 'localega-tsd-proxy'  || matrix.component == 'tsd-api-mock'}}
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v6.19.2
         with:
           file: ./services/${{ matrix.component }}/Dockerfile
           context: .
@@ -111,10 +111,10 @@ jobs:
         if: ${{ matrix.component == 'lega-commander' }}
         uses: actions/setup-go@v6.2.0
         with:
-          go-version: 1.25
+          go-version: 1.26
       - name: Run GoReleaser
         if: ${{ matrix.component == 'lega-commander' }}
-        uses: goreleaser/goreleaser-action@v6.4.0
+        uses: goreleaser/goreleaser-action@v7
         with:
           version: '~> v2'
           args: release --clean --snapshot
