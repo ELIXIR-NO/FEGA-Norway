@@ -1,0 +1,9 @@
+.git
+.github
+.gradle
+.idea
+**/build
+**/*.md
+dev.sh
+*.png
+*.jpg
