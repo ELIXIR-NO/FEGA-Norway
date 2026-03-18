@@ -1,5 +1,4 @@
-# Use Temurin 21 as the base image for Java 21
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:25-jdk-alpine AS builder
 
 WORKDIR /app
 
@@ -7,7 +6,7 @@ COPY . .
 
 RUN ./gradlew :e2eTests:jar --no-daemon
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 # Install bash
 RUN apk add --no-cache bash
