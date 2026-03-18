@@ -67,7 +67,7 @@ function log_step() {
 }
 
 function show_header() {
-    clear
+    [[ -t 1 ]] && clear
     printf "${PURPLE}${BOLD}"
     printf "===============================================================\n"
     printf "                   FEGA Development Tools                      \n"
