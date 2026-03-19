@@ -1,26 +1,40 @@
-# Use Temurin 21 as the base image for Java 21
 FROM eclipse-temurin:21-jdk-alpine AS builder
-
 WORKDIR /app
 
-COPY . .
+# Layer 1: build infrastructure (rarely changes)
+COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
+COPY gradle/ gradle/
+COPY buildSrc/ buildSrc/
+
+# Layer 2: all module build files so Gradle can configure the project graph
+COPY lib/clearinghouse/build.gradle.kts lib/clearinghouse/
+COPY lib/tsd-file-api-client/build.gradle.kts lib/tsd-file-api-client/
+COPY lib/crypt4gh/build.gradle.kts lib/crypt4gh/
+COPY services/localega-tsd-proxy/build.gradle.kts services/localega-tsd-proxy/
+COPY services/tsd-api-mock/build.gradle.kts services/tsd-api-mock/
+COPY services/cega-mock/build.gradle.kts services/cega-mock/
+COPY services/mq-interceptor/build.gradle.kts services/mq-interceptor/
+COPY e2eTests/build.gradle.kts e2eTests/
+RUN mkdir -p cli/lega-commander
+
+# Layer 3: resolve dependencies (cached until build.gradle.kts changes)
+RUN ./gradlew :e2eTests:dependencies --no-daemon 2>&1 || true
+
+# Layer 4: source code (changes frequently — only what this module needs)
+COPY lib/crypt4gh/src/ lib/crypt4gh/src/
+COPY e2eTests/src/ e2eTests/src/
 
 RUN ./gradlew :e2eTests:jar --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 
-# Install bash
 RUN apk add --no-cache bash
 
-# Set the working directory in the container
 WORKDIR /fega-norway
 
-# Copy the application JAR, env, and scripts
 COPY --from=builder /app/e2eTests/build/libs/e2eTests.jar /fega-norway/e2eTests.jar
-COPY --from=builder /app/e2eTests/entrypoint.sh /fega-norway/entrypoint.sh
+COPY e2eTests/entrypoint.sh /fega-norway/entrypoint.sh
 
-# Make entrypoint executable
 RUN chmod +x /fega-norway/entrypoint.sh
 
-# Run the entrypoint using bash
 CMD ["/bin/bash", "/fega-norway/entrypoint.sh"]
