@@ -1,5 +1,5 @@
 # Use a lightweight base image with necessary tools
-FROM --platform=linux/amd64 eclipse-temurin:21-jdk-alpine
+FROM --platform=linux/amd64 eclipse-temurin:25-jdk-alpine
 
 ARG MKCERT_VERSION="v1.4.4"
 ARG LOCAL_BIN="/usr/local/bin"
