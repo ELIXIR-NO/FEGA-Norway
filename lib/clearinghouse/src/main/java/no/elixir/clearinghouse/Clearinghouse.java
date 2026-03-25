@@ -32,7 +32,9 @@ import okhttp3.ResponseBody;
 public enum Clearinghouse {
   INSTANCE;
 
-  private static final String KEY_WRAPPING = "-----(.*?)-----";
+  private static final
+
+  String KEY_WRAPPING = "-----(.*?)-----";
   private static final String JKU = "jku";
   private static final String RSA = "RSA";
   private static final String JWKS_URI = "jwks_uri";
