@@ -37,7 +37,8 @@ public enum Clearinghouse {
   String KEY_WRAPPING = "-----(.*?)-----";
   private static final String JKU = "jku";
   private static final String RSA = "RSA";
-  private static final String JWKS_URI = "jwks_uri";
+  private static final
+  String JWKS_URI = "jwks_uri";
   private static final String GA_4_GH_PASSPORT_V_1 = "ga4gh_passport_v1";
   private static final String GA_4_GH_VISA_V_1 = "ga4gh_visa_v1";
   private static final String USERINFO = "userinfo";
