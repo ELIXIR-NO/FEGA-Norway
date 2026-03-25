@@ -148,9 +148,11 @@ services:
       - LEGA_MQ_ROUTING_KEY=<<INTERCEPTOR_LEGA_MQ_ROUTING_KEY>>
       - ENABLE_TLS=<<INTERCEPTOR_ENABLE_TLS>>
       - CA_CERT_PATH=<<INTERCEPTOR_CA_CERT_PATH>>
+      - SCHEMA_FOLDER=<<INTERCEPTOR_SCHEMA_FOLDER>>
       - DEBUG=true
     volumes:
       - interceptor-certs:/certs
+      - interceptor-schemas:/schemas
 
   postgres:
     container_name: postgres
@@ -622,6 +624,7 @@ services:
       - tsd-vault:/volumes/tsd-vault
       - tsd-certs:/volumes/tsd-certs
       - interceptor-certs:/volumes/interceptor-certs
+      - interceptor-schemas:/volumes/interceptor-schemas
       - mq-confs-and-certs:/volumes/mq-confs-and-certs
       - proxy-certs:/volumes/proxy-certs
       - postgres-data:/volumes/postgres-data
@@ -697,6 +700,7 @@ volumes:
   tsd-vault:
   tsd-certs:
   interceptor-certs:
+  interceptor-schemas:
   mq-confs-and-certs:
   proxy-certs:
   postgres-data:
