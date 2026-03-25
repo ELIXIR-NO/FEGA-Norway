@@ -415,16 +415,23 @@ func extractClaims(response *http.Response) (string, jwt.MapClaims, error) {
 }
 
 func (s defaultStreamer) getTSDtoken(c conf.Configuration) (string, jwt.MapClaims, error) {
-	fmt.Println("asking for tsd connection details from proxy service...")
-	// var response *http.Response
-	// var err error
-	response, err := s.client.DoRequest(http.MethodGet,
-		c.GetLocalEGAInstanceURL()+"/gettoken",
+	fmt.Println("asking for tsd connection details from lifesc token exchange endpoint...")
+
+	configuration := conf.NewConfiguration()
+	project := configuration.GetTSDProjectName()
+	url := configuration.GetLocalEGAInstanceURL() + "/v1/" + project + "/auth/lifesc/token?type=elixir"
+
+	body := strings.NewReader(fmt.Sprintf(`{"idtoken":"%s"}`, c.GetElixirAAIToken()))
+
+	response, err := s.client.DoRequest(
+		http.MethodPost,
+		url,
+		body,
+		map[string]string{"Content-Type": "application/json"},
 		nil,
-		map[string]string{"Proxy-Authorization": "Bearer " + c.GetElixirAAIToken()},
-		nil,
-		c.GetCentralEGAUsername(),
-		c.GetCentralEGAPassword())
+		"",
+		"",
+	)
 	if err != nil {
 		return "", nil, err
 	}
