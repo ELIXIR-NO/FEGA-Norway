@@ -1,6 +1,7 @@
 package no.elixir.e2eTests.features;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -15,7 +16,7 @@ public class UploadViaLegaCMDTest {
   public static void uploadViaLegaCommander() throws Exception {
     E2EState.log.info("Uploading a file via lega-commander CLI...");
 
-    String token = TokenUtils.generateVisaToken("upload");
+    String token = resolveUploadToken();
     E2EState.log.info("Visa JWT token for lega-commander upload: {}", token);
 
     ProcessBuilder pb = getProcessBuilder(token);
@@ -64,5 +65,18 @@ public class UploadViaLegaCMDTest {
 
     pb.redirectErrorStream(true);
     return pb;
+  }
+
+  private static String resolveUploadToken() throws Exception {
+    // if a passport scoped access token is not provided we generate a fake one
+    if (E2EState.env.getLSAAIToken() == null || E2EState.env.getLSAAIToken().isEmpty()) {
+      return TokenUtils.generateVisaToken("upload", "jwt.pub.pem", "jwt.priv.pem");
+    } else {
+      // if a passport scoped access token is provided and also the runtime is set to
+      // EGA_DEV we will use that provided token to upload the file.
+      if (!E2EState.env.getIntegration().equals("EGA_DEV"))
+        fail("LSAAIToken provided but the runtime is not set to EGA_DEV");
+      return E2EState.env.getLSAAIToken();
+    }
   }
 }

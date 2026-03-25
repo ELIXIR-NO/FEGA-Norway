@@ -26,7 +26,7 @@ COPY e2eTests/src/ e2eTests/src/
 
 RUN ./gradlew :e2eTests:jar --no-daemon
 
-FROM golang:1.25-alpine AS lega-cmd-builder
+FROM golang:1.26-alpine AS lega-cmd-builder
 
 WORKDIR /app
 
