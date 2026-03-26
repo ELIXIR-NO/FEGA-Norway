@@ -80,7 +80,7 @@ func TestNewConfigurationNonDefaultInstanceURL(t *testing.T) {
 }
 
 func TestNewConfigurationDefaultTSDbaseURL(t *testing.T) {
-	t.Setenv("TSD_BASE_URL", "")
+	t.Setenv("TSD_PROXY_URL", "")
 	configuration := NewConfiguration()
 	if configuration.GetTSDproxyURL() != defaultTSDfileAPIproxyURL {
 		t.Error()
@@ -88,7 +88,7 @@ func TestNewConfigurationDefaultTSDbaseURL(t *testing.T) {
 }
 
 func TestNewConfigurationNonDefaultTSDbaseURL(t *testing.T) {
-	t.Setenv("TSD_BASE_URL", "test/tsd_base/")
+	t.Setenv("TSD_PROXY_URL", "test/tsd_base/")
 	configuration := NewConfiguration()
 	if configuration.GetTSDproxyURL() != "test/tsd_base" {
 		t.Error()
