@@ -26,6 +26,14 @@ COPY e2eTests/src/ e2eTests/src/
 
 RUN ./gradlew :e2eTests:jar --no-daemon
 
+FROM golang:1.26-alpine AS lega-cmd-builder
+
+WORKDIR /app
+
+COPY cli/lega-commander/ .
+
+RUN go build -o /lega-commander .
+
 FROM eclipse-temurin:21-jre-alpine
 
 RUN apk add --no-cache bash
@@ -33,6 +41,7 @@ RUN apk add --no-cache bash
 WORKDIR /fega-norway
 
 COPY --from=builder /app/e2eTests/build/libs/e2eTests.jar /fega-norway/e2eTests.jar
+COPY --from=lega-cmd-builder /lega-commander /usr/local/bin/lega-commander
 COPY e2eTests/entrypoint.sh /fega-norway/entrypoint.sh
 
 RUN chmod +x /fega-norway/entrypoint.sh
