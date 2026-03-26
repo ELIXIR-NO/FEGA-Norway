@@ -15,7 +15,7 @@ const defaultInstanceURL = "https://ega.elixir.no"
 const defaultTSDFileAPIVersion = "v1"
 const defaultTSDService = "ega"
 const defaultTSDProject = "p969"
-const defaultTSDfileAPIbaseURL = "https://api.tsd.usit.no"
+const defaultTSDfileAPIproxyURL = "https://api.tsd.usit.no"
 const defaultChunkSize = 50
 
 var once sync.Once
@@ -24,7 +24,7 @@ var instance *defaultConfiguration
 // Configuration interface is a holder for application settings.
 type Configuration interface {
 	ConcatenateURLPartsToString(array []string) string
-	GetTSDbaseURL() string
+	GetTSDproxyURL() string
 	GetTSDAPIVersion() string
 	GetTSDProjectName() string
 	GetTSDservice() string
@@ -83,14 +83,14 @@ func (defaultConfiguration) GetElixirAAIToken() string {
 func (dc defaultConfiguration) GetTSDURL() string {
 	return dc.ConcatenateURLPartsToString(
 		[]string{
-			dc.GetTSDbaseURL(), dc.GetTSDAPIVersion(), dc.GetTSDProjectName(), dc.GetTSDservice()},
+			dc.GetTSDproxyURL(), dc.GetTSDAPIVersion(), dc.GetTSDProjectName(), dc.GetTSDservice()},
 	)
 }
 
-func (defaultConfiguration) GetTSDbaseURL() string {
-	TSDbaseURL := os.Getenv("TSD_BASE_URL")
+func (defaultConfiguration) GetTSDproxyURL() string {
+	TSDbaseURL := os.Getenv("TSD_PROXY_URL")
 	if TSDbaseURL == "" {
-		TSDbaseURL = defaultTSDfileAPIbaseURL
+		TSDbaseURL = defaultTSDfileAPIproxyURL
 	}
 	if strings.HasSuffix(TSDbaseURL, "/") {
 		return TSDbaseURL[:len(TSDbaseURL)-1]

@@ -82,7 +82,7 @@ func TestNewConfigurationNonDefaultInstanceURL(t *testing.T) {
 func TestNewConfigurationDefaultTSDbaseURL(t *testing.T) {
 	t.Setenv("TSD_BASE_URL", "")
 	configuration := NewConfiguration()
-	if configuration.GetTSDbaseURL() != defaultTSDfileAPIbaseURL {
+	if configuration.GetTSDproxyURL() != defaultTSDfileAPIproxyURL {
 		t.Error()
 	}
 }
@@ -90,7 +90,7 @@ func TestNewConfigurationDefaultTSDbaseURL(t *testing.T) {
 func TestNewConfigurationNonDefaultTSDbaseURL(t *testing.T) {
 	t.Setenv("TSD_BASE_URL", "test/tsd_base/")
 	configuration := NewConfiguration()
-	if configuration.GetTSDbaseURL() != "test/tsd_base" {
+	if configuration.GetTSDproxyURL() != "test/tsd_base" {
 		t.Error()
 	}
 }
@@ -120,7 +120,7 @@ func TestNewConfigurationNonNumericChunkSize(t *testing.T) {
 }
 
 func TestNewConfigurationGetTSDURL(t *testing.T) {
-	t.Setenv("TSD_BASE_URL", "tsd_base/")
+	t.Setenv("TSD_PROXY_URL", "tsd_base/")
 	t.Setenv("TSD_PROJ_NAME", "tsd_project")
 	configuration := NewConfiguration()
 	if configuration.GetTSDURL() != "tsd_base/v1/tsd_project/ega" {
