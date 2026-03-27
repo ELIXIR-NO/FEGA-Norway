@@ -15,6 +15,7 @@ FROM alpine:latest
 
 WORKDIR /app
 
+#hi
 COPY --from=builder /app/cega-mock .
 
 ENV CEGA_USERS_USER=test_instance

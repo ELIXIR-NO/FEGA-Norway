@@ -2,7 +2,7 @@
 
 The Local EGA TSD Proxy service is a component of the FEGA-Norway stack that facilitates secure file transfers between users and TSD (Services for Sensitive Data) storage. It implements authentication and authorization using both ELIXIR AAI and CEGA credentials, and manages file operations through the TSD File API.
 
-## Features
+## Features1
 
 - ELIXIR AAI (OpenID Connect) authentication support
 - GA4GH Passport & Visa validation
