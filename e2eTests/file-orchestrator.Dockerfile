@@ -22,6 +22,7 @@ RUN echo "Installing crypt4gh locally..." && \
 
 RUN mkdir -p "confs"
 RUN mkdir -p "certs"
+RUN mkdir -p "schemas"
 
 COPY confs confs
 COPY scripts/* .
