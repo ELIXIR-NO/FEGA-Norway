@@ -88,7 +88,7 @@ public class ProxyController {
   private ResponseEntity<?> validateChunkChecksum(Token token, Chunk response, String md5)
       throws IOException {
     if (md5 == null) {
-      return ResponseEntity.ok(response);
+      return ResponseEntity.badRequest().body("Missing MD5 checksum header.");
     }
     ResumableUpload resumableUpload =
         tsdFileAPIClient
