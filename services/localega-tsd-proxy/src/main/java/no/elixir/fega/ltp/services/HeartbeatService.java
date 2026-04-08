@@ -73,7 +73,10 @@ public class HeartbeatService {
 
     int NAME = 1, STATUS = 2;
     String[] data = key.split(":");
-    assert data.length == 3;
+    if (data.length != 3) {
+      log.warn("Invalid heartbeat key format (expected 3 parts): {}", key);
+      return;
+    }
 
     // Retrieve the value (timestamp) from Redis
     String value = redisTemplate.opsForValue().get(key);
