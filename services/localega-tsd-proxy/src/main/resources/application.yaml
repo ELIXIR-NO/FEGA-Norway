@@ -44,7 +44,7 @@ elixir:
     secret: ${CLIENT_SECRET}
 
 token:
-  redirect-uri: ${TOKEN_REDIRECT_URI:'{baseUrl}/oidc-protected'}
+  redirect-uri: ${TOKEN_REDIRECT_URI:{baseUrl}/oidc-protected}
 
 aai:
   service-base-url: ${AAI_SERVICE_BASE_URL:https://login.elixir-czech.org}
