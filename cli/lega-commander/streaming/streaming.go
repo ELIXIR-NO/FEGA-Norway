@@ -473,6 +473,7 @@ func (s *defaultStreamer) uploadFileWithoutProxy(file *os.File, stat os.FileInfo
 		return err
 	}
 	buffer := make([]byte, configuration.GetChunkSize()*1024*1024)
+	hashFunction := sha256.New()
 	for i := startChunk; true; i++ {
 		read, err := file.Read(buffer)
 		if err != nil {
@@ -482,6 +483,7 @@ func (s *defaultStreamer) uploadFileWithoutProxy(file *os.File, stat os.FileInfo
 			break
 		}
 		chunk := buffer[:read]
+		hashFunction.Write(chunk)
 		if err != nil {
 			return err
 		}
@@ -546,5 +548,31 @@ func (s *defaultStreamer) uploadFileWithoutProxy(file *os.File, stat os.FileInfo
 		return err
 	}
 	bar.Finish()
+
+	checksum := hex.EncodeToString(hashFunction.Sum(nil))
+	fmt.Println("Notifying proxy of completed upload...")
+	notifyResp, err := s.client.DoRequest(
+		http.MethodPost,
+		configuration.GetLocalEGAInstanceURL()+"/stream/"+url.QueryEscape(fileName)+"/notify",
+		nil,
+		map[string]string{"Proxy-Authorization": "Bearer " + configuration.GetElixirAAIToken()},
+		map[string]string{
+			"fileSize": strconv.FormatInt(totalSize, 10),
+			"sha256":   checksum,
+		},
+		configuration.GetCentralEGAUsername(),
+		configuration.GetCentralEGAPassword(),
+	)
+	if err != nil {
+		return fmt.Errorf("upload succeeded but pipeline notification failed: %w", err)
+	}
+	defer notifyResp.Body.Close()
+	if notifyResp.StatusCode != http.StatusOK {
+		respBody, _ := ioutil.ReadAll(notifyResp.Body)
+		return fmt.Errorf(
+			"upload succeeded but pipeline notification failed (%d): %s",
+			notifyResp.StatusCode, string(respBody))
+	}
+
 	return nil
 }
