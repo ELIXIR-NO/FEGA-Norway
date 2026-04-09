@@ -32,22 +32,22 @@ const (
 )
 
 var inboxOptions struct {
-	List   bool   `short:"l" long:"list" description:"Lists uploaded files"`
-	Delete string `short:"d" long:"delete" description:"Deletes uploaded file by name"`
-	PerPage  int    `short:"p" long:"per-page" default:"100"  description:"Items per page (max 50000)"`
+	List    bool   `short:"l" long:"list" description:"Lists uploaded files"`
+	Delete  string `short:"d" long:"delete" description:"Deletes uploaded file by name"`
+	PerPage int    `short:"p" long:"per-page" default:"100"  description:"Items per page (max 50000)"`
 	// Pagination note: --page is user-facing and 1-based (page=1 is the first page).
-    // Internally we convert to 0-based before calling the proxy/TSD API.
-    Page     int    `long:"page"             default:"1"    description:"Page number"`
-    All      bool   `long:"all"                          description:"Fetch *every* page. Ignores --page."`
+	// Internally we convert to 0-based before calling the proxy/TSD API.
+	Page int  `long:"page"             default:"1"    description:"Page number"`
+	All  bool `long:"all"                          description:"Fetch *every* page. Ignores --page."`
 }
 
 var inboxOptionsParser = flags.NewParser(&inboxOptions, flags.None)
 
 var outboxOptions struct {
-	List bool `short:"l" long:"list" description:"Lists exported files"`
-    PerPage  int    `short:"p" long:"per-page" default:"100"  description:"Items per page (max 50000)"`
-    Page     int    `long:"page"             default:"1"    description:"Page number"`
-    All      bool   `long:"all"                          description:"Fetch *every* page. Ignores --page."`
+	List    bool `short:"l" long:"list" description:"Lists exported files"`
+	PerPage int  `short:"p" long:"per-page" default:"100"  description:"Items per page (max 50000)"`
+	Page    int  `long:"page"             default:"1"    description:"Page number"`
+	All     bool `long:"all"                          description:"Fetch *every* page. Ignores --page."`
 }
 
 var outboxOptionsParser = flags.NewParser(&outboxOptions, flags.None)
@@ -60,9 +60,10 @@ var resumablesOptions struct {
 var resumablesOptionsParser = flags.NewParser(&resumablesOptions, flags.None)
 
 var uploadingOptions struct {
-	FileName string `short:"f"  long:"file" description:"File or folder to upload" value-name:"FILE" required:"true"`
-	Resume   bool   `short:"r" long:"resume" description:"Resumes interrupted upload"`
-	Straight bool   `short:"b" long:"beta" description:"Upload the files without the proxy service;i.e. directly to tsd file api"`
+	FileName         string `short:"f"  long:"file" description:"File or folder to upload" value-name:"FILE" required:"true"`
+	Resume           bool   `short:"r" long:"resume" description:"Resumes interrupted upload"`
+	Straight         bool   `short:"b" long:"beta" description:"Upload the files without the proxy service;i.e. directly to tsd file api"`
+	NoDuplicateCheck bool   `long:"no-duplicate-check" description:"Skip checking whether the file already exists in the inbox before upload"`
 }
 
 var uploadingOptionsParser = flags.NewParser(&uploadingOptions, flags.None)
@@ -103,12 +104,12 @@ func main() {
 		}
 		if inboxOptions.List {
 			fileList, err := fileManager.ListFiles(
-                true,
-                // Convert user-facing 1-based page to backend 0-based index.
-                inboxOptions.Page-1,
-                inboxOptions.PerPage,
-                inboxOptions.All,
-            )
+				true,
+				// Convert user-facing 1-based page to backend 0-based index.
+				inboxOptions.Page-1,
+				inboxOptions.PerPage,
+				inboxOptions.All,
+			)
 			if err != nil {
 				if _, ok := err.(*files.FolderNotFoundError); ok {
 					log.Fatal(aurora.Red("Inbox Error: The user folder is empty or does not exist yet"))
@@ -122,19 +123,19 @@ func main() {
 			if err != nil {
 				log.Fatal(aurora.Red(err))
 			}
-            for _, file := range *fileList {
-                _, err = fmt.Fprintln(
-                    tw,
-                    aurora.Blue(
-                        file.FileName +
-                            "\t " + strconv.FormatInt(file.Size, 10) + " bytes" +
-                            "\t " + file.ModifiedDate,
-                    ),
-                )
-                if err != nil {
-                    log.Fatal(aurora.Red(err))
-                }
-            }
+			for _, file := range *fileList {
+				_, err = fmt.Fprintln(
+					tw,
+					aurora.Blue(
+						file.FileName+
+							"\t "+strconv.FormatInt(file.Size, 10)+" bytes"+
+							"\t "+file.ModifiedDate,
+					),
+				)
+				if err != nil {
+					log.Fatal(aurora.Red(err))
+				}
+			}
 
 			err = tw.Flush()
 			if err != nil {
@@ -157,12 +158,12 @@ func main() {
 		}
 		if outboxOptions.List {
 			fileList, err := fileManager.ListFiles(
-                false,
-                // Convert user-facing 1-based page to backend 0-based index
-                outboxOptions.Page-1,
-                outboxOptions.PerPage,
-                outboxOptions.All,
-            )
+				false,
+				// Convert user-facing 1-based page to backend 0-based index
+				outboxOptions.Page-1,
+				outboxOptions.PerPage,
+				outboxOptions.All,
+			)
 			if err != nil {
 				if _, ok := err.(*files.FolderNotFoundError); ok {
 					log.Fatal(aurora.Red("Outbox Error: No data has been staged in the outbox yet"))
@@ -176,19 +177,19 @@ func main() {
 			if err != nil {
 				log.Fatal(aurora.Red(err))
 			}
-            for _, file := range *fileList {
-                _, err = fmt.Fprintln(
-                    tw,
-                    aurora.Blue(
-                        file.FileName +
-                            "\t " + strconv.FormatInt(file.Size, 10) + " bytes" +
-                            "\t " + file.ModifiedDate,
-                    ),
-                )
-                if err != nil {
-                    log.Fatal(aurora.Red(err))
-                }
-            }
+			for _, file := range *fileList {
+				_, err = fmt.Fprintln(
+					tw,
+					aurora.Blue(
+						file.FileName+
+							"\t "+strconv.FormatInt(file.Size, 10)+" bytes"+
+							"\t "+file.ModifiedDate,
+					),
+				)
+				if err != nil {
+					log.Fatal(aurora.Red(err))
+				}
+			}
 			err = tw.Flush()
 			if err != nil {
 				log.Fatal(aurora.Red(err))
@@ -244,7 +245,12 @@ func main() {
 		if err != nil {
 			log.Fatal(aurora.Red(err))
 		}
-		err = streamer.Upload(uploadingOptions.FileName, uploadingOptions.Resume, uploadingOptions.Straight)
+		err = streamer.Upload(
+			uploadingOptions.FileName,
+			uploadingOptions.Resume,
+			uploadingOptions.Straight,
+			uploadingOptions.NoDuplicateCheck,
+		)
 		if err != nil {
 			log.Fatal(aurora.Red(err))
 		}
@@ -260,12 +266,12 @@ func main() {
 		if downloadingOptions.FileName == "" {
 			fmt.Println(aurora.Blue("File to export is not specified. Downloading the whole outbox folder."))
 			fileList, err := fileManager.ListFiles(
-			    false,
-			    // Convert user-facing 1-based page to backend 0-based index
-                outboxOptions.Page-1,
-                outboxOptions.PerPage,
-                outboxOptions.All,
-            )
+				false,
+				// Convert user-facing 1-based page to backend 0-based index
+				outboxOptions.Page-1,
+				outboxOptions.PerPage,
+				outboxOptions.All,
+			)
 			if err != nil {
 				log.Fatal(aurora.Red(err))
 			}
