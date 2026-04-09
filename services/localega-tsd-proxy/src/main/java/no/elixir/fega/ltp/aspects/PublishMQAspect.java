@@ -110,6 +110,48 @@ public class PublishMQAspect {
   }
 
   /**
+   * Publishes {@code FileDescriptor} to the MQ upon direct upload (-b mode) completion
+   * notification.
+   *
+   * @param result Object returned by the notify endpoint.
+   */
+  @AfterReturning(
+      pointcut =
+          "execution(public * no.elixir.fega.ltp.controllers.rest.ProxyController.notifyUploadComplete(..))",
+      returning = "result")
+  public void publishDirectUploadNotification(Object result) {
+    if (!(result instanceof ResponseEntity<?> response)
+        || !response.getStatusCode().is2xxSuccessful()) {
+      return;
+    }
+
+    Object elixirId = request.getAttribute(ELIXIR_ID);
+    Object fileName = request.getAttribute(FILE_NAME);
+    Object fileSize = request.getAttribute(FILE_SIZE);
+    Object sha256 = request.getAttribute(SHA256);
+    if (elixirId == null || fileName == null || fileSize == null || sha256 == null) {
+      log.error(
+          "Missing required request attributes for direct upload notification: "
+              + "ELIXIR_ID={}, FILE_NAME={}, FILE_SIZE={}, SHA256={}",
+          elixirId,
+          fileName,
+          fileSize,
+          sha256);
+      return;
+    }
+
+    FileDescriptor fileDescriptor = new FileDescriptor();
+    fileDescriptor.setUser(elixirId.toString());
+    fileDescriptor.setFilePath(buildInboxPath(fileName.toString()));
+    fileDescriptor.setFileSize(Long.parseLong(fileSize.toString()));
+    fileDescriptor.setFileLastModified(System.currentTimeMillis() / 1000);
+    fileDescriptor.setOperation(Operation.UPLOAD.name().toLowerCase());
+    fileDescriptor.setEncryptedIntegrity(
+        new EncryptedIntegrity[] {new EncryptedIntegrity(SHA256.toLowerCase(), sha256.toString())});
+    publishMessage(fileDescriptor, Operation.UPLOAD.name().toLowerCase());
+  }
+
+  /**
    * Publishes <code>FileDescriptor</code> to the MQ upon file removal.
    *
    * @param result Object returned by the proxied method.
