@@ -204,6 +204,49 @@ public class ProxyController {
   }
 
   /**
+   * Notifies the proxy that a direct upload (-b mode) has completed. Triggers the RabbitMQ inbox
+   * message publication for the SDA pipeline.
+   *
+   * @param request HTTP servlet request (for setting attributes consumed by aspects).
+   * @param bearerAuthorization Elixir AAI token.
+   * @param fileName Uploaded file name.
+   * @param fileSize Total file size in bytes.
+   * @param sha256 SHA-256 checksum of the entire file.
+   * @return 200 OK on success, 400 on invalid input.
+   */
+  @PostMapping("/stream/{fileName}/notify")
+  public ResponseEntity<?> notifyUploadComplete(
+      jakarta.servlet.http.HttpServletRequest request,
+      @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
+      @PathVariable("fileName") String fileName,
+      @RequestParam("fileSize") String fileSize,
+      @RequestParam("sha256") String sha256) {
+
+    if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
+      return ResponseEntity.badRequest().body("Invalid file name.");
+    }
+    long parsedFileSize;
+    try {
+      parsedFileSize = Long.parseLong(fileSize);
+    } catch (NumberFormatException e) {
+      return ResponseEntity.badRequest().body("fileSize must be a valid number.");
+    }
+    if (parsedFileSize <= 0) {
+      return ResponseEntity.badRequest().body("fileSize must be positive.");
+    }
+    if (sha256 == null || !sha256.matches("^[a-fA-F0-9]{64}$")) {
+      return ResponseEntity.badRequest().body("sha256 must be a 64-character hex string.");
+    }
+
+    request.setAttribute(no.elixir.fega.ltp.aspects.ProcessArgumentsAspect.FILE_NAME, fileName);
+    request.setAttribute(no.elixir.fega.ltp.aspects.ProcessArgumentsAspect.FILE_SIZE, fileSize);
+    request.setAttribute(no.elixir.fega.ltp.aspects.ProcessArgumentsAspect.SHA256, sha256);
+    request.setAttribute(no.elixir.fega.ltp.aspects.ProcessArgumentsAspect.CHUNK, "end");
+
+    return ResponseEntity.ok().build();
+  }
+
+  /**
    * Gets TSD token.
    *
    * @param bearerAuthorization Elixir AAI token.
