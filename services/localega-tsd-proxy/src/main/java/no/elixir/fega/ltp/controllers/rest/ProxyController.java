@@ -208,7 +208,6 @@ public class ProxyController {
    * message publication for the SDA pipeline.
    *
    * @param request HTTP servlet request (for setting attributes consumed by aspects).
-   * @param bearerAuthorization Elixir AAI token.
    * @param fileName Uploaded file name.
    * @param fileSize Total file size in bytes.
    * @param sha256 SHA-256 checksum of the entire file.
@@ -217,7 +216,6 @@ public class ProxyController {
   @PostMapping("/stream/{fileName}/notify")
   public ResponseEntity<?> notifyUploadComplete(
       jakarta.servlet.http.HttpServletRequest request,
-      @RequestHeader(HttpHeaders.PROXY_AUTHORIZATION) String bearerAuthorization,
       @PathVariable("fileName") String fileName,
       @RequestParam("fileSize") String fileSize,
       @RequestParam("sha256") String sha256) {

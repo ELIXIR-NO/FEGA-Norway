@@ -140,10 +140,18 @@ public class PublishMQAspect {
       return;
     }
 
+    long parsedFileSize;
+    try {
+      parsedFileSize = Long.parseLong(fileSize.toString());
+    } catch (NumberFormatException e) {
+      log.error("Invalid FILE_SIZE attribute: {}", fileSize);
+      return;
+    }
+
     FileDescriptor fileDescriptor = new FileDescriptor();
     fileDescriptor.setUser(elixirId.toString());
     fileDescriptor.setFilePath(buildInboxPath(fileName.toString()));
-    fileDescriptor.setFileSize(Long.parseLong(fileSize.toString()));
+    fileDescriptor.setFileSize(parsedFileSize);
     fileDescriptor.setFileLastModified(System.currentTimeMillis() / 1000);
     fileDescriptor.setOperation(Operation.UPLOAD.name().toLowerCase());
     fileDescriptor.setEncryptedIntegrity(
