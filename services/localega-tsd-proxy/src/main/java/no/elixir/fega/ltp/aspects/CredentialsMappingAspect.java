@@ -38,7 +38,8 @@ public class CredentialsMappingAspect {
    */
   @AfterReturning(
       pointcut =
-          "execution(public * no.elixir.fega.ltp.controllers.rest.ProxyController.stream(..))",
+          "execution(public * no.elixir.fega.ltp.controllers.rest.ProxyController.stream(..)) || "
+              + "execution(public * no.elixir.fega.ltp.controllers.rest.ProxyController.notifyUploadComplete(..))",
       returning = "result")
   public void mapCredentials(Object result) {
     Object egaUsernameAttr = request.getAttribute(EGA_USERNAME);
