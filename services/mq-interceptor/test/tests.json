@@ -29,6 +29,7 @@
     "queue"      : "files",
     "fails"      : false,
     "enduser"    : "bob@elixir.org",
+    "contentType": "application/json",
     "message"    : {
                      "type": "accession",
                      "user": "bob@ega.org",
@@ -195,5 +196,21 @@
                                               { "type": "md5", "value": "ee25789673d8711563d5fcb7234f9a68" }
                                             ]
                    }
+  }
+ ,
+  {
+    "testname"   : "test wrong content type in the message header",
+    "description": [
+                     "Test error handling when the ContentType in the message header is not set to 'application/json' (or missing).",
+                     "This should trigger a validation error."
+                   ],
+    "direction"  : "lega",
+    "queue"      : "files",
+    "contentType": "text/plain",
+    "fails"      : true,
+    "cause"      : "validation error",
+    "reason"     : "The message has an incorrect ContentType in its header",
+    "enduser"    : "alice@elixir.org",
+    "message"    : "This is just a regular text"
   }
 ]

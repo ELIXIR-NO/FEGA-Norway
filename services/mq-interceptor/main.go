@@ -257,6 +257,13 @@ func buildPublishingFromDelivery(fromCEGAToLEGA bool, delivery amqp.Delivery) (*
 		Body:            delivery.Body,
 	}
 
+	if (delivery.ContentType == "") {
+		delivery.ContentType = "application/json"
+	}
+	if (delivery.ContentType != "application/json") {
+		errorMessage := fmt.Sprintf("The ContentType of the message was '%s', but it should have been 'application/json'", delivery.ContentType)
+		return &publishing, nil, validator.ValidationError{Message: errorMessage}
+	}
 	message := make(map[string]interface{}, 0)
 	err := json.Unmarshal(delivery.Body, &message)
 	if err != nil {

@@ -58,11 +58,11 @@ func setupDatabase(connection string, t *testing.T) (*sql.DB, error) {
 	return db, nil
 }
 
-func createDelivery(exchange string, routingkey string, message []byte) amqp091.Delivery {
+func createDelivery(exchange string, routingkey string, contentType string, message []byte) amqp091.Delivery {
 	delivery := amqp091.Delivery{
 		Acknowledger:    nil,
 		Headers:         amqp091.Table(nil),
-		ContentType:     "application/json",
+		ContentType:     contentType,
 		ContentEncoding: "UTF-8",
 		DeliveryMode:    0x2,
 		Priority:        0x0,
@@ -256,6 +256,10 @@ func (testsuite *MQinterceptorTests) Test_buildPublishingFromDelivery() {
 		direction := deliveryTest["direction"].(string)
 		testname := deliveryTest["testname"].(string)
 		shouldFail := deliveryTest["fails"].(bool)
+		contentType, ok := deliveryTest["contentType"].(string)
+		if !ok {
+			contentType = "application/json"
+		}
 		newuser, _ := deliveryTest["enduser"].(string)
 		olduser := ""
 		expectedMessageType := ""
@@ -281,10 +285,10 @@ func (testsuite *MQinterceptorTests) Test_buildPublishingFromDelivery() {
 		var dirString string
 		if direction == "lega" {
 			dirString = "from CEGA to LEGA"
-			delivery = createDelivery(legaExchange, "", message)
+			delivery = createDelivery(legaExchange, "", contentType, message)
 		} else if direction == "cega" {
 			dirString = "from LEGA to CEGA"
-			delivery = createDelivery(cegaExchange, deliveryTest["routingkey"].(string), message)
+			delivery = createDelivery(cegaExchange, deliveryTest["routingkey"].(string), contentType, message)
 		} else {
 			assert.True(t, (direction == "lega" || direction == "cega"), "TEST DECLARATION ERROR: 'direction' attribute must be either 'lega' or 'cega'")
 		}
@@ -344,6 +348,10 @@ func (testsuite *MQinterceptorTests) Test_forwardDeliveryTo() {
 		testname := forwardTest["testname"].(string)
 		shouldFail := forwardTest["fails"].(bool)
 		queue := forwardTest["queue"].(string)
+        contentType, ok := forwardTest["contentType"].(string)
+        if !ok {
+            contentType = "application/json"
+        }
 		newuser, _ := forwardTest["enduser"].(string)
 		olduser := ""
 		cause, _ := forwardTest["cause"].(string)
@@ -375,7 +383,7 @@ func (testsuite *MQinterceptorTests) Test_forwardDeliveryTo() {
 			t.Logf("Test_forwardDeliveryTo #%d: \"%s\"  (CEGA to LEGA)", index+1, testname)
 			dirString = "from CEGA to LEGA"
 			routingKey := ""
-			delivery := createDelivery(legaExchange, routingKey, message)
+			delivery := createDelivery(legaExchange, routingKey, contentType, message)
 			forwardDeliveryTo(true, bridge, routingKey, delivery)
 			forwardedMessage = legaPublishChannel.(*MockChannel).GetMessage(queue)
 			ack, nack = cegaConsumeChannel.(*MockChannel).GetAckNack()
@@ -383,7 +391,7 @@ func (testsuite *MQinterceptorTests) Test_forwardDeliveryTo() {
 			t.Logf("Test_forwardDeliveryTo #%d: \"%s\"  (LEGA to CEGA)", index+1, testname)
 			dirString = "from LEGA to CEGA"
 			routingKey := forwardTest["routingkey"].(string)
-			delivery := createDelivery(cegaExchange, routingKey, message)
+			delivery := createDelivery(cegaExchange, routingKey, contentType, message)
 			forwardDeliveryTo(false, bridge, routingKey, delivery)
 			forwardedMessage = cegaPublishChannel.(*MockChannel).GetMessage(queue)
 			ack, nack = legaConsumeChannel.(*MockChannel).GetAckNack()

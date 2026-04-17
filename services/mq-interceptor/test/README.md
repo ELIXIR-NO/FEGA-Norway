@@ -55,6 +55,7 @@ The test suite covers these scenarios:
 7. test failure respons when a message fails to validate because it is not properly JSON-formatted at all (but actually HTML)
 8. test failure respons when a typed message fails to validate because the schema for that specific type is missing
 9. test failure respons when an untyped message fails to validate against any of the known schemas
+10. test failure respons when the ContentType field in the message header is not set to "application/json"
 
 ### Format of the `test/tests.json` file.
 
@@ -74,6 +75,7 @@ Each test is defined with the following properties (not all are necessarily requ
 |reason|string| A human-readable description of the reason why the test is expected to fail (if "fails" is true)|
 |enduser|string| The expected value of the "user" field in the message after it has been reposted by the MQ-interceptor|
 |message|object| The actual message to forward, usually in the form of a JSON object. (Could also be a string if it is not valid JSON)|
+|contentType|string| A value to use for the ContentType field in the message header. Defaults to "application/json"|
 
 
 
