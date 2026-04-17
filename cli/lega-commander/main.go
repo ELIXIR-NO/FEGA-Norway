@@ -245,12 +245,7 @@ func main() {
 		if err != nil {
 			log.Fatal(aurora.Red(err))
 		}
-		err = streamer.Upload(
-			uploadingOptions.FileName,
-			uploadingOptions.Resume,
-			uploadingOptions.Straight,
-			uploadingOptions.NoDuplicateCheck,
-		)
+		err = streamer.Upload(uploadingOptions.FileName, uploadingOptions.Resume, uploadingOptions.Straight, uploadingOptions.NoDuplicateCheck)
 		if err != nil {
 			log.Fatal(aurora.Red(err))
 		}

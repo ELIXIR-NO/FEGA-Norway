@@ -102,27 +102,26 @@ func (fm defaultFileManager) ListFiles(
 		body, _ := ioutil.ReadAll(resp.Body)
 		_ = resp.Body.Close()
 
-
 		pageFiles := make([]File, 0)
 
-_, vt, _, err := jsonparser.Get(body)
-if err == nil && vt == jsonparser.Array {
-    // Case 1: proxy returns simple string array ["fileA", "fileB"]
-    jsonparser.ArrayEach(body, func(v []byte, _ jsonparser.ValueType, _ int, _ error) {
-        name, _ := jsonparser.GetString(v, "fileName")
-        size, _ := jsonparser.GetInt(v, "size")
-        date, _ := jsonparser.GetString(v, "modifiedDate")
-        pageFiles = append(pageFiles, File{name, size, date})
-    })
-} else {
-    // Case 2: proxy returns wrapped objects {"files":[{...}, {...}]}
-    jsonparser.ArrayEach(body, func(v []byte, _ jsonparser.ValueType, _ int, _ error) {
-        name, _ := jsonparser.GetString(v, "fileName")
-        size, _ := jsonparser.GetInt(v, "size")
-        date, _ := jsonparser.GetString(v, "modifiedDate")
-        pageFiles = append(pageFiles, File{name, size, date})
-    }, "files")
-}
+		_, vt, _, err := jsonparser.Get(body)
+		if err == nil && vt == jsonparser.Array {
+			// Case 1: proxy returns simple string array ["fileA", "fileB"]
+			jsonparser.ArrayEach(body, func(v []byte, _ jsonparser.ValueType, _ int, _ error) {
+				name, _ := jsonparser.GetString(v, "fileName")
+				size, _ := jsonparser.GetInt(v, "size")
+				date, _ := jsonparser.GetString(v, "modifiedDate")
+				pageFiles = append(pageFiles, File{name, size, date})
+			})
+		} else {
+			// Case 2: proxy returns wrapped objects {"files":[{...}, {...}]}
+			jsonparser.ArrayEach(body, func(v []byte, _ jsonparser.ValueType, _ int, _ error) {
+				name, _ := jsonparser.GetString(v, "fileName")
+				size, _ := jsonparser.GetInt(v, "size")
+				date, _ := jsonparser.GetString(v, "modifiedDate")
+				pageFiles = append(pageFiles, File{name, size, date})
+			}, "files")
+		}
 
 		out = append(out, pageFiles...)
 		if !fetchAll || len(pageFiles) < perPage {

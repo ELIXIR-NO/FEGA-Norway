@@ -216,6 +216,7 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 			}
 		}
 	}
+
 	// Make sure the file to be uploaded is a crypt4gh encrypted file
 	if err = isCrypt4GHFile(file); err != nil {
 		return err
