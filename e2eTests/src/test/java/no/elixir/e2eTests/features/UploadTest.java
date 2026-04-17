@@ -12,6 +12,7 @@ import no.elixir.e2eTests.utils.TokenUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 
+@Deprecated
 public class UploadTest {
 
   public static void uploadThroughProxy() throws Exception {

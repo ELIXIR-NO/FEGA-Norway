@@ -5,7 +5,7 @@ Unit tests defined in [main_test.go](../main_test.go) cover six functions from `
 `Test_selectElixirIdByEGAId()` + `Test_selectEgaIdByElixirId()`
 - Check that known users are mapped correctly and no error is returned
 - Check that unknown users map to an empty string and an error is returned
-  
+
 `Test_publishError()`
 - Check that the posted error message was routed correctly and can be retrived from the expected queue
 - Check that the error message has the expected contents (a field with the original error and a field with the body of the original message)
@@ -20,7 +20,7 @@ Unit tests defined in [main_test.go](../main_test.go) cover six functions from `
 - Check that tests that are designed to succeed return a message (publishing) but no error
 - Check that the value of the "user" field is replaced correctly (depending on the direction of the message)
 - Check that the message type returned by the function matches the type in the message itself (if present)
-    
+
 `Test_forwardDeliveryTo()`
 - If delivery of a message is expected to succeed:
   - Check that the forwarded message ended up in the correct queue

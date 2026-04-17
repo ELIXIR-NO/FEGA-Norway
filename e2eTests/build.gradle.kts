@@ -25,8 +25,8 @@ dependencies {
     testImplementation(project(":lib:crypt4gh"))
     testImplementation("org.slf4j:slf4j-api:2.0.17")
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
-    testCompileOnly("org.projectlombok:lombok:1.18.42")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
+    testCompileOnly("org.projectlombok:lombok:1.18.44")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.44")
     implementation("org.bouncycastle:bcprov-jdk18on:1.83")
     implementation("org.bouncycastle:bcpkix-jdk18on:1.83")
 }

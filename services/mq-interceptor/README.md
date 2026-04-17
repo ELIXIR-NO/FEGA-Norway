@@ -92,7 +92,11 @@ The MQ-interceptor service can be configured by setting the following environmen
 | CA_CERT_PATH | Path to a custom CA certificate (PEM) used to verify the broker's TLS certificate. If unset, the system certificate pool is used. Example value: "/etc/ssl/certs/ca.pem" |
 | SCHEMA_FOLDER | Path to a directory containing JSON schemas for message validation. If unset, messages will not be validated except to check that they are in proper JSON format. |
 
+<<<<<<< HEAD
 Note that none of the CEGA_*, LEGA_* and POSTGRES_* variables have default fallback values, and MQ-interceptor will usually fail to start if they are not set explicitly. 
+=======
+Note that none of the CEGA_\*, LEGA_\* and POSTGRES_\* variables have default fallback values, and MQ-interceptor will usually fail to start if they are not set explicitly.
+>>>>>>> e6e521656757393debd42aaca0ddec0d41aa7c10
 
 ## Build and execute
 The MQ-interceptor is written in the [Go language](https://go.dev/) and requires the [Go compiler](https://go.dev/doc/install) to build.

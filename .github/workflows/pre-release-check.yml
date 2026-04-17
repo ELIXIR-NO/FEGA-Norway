@@ -18,7 +18,7 @@ jobs:
       matrix:
         component: ${{ fromJson(needs.detect.outputs.changed-components).component }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6
 
       - name: Setup Java
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' || matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock'}}
@@ -76,7 +76,7 @@ jobs:
 
       - name: Build and push
         if: ${{ matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
-        uses: docker/build-push-action@v6.19.2
+        uses: docker/build-push-action@v7.0.0
         with:
           context: ./services/${{ matrix.component }}
           push: true
@@ -92,7 +92,7 @@ jobs:
 
       - name: Build and push
         if: ${{ matrix.component == 'localega-tsd-proxy'  || matrix.component == 'tsd-api-mock'}}
-        uses: docker/build-push-action@v6.19.2
+        uses: docker/build-push-action@v7.0.0
         with:
           file: ./services/${{ matrix.component }}/Dockerfile
           context: .

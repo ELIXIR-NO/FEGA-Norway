@@ -67,7 +67,7 @@ function log_step() {
 }
 
 function show_header() {
-    clear
+    [[ -t 1 ]] && clear
     printf "${PURPLE}${BOLD}"
     printf "===============================================================\n"
     printf "                   FEGA Development Tools                      \n"
@@ -82,9 +82,17 @@ function start() {
     show_header
     log_step "Starting development environment"
 
-    if ./gradlew clean && bash -c "./gradlew start-docker-containers"; then
+    log_step "Preparing configuration"
+    cd e2eTests
+    source env.sh
+    ./scripts/bootstrap.sh apply_configs
+    ./scripts/bootstrap.sh check_requirements
+    log_step "Starting containers (Docker will build images)"
+    if docker compose up --build -d; then
+        cd ..
         log_success "Development environment started successfully!"
     else
+        cd ..
         log_error "Failed to start development environment"
         return 1
     fi
@@ -94,9 +102,12 @@ function stop() {
     show_header
     log_step "Stopping development environment"
 
-    if ./gradlew stop-docker-containers; then
+    cd e2eTests
+    if docker compose down --rmi local -v; then
+        cd ..
         log_success "Development environment stopped successfully!"
     else
+        cd ..
         log_error "Failed to stop development environment"
         return 1
     fi
@@ -106,37 +117,22 @@ function reexecute_tests_in_container() {
     show_header
     log_step "Rebuilding and reexecuting E2E tests"
 
-    ./gradlew :e2eTests:clean > /dev/null &&
-    ./gradlew :e2eTests:assemble > /dev/null &&
     docker rm e2e-tests -f > /dev/null 2>&1 &&
     docker rmi fega-norway-e2e-tests:latest -f > /dev/null 2>&1 &&
     cd e2eTests &&
-    docker compose up -d e2e-tests > /dev/null &&
+    docker compose up --build -d e2e-tests > /dev/null &&
     cd .. &&
     log_success "E2E tests rebuilt and reexecuted!"
-}
-
-function reexecute_tests_in_container() {
-  ./gradlew :e2eTests:clean > /dev/null &&
-  ./gradlew :e2eTests:assemble > /dev/null &&
-  docker rm e2e-tests -f > /dev/null &&
-  docker rmi fega-norway-e2e-tests:latest -f > /dev/null &&
-  cd e2eTests &&
-  docker compose up -d e2e-tests > /dev/null &&
-  cd .. &&
-  echo "Task done ✅ Built and reexecuting e2e-tests."
 }
 
 function rebuild_and_deploy_proxy() {
     show_header
     log_step "Rebuilding and deploying proxy service"
 
-    ./gradlew :services:localega-tsd-proxy:clean > /dev/null &&
-    ./gradlew :services:localega-tsd-proxy:assemble > /dev/null &&
     docker rm proxy -f > /dev/null 2>&1 &&
     docker rmi tsd-proxy:latest -f > /dev/null 2>&1 &&
     cd e2eTests &&
-    docker compose up -d proxy > /dev/null &&
+    docker compose up --build -d proxy > /dev/null &&
     cd .. &&
     log_success "Proxy service rebuilt and deployed!"
 }
@@ -145,12 +141,10 @@ function rebuild_and_deploy_mq_interceptor() {
     show_header
     log_step "Rebuilding and deploying MQ interceptor"
 
-    ./gradlew :services:mq-interceptor:clean > /dev/null &&
-    ./gradlew :services:mq-interceptor:assemble > /dev/null &&
     docker rm interceptor -f > /dev/null 2>&1 &&
     docker rmi mq-interceptor:latest -f > /dev/null 2>&1 &&
     cd e2eTests &&
-    docker compose up -d interceptor > /dev/null &&
+    docker compose up --build -d interceptor > /dev/null &&
     cd .. &&
     log_success "MQ interceptor rebuilt and deployed!"
 }
@@ -184,12 +178,10 @@ function rebuild_and_deploy_tsd() {
     show_header
     log_step "Rebuilding and deploying TSD API mock"
 
-    ./gradlew :services:tsd-api-mock:clean > /dev/null &&
-    ./gradlew :services:tsd-api-mock:assemble > /dev/null &&
     docker rm tsd -f > /dev/null 2>&1 &&
     docker rmi tsd-api-mock:latest -f > /dev/null 2>&1 &&
     cd e2eTests &&
-    docker compose up -d tsd > /dev/null &&
+    docker compose up --build -d tsd > /dev/null &&
     cd .. &&
     log_success "TSD API mock rebuilt and deployed!"
 }
@@ -198,7 +190,6 @@ function rebuild_clearinghouse() {
     show_header
     log_step "Rebuilding clearinghouse library"
 
-    ./gradlew :lib:clearinghouse:clean > /dev/null &&
     ./gradlew :lib:clearinghouse:assemble > /dev/null &&
     log_success "Clearinghouse library rebuilt!"
     log_info "This library is used by localega-tsd-proxy."
@@ -212,7 +203,6 @@ function rebuild_tsd_file_api_client() {
     show_header
     log_step "Rebuilding TSD file API client"
 
-    ./gradlew :lib:tsd-file-api-client:clean > /dev/null &&
     ./gradlew :lib:tsd-file-api-client:assemble > /dev/null &&
     log_success "TSD file API client rebuilt!"
     log_info "This library is used by localega-tsd-proxy."
@@ -226,7 +216,6 @@ function rebuild_crypt4gh() {
     show_header
     log_step "Rebuilding crypt4gh library"
 
-    ./gradlew :lib:crypt4gh:clean > /dev/null &&
     ./gradlew :lib:crypt4gh:assemble > /dev/null &&
     log_success "Crypt4gh library rebuilt!"
 }

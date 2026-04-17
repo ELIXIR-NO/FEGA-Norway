@@ -15,7 +15,7 @@ const defaultInstanceURL = "https://ega.elixir.no"
 const defaultTSDFileAPIVersion = "v1"
 const defaultTSDService = "ega"
 const defaultTSDProject = "p969"
-const defaultTSDfileAPIbaseURL = "https://api.tsd.usit.no"
+const defaultTSDfileAPIproxyURL = "https://ega.elixir.no"
 const defaultChunkSize = 50
 
 var once sync.Once
@@ -24,7 +24,7 @@ var instance *defaultConfiguration
 // Configuration interface is a holder for application settings.
 type Configuration interface {
 	ConcatenateURLPartsToString(array []string) string
-	GetTSDbaseURL() string
+	GetTSDproxyURL() string
 	GetTSDAPIVersion() string
 	GetTSDProjectName() string
 	GetTSDservice() string
@@ -34,6 +34,7 @@ type Configuration interface {
 	GetLocalEGAInstanceURL() string
 	GetElixirAAIToken() string
 	GetChunkSize() int
+	GetTLSSkipVerify() bool
 }
 
 func (defaultConfiguration) ConcatenateURLPartsToString(array []string) string {
@@ -83,14 +84,14 @@ func (defaultConfiguration) GetElixirAAIToken() string {
 func (dc defaultConfiguration) GetTSDURL() string {
 	return dc.ConcatenateURLPartsToString(
 		[]string{
-			dc.GetTSDbaseURL(), dc.GetTSDAPIVersion(), dc.GetTSDProjectName(), dc.GetTSDservice()},
+			dc.GetTSDproxyURL(), dc.GetTSDAPIVersion(), dc.GetTSDProjectName(), dc.GetTSDservice()},
 	)
 }
 
-func (defaultConfiguration) GetTSDbaseURL() string {
-	TSDbaseURL := os.Getenv("TSD_BASE_URL")
+func (defaultConfiguration) GetTSDproxyURL() string {
+	TSDbaseURL := os.Getenv("TSD_PROXY_URL")
 	if TSDbaseURL == "" {
-		TSDbaseURL = defaultTSDfileAPIbaseURL
+		TSDbaseURL = defaultTSDfileAPIproxyURL
 	}
 	if strings.HasSuffix(TSDbaseURL, "/") {
 		return TSDbaseURL[:len(TSDbaseURL)-1]
@@ -124,6 +125,13 @@ func (defaultConfiguration) GetChunkSize() int {
 		return defaultChunkSize
 	}
 	return numericChunkSize
+}
+
+// GetTLSSkipVerify returns true when LEGA_COMMANDER_TLS_SKIP_VERIFY is set to "true".
+// This disables TLS certificate verification, intended for testing environments
+// where services use self-signed certificates (e.g. e2e docker-compose setup).
+func (defaultConfiguration) GetTLSSkipVerify() bool {
+	return os.Getenv("LEGA_COMMANDER_TLS_SKIP_VERIFY") == "true"
 }
 
 // NewConfiguration constructs Configuration, accepting LocalEGA URL instance and possibly chunk size.
