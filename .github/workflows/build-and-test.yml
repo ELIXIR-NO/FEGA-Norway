@@ -68,14 +68,14 @@ jobs:
       - name: Print logs for all Docker containers
         if: always()
         run: |
-          CONTAINERS="db ingest verify finalize mapper intercept"
+          CONTAINERS="db ingest verify mapper intercept finalize "
 
           for container in $CONTAINERS; do
             echo "========================================"
             echo "Logs for container: $container"
             docker ps -a --filter "id=$container"
             echo "----------------------------------------"
-            docker logs "$container" || true
+            docker logs --timestamps --tail 200 "$container" || true
             echo
           done
 
