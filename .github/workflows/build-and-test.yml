@@ -68,12 +68,7 @@ jobs:
       - name: Print logs for all Docker containers
         if: always()
         run: |
-          CONTAINERS=$(docker ps -aq)
-
-          if [ -z "$CONTAINERS" ]; then
-            echo "No containers found"
-            exit 0
-          fi
+          CONTAINERS="db ingest verify finalize mapper intercept"
 
           for container in $CONTAINERS; do
             echo "========================================"
