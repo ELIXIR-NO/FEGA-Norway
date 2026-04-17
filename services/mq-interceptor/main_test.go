@@ -395,14 +395,16 @@ func (testsuite *MQinterceptorTests) Test_forwardDeliveryTo() {
 		legaErrorMessage = bridge.LEGAErrorChannel.(*MockChannel).GetMessage("dropped_messages")
 
 		if shouldFail {
-			assert.Falsef(t, ack, "Failed delivery %s was incorrectly ACK'ed", dirString)
 			assert.Nilf(t, forwardedMessage, "A failed delivery was incorrectly posted to queue %s", queue)
 			if strings.HasPrefix(cause, "validation") {
+				assert.Truef(t, ack, "Failed delivery %s (due to JSON validation error) was not ACK'ed properly", dirString)
+				assert.Falsef(t, nack, "Failed delivery %s (due to JSON validation error) was uncorrectly NACK'ed", dirString)
 				assert.NotNilf(t, legaErrorMessage, "Validation error did not result in message ending up in LEGA queue 'dropped_messages'")
 				assert.Equalf(t, message, legaErrorMessage.Body, "Dropped message does not equal original message")
 				assert.Nilf(t, cegaErrorMessage, "Validation error incorrectly resulted in error message being posted to CEGA")
 			} else {
 				assert.Truef(t, nack, "Failed delivery %s was not NACK'ed properly", dirString)
+				assert.Falsef(t, ack, "Failed delivery %s was uncorrectly ACK'ed", dirString)
 				assert.NotNilf(t, cegaErrorMessage, "Failed delivery did not result in error post to CEGA")
 				assert.NotNilf(t, legaErrorMessage, "Failed delivery did not result in error post to LEGA ending up in the queue 'dropped_messages'")
 			}

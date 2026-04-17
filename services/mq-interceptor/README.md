@@ -40,6 +40,7 @@ The MQ-interceptor also checks that all the messages that it reposts are properl
 - Before any message is reposted, the MQ-interceptor checks the JSON-formatted body of the message and replaces the value of the "user" field (if present) based on mappings obtained from the PostgreSQL database. For messages sent from CEGA to LEGA, the EGA user ID in the original message is replaced with an Elixir user ID ([Life Science Login](https://lifescience-ri.eu/ls-login/) ID), and vice versa for the opposite direction.
 - The format of messages can optionally be validated against JSON schemas. If this validation fails (or if a message is not proper JSON at all), the message will not be reposted in the normal way, but instead be posted to the configured LEGA exchange with the routing key "validation_error".
 - If a message was successfully reposted, an ACK (acknowledgement message) is posted back on the channel that the message was obtained from.
+- An ACK will also be posted to the original channel if the message failed JSON validation.
 - If message processing fails for other reasons than JSON validation errors, a NACK (negative acknowledgement) is posted back on the channel that the message was obtained from (but the message is not requeued). Error messages are then posted to the CEGA exchange with routing key "files.error" and to the LEGA exchange with routing key "message_error".
 
 ### Error situations

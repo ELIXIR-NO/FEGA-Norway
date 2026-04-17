@@ -30,15 +30,17 @@ Unit tests defined in [main_test.go](../main_test.go) cover six functions from `
   - Check that no error messages were posted to either CEGA or LEGA
 - If delivery of a message was designed to fail for a given test:
   - Check that the message was _not_ sent to the regular queue 
-  - Check that the message was _not_ Ack'ed
   - If the message delivery failed due to JSON validation error:
     - Check that the message was reposted to LEGA and ended up in the "dropped_messages" queue
     - Check that the message retrieved from the "dropped_messages" queue matches the original message
     - Check that no error message was posted to CEGA
+    - Check that the message was Ack'ed
+    - Check that the message was _not_ Nack'ed
   - If the message delivery failed due to other errors:
     - Check that the an error message was posted to the CEGA error channel
     - Check that the an error message was posted to LEGA and ended up in the "dropped_messages" queue
     - Check that the message was Nack'ed
+    - Check that the messaeg was _not_ Ack'ed
 
 
 The two functions `buildPublishingFromDelivery` and `forwardDeliveryTo` are tested by looping through a suite of messages defined in [test/tests.json](tests.json). Some of these are designed to fail for various reasons, such as JSON validation errors or unknown users. The tests include messages going in both directions, and messages are validated against schemas in the [test/schemas](schemas) directory.  This directory deliberately only contains three schemas, both to save space and also to check what happens when a required schema is missing.
