@@ -67,7 +67,7 @@
       }
     },
     {
-      "name": "accessionIDs",
+      "name": "accession",
       "vhost": "<<MQ_VHOST>>",
       "durable": true,
       "auto_delete": false,
@@ -168,18 +168,9 @@
     {
       "source": "sda",
       "vhost": "<<MQ_VHOST>>",
-      "destination": "accessionIDs",
+      "destination": "accession",
       "destination_type": "queue",
       "routing_key": "accession",
-      "arguments": {
-      }
-    },
-    {
-      "source": "sda",
-      "vhost": "<<MQ_VHOST>>",
-      "destination": "accessionIDs",
-      "destination_type": "queue",
-      "routing_key": "accessionIDs",
       "arguments": {
       }
     },

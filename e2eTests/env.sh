@@ -149,7 +149,7 @@ export SDA_INBOX_TYPE=posix
 export SDA_BROKER_QUEUE_VERIFY=archived
 export SDA_BROKER_ROUTINGKEY_VERIFY=verified
 # Finalize
-export SDA_BROKER_QUEUE_FINALIZE=accessionIDs
+export SDA_BROKER_QUEUE_FINALIZE=accession
 export SDA_BROKER_ROUTINGKEY_FINALIZE=completed
 # Mapper
 export SDA_BROKER_QUEUE_MAPPER=mappings
