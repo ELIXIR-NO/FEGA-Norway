@@ -65,6 +65,7 @@ The MQ-interceptor will write error messages to the log but still continue to op
 A JSON validation error will be raised if any of the following situations occur:
 - A message is not in proper JSON format
 - A JSON message that has been correctly parsed/unmarshalled and then possibly modified cannot be marshalled back into proper JSON
+- The ContentType in the message header is set to something other than "application/json"
 - Validation against JSON schemas is enabled and:
     - A message has a "type" field but the schema to use for this type is not known
     - A message has a "type" field but the schema for that type was not properly loaded
