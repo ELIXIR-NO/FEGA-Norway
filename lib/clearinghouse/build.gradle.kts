@@ -35,8 +35,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.3")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:6.0.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.0.3")
-    testImplementation("org.bouncycastle:bcprov-jdk15to18:1.83")
-    testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.83")
+    testImplementation("org.bouncycastle:bcprov-jdk15to18:1.84")
+    testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.84")
     testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
 }
 
