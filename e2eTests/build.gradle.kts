@@ -15,7 +15,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.0.3")
     testRuntimeOnly("org.junit.platform:junit-platform-console-standalone:6.0.3")
-    testImplementation("com.rabbitmq:amqp-client:5.29.0")
+    testImplementation("com.rabbitmq:amqp-client:5.30.0")
     testImplementation("com.konghq:unirest-java:3.14.5")
     testImplementation("org.postgresql:postgresql:42.7.10")
     testImplementation("io.jsonwebtoken:jjwt-api:0.13.0")
@@ -27,8 +27,8 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
     testCompileOnly("org.projectlombok:lombok:1.18.44")
     testAnnotationProcessor("org.projectlombok:lombok:1.18.44")
-    implementation("org.bouncycastle:bcprov-jdk18on:1.83")
-    implementation("org.bouncycastle:bcpkix-jdk18on:1.83")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.84")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.84")
 }
 
 // Start setup scripts.
