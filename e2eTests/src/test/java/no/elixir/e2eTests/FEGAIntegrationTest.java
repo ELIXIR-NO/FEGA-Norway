@@ -2,6 +2,7 @@ package no.elixir.e2eTests;
 
 import no.elixir.e2eTests.core.BaseE2ETest;
 import no.elixir.e2eTests.features.*;
+import no.elixir.e2eTests.negative.*;
 import no.elixir.e2eTests.utils.CommonUtils;
 import org.junit.jupiter.api.*;
 
@@ -16,6 +17,14 @@ public class FEGAIntegrationTest {
   @AfterAll
   static void cleanup() {
     BaseE2ETest.cleanupTestEnvironment();
+  }
+
+  @Test
+  @Order(0)
+  void C1JwtSignatureVerificationTest() throws Exception {
+    // Negative security check: forged-signature JWT must be rejected before
+    // the pipeline runs. If this fails, auth is bypassable (audit finding C1).
+    C1JwtSignatureVerificationTest.verifyForgedJwtIsRejected();
   }
 
   @Test

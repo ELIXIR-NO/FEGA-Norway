@@ -2,6 +2,7 @@ package no.elixir.fega.ltp.aspects;
 
 import static no.elixir.fega.ltp.aspects.ProcessArgumentsAspect.ELIXIR_ID;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -72,12 +73,22 @@ public class AAIAspect {
     }
     String passportScopedAccessToken = optionalBearerAuth.get().replace("Bearer ", "");
     try {
-      String audience = tokenService.getAudience(passportScopedAccessToken);
-      if (!elixirAAIClientId.equals(audience))
-        throw new AuthenticationException(
-            String.format(
-                "Incorrect JWT audience! Expected '%s' but got '%s'", elixirAAIClientId, audience));
-      String subject = tokenService.getSubject(passportScopedAccessToken);
+      // Verify signature first. Throws on forged, expired, or malformed tokens.
+      Claims claims = tokenService.parseVerified(passportScopedAccessToken);
+
+      String audience =
+          claims.getAudience() != null && !claims.getAudience().isEmpty()
+              ? claims.getAudience().iterator().next()
+              : null;
+      if (!elixirAAIClientId.equals(audience)) {
+        throw new AuthenticationException("Invalid JWT");
+      }
+
+      String subject = claims.getSubject();
+      if (StringUtils.isEmpty(subject)) {
+        throw new AuthenticationException("JWT missing subject");
+      }
+
       String sanitizedSubject = subject.replaceAll("[\\r\\n]", "_");
       List<Visa> controlledAccessGrantsVisas =
           tokenService.getControlledAccessGrantsVisas(passportScopedAccessToken);
@@ -88,8 +99,8 @@ public class AAIAspect {
       request.setAttribute(ELIXIR_ID, subject);
       return joinPoint.proceed();
     } catch (Exception e) {
-      log.info(e.getMessage(), e);
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+      log.info("JWT authentication failed", e);
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
   }
 
