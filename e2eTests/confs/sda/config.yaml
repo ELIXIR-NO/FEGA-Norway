@@ -1,0 +1,12 @@
+c4gh:
+  privateKeys:
+    - filePath: <<SDA_C4GH_FILEPATH>>
+      passphrase: <<SDA_C4GH_PASSPHRASE>>
+
+storage:
+  inbox:
+    posix:
+      - path: <<SDA_INBOX_LOCATION>>
+  archive:
+    posix:
+      - path: <<SDA_ARCHIVE_LOCATION>>
