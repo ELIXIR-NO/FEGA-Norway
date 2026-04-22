@@ -23,9 +23,8 @@ import no.elixir.e2eTests.core.E2EState;
  * token — but signs it with a freshly-generated RSA key the proxy does not trust. A correctly
  * implemented resource server rejects such a request on signature verification alone.
  *
- * <p>Currently this passes because TSD's token-exchange endpoint verifies the signature
- * downstream; if that safety net is ever removed, this test fails and we know we've lost defense in
- * depth.
+ * <p>The proxy now verifies the signature at the auth boundary ({@code TokenService.parseVerified})
+ * before any downstream call is made. A failure here means the proxy-level check regressed.
  */
 public class C1JwtSignatureVerificationTest {
 
