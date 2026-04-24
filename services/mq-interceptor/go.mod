@@ -3,7 +3,7 @@ module github.com/ELIXIR-NO/FEGA-Norway/mq-interceptor
 go 1.26.0
 
 require (
-	github.com/lib/pq v1.12.2
+	github.com/lib/pq v1.12.3
 	github.com/proullon/ramsql v0.1.4
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/spf13/viper v1.21.0

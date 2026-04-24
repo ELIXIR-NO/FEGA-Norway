@@ -419,7 +419,7 @@ func (s defaultStreamer) getTSDtoken(c conf.Configuration) (string, jwt.MapClaim
 
 	configuration := conf.NewConfiguration()
 	project := configuration.GetTSDProjectName()
-	url := configuration.GetLocalEGAInstanceURL() + "/v1/" + project + "/auth/lifesc/token?type=elixir"
+	url := configuration.GetTSDproxyURL() + "/v1/" + project + "/auth/lifesc/token?type=elixir"
 
 	body := strings.NewReader(fmt.Sprintf(`{"idtoken":"%s"}`, c.GetElixirAAIToken()))
 
