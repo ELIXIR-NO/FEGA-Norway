@@ -99,6 +99,7 @@ export INTERCEPTOR_LEGA_MQ_EXCHANGE=sda
 export INTERCEPTOR_LEGA_MQ_ROUTING_KEY=files
 export INTERCEPTOR_ENABLE_TLS=true
 export INTERCEPTOR_CA_CERT_PATH=/certs/CA.cert
+export INTERCEPTOR_SCHEMA_FOLDER=/schemas
 
 # SDA DB
 # ---------------------------------------------------------------------------

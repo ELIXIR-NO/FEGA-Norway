@@ -1,94 +1,216 @@
 [
   {
-    "testname"  : "test ingest", 
-    "direction" : "lega",    
-    "queue"     : "files",
-    "fails"     : false,
-    "enduser"   : "alice@elixir.org",    
-    "message"   : {
-                    "type": "ingest",
-                    "user": "alice@ega.org",
-                    "filepath": "/inbox/user/dir1/file.txt.c4gh",
-                    "encrypted_checksums": [ { "type": "sha256", "value": "82E4e60e7beb3db2e06f28c4c942703dabb6d6" } ]
-                  }
+    "testname"   : "test ingest",
+    "description": [
+                     "Test regular ingest-message sent from CEGA to LEGA.",
+                     "The message is correctly validated against the 'ingestion-trigger.json' schema.",
+                     "The user name should be replaced, and the message should end up in the 'files' queue in LEGA."
+                   ],
+    "direction"  : "lega",
+    "queue"      : "files",
+    "fails"      : false,
+    "enduser"    : "alice@elixir.org",
+    "message"    : {
+                     "type": "ingest",
+                     "user": "alice@ega.org",
+                     "filepath": "/inbox/user/dir1/file.txt.c4gh",
+                     "encrypted_checksums": [ { "type": "sha256", "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" } ]
+                   }
   }
-  ,
+ ,
   {
-    "testname"  : "test accession", 
-    "direction" : "lega",
-    "queue"     : "files",
-    "fails"     : false,      
-    "enduser"   : "bob@elixir.org",    
-    "message"   : {
-                    "type": "accession",
-                    "user": "bob@ega.org",
-                    "filepath": "/inbox/user/dir1/file.txt.c4gh",
-                    "accession_id": "EGAF00000123456",
-                    "decrypted_checksums": [ { "type": "sha256", "value": "7853c53a03ccfc38683e533e68ab37b5b790074" }, 
-                                             { "type": "md5", "value": "ee25789673d8711563d5fcb7234f9a68" }
-                                           ]
-                  }
+    "testname"   : "test accession",
+    "description": [
+                     "Test regular accession-message sent from CEGA to LEGA.",
+                     "The message is correctly validated against the 'ingestion-accession.json' schema.",
+                     "The user name should be replaced, and the message should end up in the 'files' queue in LEGA."
+                   ],
+    "direction"  : "lega",
+    "queue"      : "files",
+    "fails"      : false,
+    "enduser"    : "bob@elixir.org",
+    "contentType": "application/json",
+    "message"    : {
+                     "type": "accession",
+                     "user": "bob@ega.org",
+                     "filepath": "/inbox/user/dir1/file.txt.c4gh",
+                     "accession_id": "EGAF00000123456",
+                     "decrypted_checksums": [ { "type": "sha256", "value": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" },
+                                              { "type": "md5", "value": "ee25789673d8711563d5fcb7234f9a68" }
+                                            ]
+                   }
   }
-    ,
+ ,
   {
-    "testname"  : "test unknown user",
-    "direction" : "lega",
-    "queue"     : "files",
-    "fails"     : true,
-    "reason"    : "This should fail since John is not a registered user",      
-    "enduser"   : "john@elixir.org",
-    "message"   : {
-                    "type": "accession",
-                    "user": "john@ega.org",
-                    "filepath": "/inbox/user/dir1/file.txt.c4gh",
-                    "accession_id": "EGAF00000123456",
-                    "decrypted_checksums": [ { "type": "sha256", "value": "7853c53a03ccfc38683e533e68ab37b5b790074" },
-                                             { "type": "md5", "value": "ee25789673d8711563d5fcb7234f9a68" }
-                                           ]
-                  }
+    "testname"   : "test validation of message without type field",
+    "description": [
+                     "Test ingestion-accession-request message sent from LEGA to CEGA.",
+                     "The test simulates a message read from the 'verified' queue in LEGA and reposted to CEGA with the routing key 'files.verified'.",
+                     "The message does not have a 'type' field, so it will be attempted validated against all known JSON schemas.",
+                     "It should (at least) match the 'ingestion-accession-request.json' schema.",
+                     "The user name should be replaced, and the message should end up in the 'v1.files.verified' queue in CEGA."
+                   ],
+    "direction"  : "cega",
+    "routingkey" : "files.verified",
+    "queue"      : "v1.files.verified",
+    "fails"      : false,
+    "enduser"    : "bob@ega.org",
+    "message"    : {
+                     "user": "bob@elixir.org",
+                     "filepath": "/inbox/user/dir1/file.txt.c4gh",
+                     "decrypted_checksums": [ { "type": "sha256", "value": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" },
+                                              { "type": "md5", "value": "ee25789673d8711563d5fcb7234f9a68" }
+                                            ]
+                   }
   }
-    ,
+ ,
   {
-    "testname"  : "test missing user",
-    "direction" : "lega",
-    "queue"     : "files",
-    "fails"     : false,
-    "reason"    : "This message contains no 'user' field, but that should be OK",
-    "enduser"   : "john@elixir.org",
-    "message"   : {
-                    "type": "accession",
-                    "filepath": "/inbox/user/dir1/file.txt.c4gh",
-                    "accession_id": "EGAF00000123456",
-                    "decrypted_checksums": [ { "type": "sha256", "value": "7853c53a03ccfc38683e533e68ab37b5b790074" },
-                                             { "type": "md5", "value": "ee25789673d8711563d5fcb7234f9a68" }
-                                           ]
-                  }
+    "testname"   : "test unknown user",
+    "description": [
+                     "Test accession message with unknown user sent from LEGA to CEGA.",
+                     "Since the database does not contain a mapping for this user, a regular (non-validation) error will be returned.",
+                     "The message should not be forwarded, but an error message should be posted to CEGA instead."
+                   ],
+    "direction"  : "lega",
+    "queue"      : "files",
+    "fails"      : true,
+    "reason"     : "Fails since John is not a registered user in the database",
+    "enduser"    : "john@elixir.org",
+    "message"    : {
+                     "type": "accession",
+                     "user": "john@ega.org",
+                     "filepath": "/inbox/user/dir1/file.txt.c4gh",
+                     "accession_id": "EGAF00000123456",
+                     "decrypted_checksums": [ { "type": "sha256", "value": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" },
+                                              { "type": "md5", "value": "ee25789673d8711563d5fcb7234f9a68" }
+                                            ]
+                   }
   }
-    ,    
+ ,
   {
-    "testname"  : "test improper message formatting",
-    "direction" : "lega",
-    "queue"     : "files",
-    "fails"     : true,
-    "reason"    : "This should fail since the message is not properly JSON formatted",
-    "enduser"   : "alice@elixir.org",
-    "message"   : "<html><body><h1>This is an HTML page</h1>That could be problematic</body></html>"
+    "testname"   : "test missing user",
+    "description": [
+                     "Test accession message with no user sent from CEGA to LEGA.",
+                     "The message is validated against the 'ingestion-accession.json' schema, but validation fails",
+                     "because the message does not contain the required 'user' field. Since this is a validation error,",
+                     "the message should not be forwarded to the regular 'files' queue, but instead be reposted to LEGA",
+                     "with the unknown routing key 'validation_error' which is handled by the alternate exchange."
+                   ],
+    "direction"  : "lega",
+    "queue"      : "files",
+    "fails"      : true,
+    "cause"      : "validation error",
+    "reason"     : "Validation fails because the accession-message is missing the required 'user' field",
+    "enduser"    : "john@elixir.org",
+    "message"    : {
+                     "type": "accession",
+                     "filepath": "/inbox/user/dir1/file.txt.c4gh",
+                     "accession_id": "EGAF00000123456",
+                     "decrypted_checksums": [ { "type": "sha256", "value": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" },
+                                              { "type": "md5", "value": "ee25789673d8711563d5fcb7234f9a68" }
+                                            ]
+                   }
   }
-    ,
+ ,
   {
-    "testname"  : "test ingestion-accession-request", 
-    "direction" : "cega",
-    "routingkey": "files.verified",     
-    "queue"     : "v1.files.verified",
-    "fails"     : false,     
-    "type"      : "ingestion-accession-request",
-    "enduser"   : "bob@ega.org",    
-    "message"   : {
-                    "user": "bob@elixir.org",
-                    "filepath": "/inbox/user/dir1/file.txt.c4gh",
-                    "decrypted_checksums": [ { "type": "sha256", "value": "7853c53a03ccfc38683e...533e68ab37b5b790074" }, 
-                                             { "type": "md5", "value": "ee25789673d8711563d5fcb7234f9a68" }
-                                           ]
-                  }
-  }  
+    "testname"   : "test validation of wrong checksum format",
+    "description": [
+                     "Test ingest-message sent from CEGA to LEGA with format error in a checksum.",
+                     "The message is validated against the 'ingest' JSON schema, but validation fails because",
+                     "the SHA256 checksum does not have the expected format of 64 hexadecimal digits.",
+                     "The message should not be forwarded to the regular 'files' queue, but instead be reposted to LEGA",
+                     "with the unknown routing key 'validation_error' which is handled by the alternate exchange."
+                   ],
+    "direction"  : "lega",
+    "queue"      : "files",
+    "fails"      : true,
+    "cause"      : "validation error",
+    "reason"     : "Validation fails because the SHA256 hash does not have the correct length",
+    "enduser"    : "alice@elixir.org",
+    "message"    : {
+                     "type": "ingest",
+                     "user": "alice@ega.org",
+                     "filepath": "/inbox/user/dir1/file.txt.c4gh",
+                     "encrypted_checksums": [ { "type": "sha256", "value": "e3b0c991b7852b85" } ]
+                   }
+  }
+ ,
+  {
+    "testname"   : "test improper message formatting (not JSON)",
+    "description": [
+                     "The test simulates the unlikely scenario of an HTML message being sent from CEGA to LEGA.",
+                     "Since the message cannot be parsed as JSON at all, a validation error will be returned.",
+                     "The message should not be forwarded to the regular 'files' queue, but instead be reposted to LEGA",
+                     "with the unknown routing key 'validation_error' which is handled by the alternate exchange."
+                   ],
+    "direction"  : "lega",
+    "queue"      : "files",
+    "fails"      : true,
+    "cause"      : "validation error",
+    "reason"     : "Validation fails since the message is not properly JSON formatted and cannot be parsed",
+    "message"    : "<html><body><h1>This is an HTML page</h1>That could be problematic</body></html>"
+  }
+ ,
+  {
+    "testname"   : "test validation of typed message against missing schema",
+    "description": [
+                     "Test mapping-message from CEGA to LEGA with missing schema.",
+                     "The message has type 'mapping' and should thus be validated against the schema 'dataset-mapping.json',",
+                     "but this schema has intentionally been excluded from the test suite for the purpose of this exact test.",
+                     "Failing validation, the message should not be forwarded to the regular 'files' queue, but instead be reposted",
+                     "to LEGA with the unknown routing key 'validation_error' which is handled by the alternate exchange."
+                   ],
+    "direction"  : "lega",
+    "queue"      : "files",
+    "fails"      : true,
+    "cause"      : "validation error",
+    "reason"     : "Validation fails since the 'dataset-mapping.json' schema is not found",
+    "message"    : {
+                     "type": "mapping",
+                     "dataset_id": "EGAD12345678901",
+                     "accession_ids": [ "EGAF12345678901", "EGAF12345678902", "EGAF12345678903" ]
+                   }
+  }
+ ,
+  {
+    "testname"   : "test untyped JSON message that fails validation against all schemas",
+    "description": [
+                     "Test improperly formatted message sent from LEGA to CEGA.",
+                     "The test simulates a message read from the 'verified' queue in LEGA, which is to be reposted to CEGA with routing key 'files.verified'",
+                     "The message does not have a 'type' field, so it will be attempted validated against all known JSON schemas,",
+                     "but since the SHA256 checksum does not have the correct format (64 hex-digits), validation fails against all schemas.",
+                     "The message should not be posted to CEGA, but instead be reposted to LEGA with the unknown routing key 'validation_error'",
+                     "which is handled by the alternate exchange."
+                   ],
+    "direction"  : "cega",
+    "routingkey" : "files.verified",
+    "queue"      : "v1.files.verified",
+    "fails"      : true,
+    "cause"      : "validation error",
+    "reason"     : "The message does not validate against any known JSON schemas",
+    "enduser"    : "bob@ega.org",
+    "message"    : {
+                     "user": "bob@elixir.org",
+                     "filepath": "/inbox/user/dir1/file.txt.c4gh",
+                     "decrypted_checksums": [ { "type": "sha256", "value": "ba781610ff6015ad" },
+                                              { "type": "md5", "value": "ee25789673d8711563d5fcb7234f9a68" }
+                                            ]
+                   }
+  }
+ ,
+  {
+    "testname"   : "test wrong content type in the message header",
+    "description": [
+                     "Test error handling when the ContentType in the message header is not set to 'application/json' (or missing).",
+                     "This should trigger a validation error."
+                   ],
+    "direction"  : "lega",
+    "queue"      : "files",
+    "contentType": "text/plain",
+    "fails"      : true,
+    "cause"      : "validation error",
+    "reason"     : "The message has an incorrect ContentType in its header",
+    "enduser"    : "alice@elixir.org",
+    "message"    : "This is just a regular text"
+  }
 ]
