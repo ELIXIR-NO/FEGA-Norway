@@ -1,5 +1,6 @@
 package no.elixir.fega.ltp.services;
 
+import io.jsonwebtoken.Claims;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -51,7 +52,11 @@ public class ExportRequestService {
       throw new IllegalArgumentException("Access token cannot be null or empty");
     }
 
-    String subject = tokenService.getSubject(gdiExportRequestDto.getAccessToken());
+    Claims claims = tokenService.parseVerified(gdiExportRequestDto.getAccessToken());
+    String subject = claims.getSubject();
+    if (!StringUtils.hasText(subject)) {
+      throw new IllegalArgumentException("Access token missing subject");
+    }
     String sanitizedSubject = subject.replaceAll("[\r\n]", "_");
     List<Visa> controlledAccessGrantsVisas =
         tokenService.getControlledAccessGrantsVisas(gdiExportRequestDto.getAccessToken());

@@ -1,16 +1,26 @@
 package no.elixir.fega.ltp.services;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Jwk;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.clearinghouse.Clearinghouse;
+import no.elixir.clearinghouse.JWKProvider;
 import no.elixir.clearinghouse.model.Visa;
 import no.elixir.clearinghouse.model.VisaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.ResponseBody;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
@@ -97,49 +107,62 @@ public class TokenService {
   }
 
   /**
-   * Extracts the subject (sub) claim from the provided JWT token.
+   * Parses a passport-scoped access token and verifies its signature before returning any claims.
+   * Uses the configured PEM public key if available, otherwise falls back to JWKS discovered via
+   * the OpenID configuration URL. Throws {@link io.jsonwebtoken.JwtException} (unchecked) on
+   * signature failure, expiry, or any other validation error — callers must translate that into a
+   * rejection response.
    *
-   * <p>This method decodes the body fragment of the JWT token to retrieve the subject claim, which
-   * typically identifies the principal that issued the token.
-   *
-   * @param jwtToken the JWT token from which to extract the subject.
-   * @return the subject claim (sub) as a {@link String}.
-   * @throws NullPointerException if the JWT does not contain a subject claim.
+   * @param jwtToken passport-scoped access token.
+   * @return verified {@link Claims}.
    */
-  public String getSubject(String jwtToken) throws IllegalArgumentException {
-    JsonNode claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
-    return claims.get(Claims.SUBJECT).asText();
+  public Claims parseVerified(String jwtToken) {
+    try {
+      String passportPublicKey = Files.readString(Path.of(passportPublicKeyPath));
+      RSAPublicKey key = readPEMKey(passportPublicKey);
+      return Jwts.parser().verifyWith(key).build().parseSignedClaims(jwtToken).getPayload();
+    } catch (IOException e) {
+      log.info(
+          "Passport PEM not readable ({}), falling back to OpenID JWKS for verification.",
+          e.getMessage());
+      return parseVerifiedViaJwks(jwtToken);
+    }
   }
 
-  /**
-   * Extracts the audience (aud) claim from the provided JWT token.
-   *
-   * <p>This method decodes the body fragment of the JWT token to retrieve the audience claim, which
-   * identifies the recipient for which the token is intended.
-   *
-   * @param jwtToken the JWT token from which to extract the audience.
-   * @return the audience claim (aud) as a {@link String} or null if the audience claim is missing.
-   */
-  public String getAudience(String jwtToken) throws IllegalArgumentException {
-    JsonNode claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
-    JsonNode audience = claims.get(Claims.AUDIENCE);
-    if (audience == null || audience.isNull()) {
-      return null;
-    }
-    // Handle both string and array cases (JWT aud can be either)
-    String audValue;
-    if (audience.isArray()) {
-      // If it's an array, get the first element
-      if (audience.size() > 0) {
-        audValue = audience.get(0).asText();
-      } else {
-        return null; // Empty array should be treated as no audience
+  private Claims parseVerifiedViaJwks(String jwtToken) {
+    try {
+      Request request = new Request.Builder().url(openIDConfigurationURL).get().build();
+      ResponseBody body = new OkHttpClient().newCall(request).execute().body();
+      if (body == null) {
+        throw new IllegalStateException("Empty response from OpenID configuration URL");
       }
-    } else {
-      audValue = audience.asText();
+      String jwksUrl = new ObjectMapper().readTree(body.string()).get("jwks_uri").asText();
+      String kid = extractKid(jwtToken);
+      Jwk<?> jwk = JWKProvider.INSTANCE.get(jwksUrl, kid);
+      RSAPublicKey key = (RSAPublicKey) jwk.toKey();
+      return Jwts.parser().verifyWith(key).build().parseSignedClaims(jwtToken).getPayload();
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to reach OpenID JWKS endpoint", e);
     }
-    // Return null if empty string (empty string should be treated as no audience)
-    return audValue.isEmpty() ? null : audValue;
+  }
+
+  private String extractKid(String jwtToken) {
+    JsonNode header = extractFragmentFromJWT(jwtToken, TokenFragment.HEADER);
+    if (!header.has("kid")) {
+      throw new IllegalArgumentException("JWT header missing 'kid'");
+    }
+    return header.get("kid").asText();
+  }
+
+  private RSAPublicKey readPEMKey(String pem) throws IOException {
+    try {
+      String encoded = pem.replaceAll("-----(.*?)-----", "").replaceAll("\\s", "").trim();
+      byte[] decoded = Base64.getDecoder().decode(encoded);
+      return (RSAPublicKey)
+          KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(decoded));
+    } catch (GeneralSecurityException e) {
+      throw new IOException("Invalid PEM key at " + passportPublicKeyPath, e);
+    }
   }
 
   /**
