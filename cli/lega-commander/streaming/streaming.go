@@ -30,14 +30,14 @@ import (
 )
 
 type FileEntry struct {
-	FileName     string  `json:"fileName"`
-	Size         int64   `json:"size"`
-	ModifiedDate string  `json:"modifiedDate"`
-	Href         string  `json:"href"`
-	Exportable   bool    `json:"exportable"`
-	Reason       *string `json:"reason"`
-	MimeType     string  `json:"mimeType"`
-	Owner        string  `json:"owner"`
+    FileName     string  `json:"fileName"`
+    Size         int64   `json:"size"`
+    ModifiedDate string  `json:"modifiedDate"`
+    Href         string  `json:"href"`
+    Exportable   bool    `json:"exportable"`
+    Reason       *string `json:"reason"`
+    MimeType     string  `json:"mimeType"`
+    Owner        string  `json:"owner"`
 }
 
 // Streamer interface provides methods for uploading and downloading files from LocalEGA instance.
@@ -138,53 +138,53 @@ func (s defaultStreamer) Upload(path string, resume, straight, noDuplicateCheck 
 }
 
 func (s defaultStreamer) uploadFolder(folder *os.File, resume, straight, noDuplicateCheck bool) error {
-	var warnings []string
+    var warnings []string
 
-	entries, err := folder.Readdir(-1)
-	if err != nil {
-		return err
-	}
+    entries, err := folder.Readdir(-1)
+    if err != nil {
+        return err
+    }
 
-	for _, entry := range entries {
-		entryPath, err := filepath.Abs(filepath.Join(folder.Name(), entry.Name()))
-		if err != nil {
-			return err
-		}
-		if entry.IsDir() {
-			subdir, err := os.Open(entryPath)
-			if err != nil {
-				return err
-			}
-			defer subdir.Close()
-			err = s.uploadFolder(subdir, resume, straight, noDuplicateCheck)
-			if err != nil {
-				return err
-			}
-			continue
-		}
+    for _, entry := range entries {
+        entryPath, err := filepath.Abs(filepath.Join(folder.Name(), entry.Name()))
+        if err != nil {
+            return err
+        }
+        if entry.IsDir() {
+            subdir, err := os.Open(entryPath)
+            if err != nil {
+                return err
+            }
+            defer subdir.Close()
+            err = s.uploadFolder(subdir, resume, straight, noDuplicateCheck)
+            if err != nil {
+                return err
+            }
+            continue
+        }
 
-		err = s.Upload(entryPath, resume, straight, noDuplicateCheck)
-		if err != nil {
-			errMsg := err.Error()
-			if strings.Contains(errMsg, "is already in the inbox") {
-				warnings = append(warnings,
-					fmt.Sprintf("Skipped %s: already in the inbox", entry.Name()))
-				continue
-			}
-			return err
-		}
-	}
-	if len(warnings) > 0 {
-		fmt.Println(aurora.Yellow("WARNING: Some files were skipped:"))
-		for _, w := range warnings {
-			fmt.Println(aurora.Yellow("  - " + w))
-		}
-	}
-	return nil
+        err = s.Upload(entryPath, resume, straight, noDuplicateCheck)
+        if err != nil {
+            errMsg := err.Error()
+            if strings.Contains(errMsg, "is already in the inbox") {
+                warnings = append(warnings,
+                    fmt.Sprintf("Skipped %s: already in the inbox", entry.Name()))
+                continue
+            }
+            return err
+        }
+    }
+    if len(warnings) > 0 {
+        fmt.Println(aurora.Yellow("WARNING: Some files were skipped:"))
+        for _, w := range warnings {
+            fmt.Println(aurora.Yellow("  - " + w))
+        }
+    }
+    return nil
 }
 
 func containsIgnoreCase(haystack, needle string) bool {
-	return strings.Contains(strings.ToLower(haystack), strings.ToLower(needle))
+    return strings.Contains(strings.ToLower(haystack), strings.ToLower(needle))
 }
 
 func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *string, offset, startChunk int64, noDuplicateCheck bool) error {
@@ -205,17 +205,18 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 		} else {
 			for _, uploadedFile := range *filesList {
 				if fileName == filepath.Base(uploadedFile.FileName) {
-					return fmt.Errorf(
-						"File %s is already in the inbox.\n"+
-							"If you want to replace it, remove it first using:\n"+
-							"  lega-commander inbox -d %s",
-						file.Name(),
-						filepath.Base(uploadedFile.FileName),
-					)
+                    return fmt.Errorf(
+                        "File %s is already in the inbox.\n"+
+                            "If you want to replace it, remove it first using:\n"+
+                            "  lega-commander inbox -d %s",
+                        file.Name(),
+                        filepath.Base(uploadedFile.FileName),
+                    )
 				}
 			}
 		}
 	}
+
 	// Make sure the file to be uploaded is a crypt4gh encrypted file
 	if err = isCrypt4GHFile(file); err != nil {
 		return err
@@ -285,8 +286,8 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 	checksum := hex.EncodeToString(hashFunction.Sum(nil))
 	fmt.Println("Assembling the uploaded parts of the file together in order to build it! Duration varies based on filesize.")
 	if uploadID == nil {
-		return errors.New("uploadID is nil at the finalization step")
-	}
+        return errors.New("uploadID is nil at the finalization step")
+    }
 	response, err := s.client.DoRequest(http.MethodPatch,
 		configuration.GetLocalEGAInstanceURL()+"/stream/"+url.QueryEscape(fileName),
 		nil,
@@ -333,13 +334,13 @@ func (s defaultStreamer) Download(fileName string) error {
 	if fileExists(fileName) {
 		return errors.New("File " + fileName + " exists locally, aborting.")
 	}
-	// Backend pagination is 0-based; start at page=0
+    // Backend pagination is 0-based; start at page=0
 	filesList, err := s.fileManager.ListFiles(
-		false,
-		0,
-		50000,
-		true,
-	)
+    false,
+    0,
+    50000,
+    true,
+    )
 	if err != nil {
 		return err
 	}
