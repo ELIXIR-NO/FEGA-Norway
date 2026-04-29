@@ -150,7 +150,7 @@ export SDA_INBOX_TYPE=posix
 export SDA_BROKER_QUEUE_VERIFY=archived
 export SDA_BROKER_ROUTINGKEY_VERIFY=verified
 # Finalize
-export SDA_BROKER_QUEUE_FINALIZE=accessionIDs
+export SDA_BROKER_QUEUE_FINALIZE=accession
 export SDA_BROKER_ROUTINGKEY_FINALIZE=completed
 # Mapper
 export SDA_BROKER_QUEUE_MAPPER=mappings
@@ -159,8 +159,11 @@ export SDA_BROKER_QUEUE_INTERCEPT=files
 
 # DOA
 # ---------------------------------------------------------------------------
-export DOA_SSL_MODE=require
+export DOA_SSL_MODE=verify-ca
 export DOA_SSL_ENABLED=true
+export DOA_ROOT_CERT_PATH=/etc/ega/ssl/CA.cert
+export DOA_CERT_PATH=/etc/ega/ssl/client.cert
+export DOA_CERT_KEY=/etc/ega/ssl/client.key
 export DOA_ARCHIVE_PATH=/ega/archive/
 export DOA_DB_INSTANCE=$DB_HOST
 export DOA_POSTGRES_USER=$DB_POSTGRES_USER

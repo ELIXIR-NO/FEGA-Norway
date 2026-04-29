@@ -64,11 +64,17 @@ echo
 
 # doa
 chmod -R 777 /volumes/doa-certs/
+chmod 600 /volumes/doa-certs/ssl/client.key  # JDBC rejects key files readable by group/other
 chown -R 65534:65534 /volumes/doa-certs/
 chmod 755 /volumes/doa-certs/
 echo "Inspecting /volumes/doa-certs/"
 ls -alh /volumes/doa-certs/
 echo
+
+# sda-config
+chmod -R 644 /volumes/sda-config/
+chown -R 65534:65534 /volumes/sda-config/
+chmod 755 /volumes/sda-config/
 
 cd .. # Go back to the working directory.
 
