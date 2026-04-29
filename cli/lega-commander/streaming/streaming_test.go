@@ -62,73 +62,73 @@ type mockClient struct {
 }
 
 func (mockClient) DoRequest(
-    method, url string,
-    _ io.Reader,
-    headers, params map[string]string,
-    _, _ string,
+	method, url string,
+	_ io.Reader,
+	headers, params map[string]string,
+	_, _ string,
 ) (*http.Response, error) {
-    //auth check
-    if !strings.HasPrefix(headers["Proxy-Authorization"], "Bearer ") {
-        return &http.Response{
-            StatusCode: http.StatusUnauthorized,
-            Body:       ioutil.NopCloser(strings.NewReader("")),
-        }, nil
-    }
+	//auth check
+	if !strings.HasPrefix(headers["Proxy-Authorization"], "Bearer ") {
+		return &http.Response{
+			StatusCode: http.StatusUnauthorized,
+			Body:       ioutil.NopCloser(strings.NewReader("")),
+		}, nil
+	}
 
-    // list files (inbox / outbox)
-    if strings.HasSuffix(url, "/files") {
-        page := params["page"]
-        if page != "" && page != "0" {
-            empty := ioutil.NopCloser(strings.NewReader(`{"files":[]}`))
-            return &http.Response{StatusCode: http.StatusOK, Body: empty}, nil
-        }
-        var body io.ReadCloser
-        if params["inbox"] == "" || params["inbox"] == "true" {
-            body = ioutil.NopCloser(
-                strings.NewReader(`{"files":[{"fileName":"test.enc","size":100,"modifiedDate":"2010"}]}`),
-            )
-        } else {
-            body = ioutil.NopCloser(
-                strings.NewReader(`{"files":[{"fileName":"test2.enc","size":100,"modifiedDate":"2010"}]}`),
-            )
-        }
-        return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
-    }
+	// list files (inbox / outbox)
+	if strings.HasSuffix(url, "/files") {
+		page := params["page"]
+		if page != "" && page != "0" {
+			empty := ioutil.NopCloser(strings.NewReader(`{"files":[]}`))
+			return &http.Response{StatusCode: http.StatusOK, Body: empty}, nil
+		}
+		var body io.ReadCloser
+		if params["inbox"] == "" || params["inbox"] == "true" {
+			body = ioutil.NopCloser(
+				strings.NewReader(`{"files":[{"fileName":"test.enc","size":100,"modifiedDate":"2010"}]}`),
+			)
+		} else {
+			body = ioutil.NopCloser(
+				strings.NewReader(`{"files":[{"fileName":"test2.enc","size":100,"modifiedDate":"2010"}]}`),
+			)
+		}
+		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+	}
 
-    // resumable / streaming endpoints (mock PATCH/GET)
-    if strings.Contains(url, "/stream/") {
-        if method == http.MethodGet {
-            // Simulate a file download
-            return &http.Response{
-                StatusCode: http.StatusOK,
-                Body: ioutil.NopCloser(strings.NewReader("test")),
-            }, nil
-        }
-        if method == http.MethodPatch {
-            body := ioutil.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
-            return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
-        }
-    }
+	// resumable / streaming endpoints (mock PATCH/GET)
+	if strings.Contains(url, "/stream/") {
+		if method == http.MethodGet {
+			// Simulate a file download
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       ioutil.NopCloser(strings.NewReader("test")),
+			}, nil
+		}
+		if method == http.MethodPatch {
+			body := ioutil.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
+			return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+		}
+	}
 
-    return nil, nil
+	return nil, nil
 }
 
 func TestUploadedFileExists(t *testing.T) {
-	err := uploader.Upload(existingFile.Name(), false, false)
+	err := uploader.Upload(existingFile.Name(), false, false, false)
 	if err == nil {
 		t.Error()
 	}
 }
 
 func TestUploadFile(t *testing.T) {
-	err := uploader.Upload(file.Name(), false, false)
+	err := uploader.Upload(file.Name(), false, false, false)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestUploadFolder(t *testing.T) {
-	err := uploader.Upload(dir, false, false)
+	err := uploader.Upload(dir, false, false, false)
 	if err == nil || !strings.HasSuffix(err.Error(), "not a Crypt4GH file") {
 		t.Error(err)
 	}
@@ -142,7 +142,7 @@ func TestDownloadFileRemoteDoesntExist(t *testing.T) {
 }
 
 func TestDownloadFileRemoteExists(t *testing.T) {
-    os.Remove("test2.enc")
+	os.Remove("test2.enc")
 	err := uploader.Download("test2.enc")
 	if err != nil {
 		t.Error(err)
