@@ -62,7 +62,8 @@ var resumablesOptionsParser = flags.NewParser(&resumablesOptions, flags.None)
 var uploadingOptions struct {
 	FileName string `short:"f"  long:"file" description:"File or folder to upload" value-name:"FILE" required:"true"`
 	Resume   bool   `short:"r" long:"resume" description:"Resumes interrupted upload"`
-	Straight bool   `short:"b" long:"beta" description:"Upload the files without the proxy service;i.e. directly to tsd file api"`
+	Straight         bool   `short:"b" long:"beta" description:"Upload the files without the proxy service;i.e. directly to tsd file api"`
+	NoDuplicateCheck bool   `long:"no-duplicate-check" description:"Skip checking whether the file already exists in the inbox before upload"`
 }
 
 var uploadingOptionsParser = flags.NewParser(&uploadingOptions, flags.None)
@@ -244,7 +245,12 @@ func main() {
 		if err != nil {
 			log.Fatal(aurora.Red(err))
 		}
-		err = streamer.Upload(uploadingOptions.FileName, uploadingOptions.Resume, uploadingOptions.Straight)
+		err = streamer.Upload(
+			uploadingOptions.FileName,
+			uploadingOptions.Resume,
+			uploadingOptions.Straight,
+			uploadingOptions.NoDuplicateCheck,
+		)
 		if err != nil {
 			log.Fatal(aurora.Red(err))
 		}
