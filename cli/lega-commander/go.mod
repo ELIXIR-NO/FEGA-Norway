@@ -3,7 +3,7 @@ module github.com/ELIXIR-NO/FEGA-Norway/cli/lega-commander
 go 1.26.0
 
 require (
-	github.com/buger/jsonparser v1.1.2
+	github.com/buger/jsonparser v1.2.0
 	github.com/cheggaaa/pb/v3 v3.1.7
 	github.com/chzyer/test v1.0.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
