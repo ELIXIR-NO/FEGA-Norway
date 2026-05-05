@@ -40,10 +40,10 @@ func (mockClient) DoRequest(method, url string, _ io.Reader, _, params map[strin
 		}
 		return &http.Response{StatusCode: http.StatusInternalServerError}, nil
 	}
-if method == http.MethodPatch && strings.Contains(url, "/stream/") {
-        body := ioutil.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
-        return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
-    }
+	if method == http.MethodPatch && strings.Contains(url, "/stream/") {
+		body := ioutil.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
+		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+	}
 	return nil, nil
 }
 
@@ -64,17 +64,17 @@ func TestListFilesInbox(t *testing.T) {
 	if fileList == nil || len(*fileList) != 1 {
 		t.Error()
 	}
-file := (*fileList)[0]
-if file.FileName != "test.enc" {
-    t.Errorf("FileName: %s (expected: test.enc)", file.FileName)
-}
+	file := (*fileList)[0]
+	if file.FileName != "test.enc" {
+		t.Errorf("FileName: %s (expected: test.enc)", file.FileName)
+	}
 
-if file.Size != 0 && file.Size != 100 {
-    t.Errorf("Size: %d (expected: 0 or 100)", file.Size)
-}
-if file.ModifiedDate != "" && file.ModifiedDate != "2010" {
-    t.Errorf("ModifiedDate: %s (expected: '' or 2010)", file.ModifiedDate)
-}
+	if file.Size != 0 && file.Size != 100 {
+		t.Errorf("Size: %d (expected: 0 or 100)", file.Size)
+	}
+	if file.ModifiedDate != "" && file.ModifiedDate != "2010" {
+		t.Errorf("ModifiedDate: %s (expected: '' or 2010)", file.ModifiedDate)
+	}
 
 }
 
