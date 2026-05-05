@@ -64,12 +64,18 @@ openssl pkcs12 -export \
   -inkey rootCA-key.pem \
   -passout pass:${OPENSSL_ROOT_CERT_PASSWORD}
 
+openssl pkcs8 -topk8 \
+  -inform PEM \
+  -outform PEM \
+  -in localhost+7-client-key.pem \
+  -out client-key.pem \
+  -nocrypt
+
 # Step 11: Rename server and client certificates
 cp localhost+7.pem server.pem
 cp localhost+7-key.pem server-key.pem
 cp localhost+7.p12 server.p12
 cp localhost+7-client.pem client.pem
-cp localhost+7-client-key.pem client-key.pem
 cp localhost+7-client-key.der client-key.der
 cp localhost+7-client.p12 client.p12
 
