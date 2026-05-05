@@ -61,7 +61,7 @@ mkdir -p /volumes/doa-certs/ssl/ /volumes/doa-certs/jwt/ /volumes/doa-certs/cryp
   cp rootCA.pem /volumes/doa-certs/ssl/CA.cert &&
   cp server.p12 /volumes/doa-certs/ssl/server.p12 &&
   cp client.pem /volumes/doa-certs/ssl/client.cert &&
-  cp client-key.der /volumes/doa-certs/ssl/client.key &&
+  cp client-key.pem /volumes/doa-certs/ssl/client.key &&
   cp jwt.pub.pem /volumes/doa-certs/jwt/passport.pem &&
   cp jwt.pub.pem /volumes/doa-certs/jwt/visa.pem &&
   cp ega.sec.pem /volumes/doa-certs/crypt4gh/key.pem &&
