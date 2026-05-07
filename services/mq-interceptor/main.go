@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -196,8 +197,8 @@ func forwardDeliveryTo(fromCEGAToLEGA bool, bridge *Bridge, routingKey string, d
 	defer publishMutex.Unlock()
 
 	channelFrom := bridge.getConsumeChannel(fromCEGAToLEGA)
-	channelTo   := bridge.getPublishChannel(fromCEGAToLEGA)
-	exchange    := bridge.getPublishExchange(fromCEGAToLEGA)
+	channelTo := bridge.getPublishChannel(fromCEGAToLEGA)
+	exchange := bridge.getPublishExchange(fromCEGAToLEGA)
 
 	publishing, messageType, err := buildPublishingFromDelivery(fromCEGAToLEGA, delivery)
 	if err != nil {
@@ -235,7 +236,7 @@ func forwardDeliveryTo(fromCEGAToLEGA bool, bridge *Bridge, routingKey string, d
 		failOnError(err, "Failed to Ack message")
 		log.Printf("Forwarded message from [%s, %s] to [%s, %s]", delivery.Exchange, delivery.RoutingKey, exchange, routingKey)
 		log.Printf("Correlation ID: %s", delivery.CorrelationId)
-		log.Printf("Message: %s", string(delivery.Body))
+		log.Printf("Message: %s", maskMessage(delivery.Body))
 	}
 }
 
@@ -257,10 +258,10 @@ func buildPublishingFromDelivery(fromCEGAToLEGA bool, delivery amqp.Delivery) (*
 		Body:            delivery.Body,
 	}
 
-	if (delivery.ContentType == "") {
+	if delivery.ContentType == "" {
 		delivery.ContentType = "application/json"
 	}
-	if (delivery.ContentType != "application/json") {
+	if delivery.ContentType != "application/json" {
 		errorMessage := fmt.Sprintf("The ContentType of the message was '%s', but it should have been 'application/json'", delivery.ContentType)
 		return &publishing, nil, validator.ValidationError{Message: errorMessage}
 	}
@@ -309,12 +310,21 @@ func buildPublishingFromDelivery(fromCEGAToLEGA bool, delivery amqp.Delivery) (*
 }
 
 func publishError(delivery amqp.Delivery, err error, errorChannel MQChannel, exchange string, routingKey string) error {
-	errorMessage := fmt.Sprintf("{\"reason\" : \"%s\", \"original_message\" : \"%s\"}", err.Error(), string(delivery.Body))
+	message := map[string]string{
+		"reason":           err.Error(),
+		"original_message": string(delivery.Body),
+	}
+
+	errorMessage, jsonError := json.Marshal(message)
+	if jsonError != nil {
+		return fmt.Errorf("Unable to : %w", jsonError)
+	}
+
 	publishing := amqp.Publishing{
 		ContentType:     delivery.ContentType,
 		ContentEncoding: delivery.ContentEncoding,
 		CorrelationId:   delivery.CorrelationId,
-		Body:            []byte(errorMessage),
+		Body:            errorMessage,
 	}
 	return errorChannel.Publish(exchange, routingKey, false, false, publishing)
 }
@@ -326,7 +336,7 @@ func postMessage(message amqp.Publishing, channel MQChannel, exchange string, ro
 func selectElixirIdByEGAId(egaId string) (elixirId string, err error) {
 	err = db.QueryRow("select elixir_id from mapping where ega_id = $1", egaId).Scan(&elixirId)
 	if err == nil {
-		log.Printf("Replacing EGA ID [%s] with Elixir ID [%s]", egaId, elixirId)
+		log.Printf("Replacing EGA ID [%s] with Elixir ID [%s]", maskEmail(egaId), maskEmail(elixirId))
 	}
 	return
 }
@@ -334,7 +344,7 @@ func selectElixirIdByEGAId(egaId string) (elixirId string, err error) {
 func selectEgaIdByElixirId(elixirId string) (egaId string, err error) {
 	err = db.QueryRow("select ega_id from mapping where elixir_id = $1", elixirId).Scan(&egaId)
 	if err == nil {
-		log.Printf("Replacing Elixir ID [%s] with EGA ID [%s]", elixirId, egaId)
+		log.Printf("Replacing Elixir ID [%s] with EGA ID [%s]", maskEmail(elixirId), maskEmail(egaId))
 	}
 	return
 }
@@ -383,5 +393,56 @@ func getTLSConfig() *tls.Config {
 func failOnError(err error, msg string) {
 	if err != nil {
 		log.Fatalf("%s: %s", msg, err)
+	}
+}
+
+func maskEmail(email string) string {
+	atIndex := strings.Index(email, "@")
+	if atIndex == -1 {
+		return email
+	}
+
+	username := email[:atIndex]
+	domain := email[atIndex+1:] // "example.com"
+
+	// Mask the username
+	masked := []byte(username)
+	if len(username) < 6 { // keep first 2 and last character. Mask the middle
+		for i := 2; i < len(username)-1; i++ {
+			masked[i] = '*'
+		}
+	} else { // keep first 3 and last 2 characters. Mask the middle
+		for i := 3; i < len(username)-2; i++ {
+			masked[i] = '*'
+		}
+	}
+
+	// Mask the full domain, except the top-level
+	lastDot := strings.LastIndex(domain, ".")
+	if lastDot == -1 {
+		return string(masked) + "@" + domain
+	}
+	tld := domain[lastDot:]
+
+	return string(masked) + "@*****" + tld
+}
+
+func maskMessage(msg []byte) string {
+	message := make(map[string]any, 0)
+	err := json.Unmarshal(msg, &message)
+	if err != nil {
+		return string(msg)
+	}
+	user, ok := message["user"].(string)
+	if ok {
+		message["user"] = maskEmail(user)
+	} else {
+		return string(msg)
+	}
+	maskedMessage, err := json.Marshal(message)
+	if err == nil {
+		return string(maskedMessage)
+	} else {
+		return string(msg)
 	}
 }
