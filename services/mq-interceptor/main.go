@@ -317,7 +317,7 @@ func publishError(delivery amqp.Delivery, err error, errorChannel MQChannel, exc
 
 	errorMessage, jsonError := json.Marshal(message)
 	if jsonError != nil {
-		return fmt.Errorf("Unable to : %w", jsonError)
+		return fmt.Errorf("Unable to convert message to JSON: %w", jsonError)
 	}
 
 	publishing := amqp.Publishing{
