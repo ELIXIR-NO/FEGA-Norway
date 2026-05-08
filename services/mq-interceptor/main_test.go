@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"flag"
 	"github.com/ELIXIR-NO/FEGA-Norway/mq-interceptor/validator"
-	"io/ioutil"
+	"io"
+	"log"
 	"os"
 	"reflect"
 	"strings"
@@ -29,6 +31,8 @@ var settings = map[string]string{
 	"CEGA_MQ_QUEUE":       "v1.files",
 	"ENABLE_TLS":          "false",
 }
+
+var logOutput = flag.Bool("log-output", false, "enable log output during tests")
 
 func failTestOnError(err error, t *testing.T) {
 	if err != nil {
@@ -82,7 +86,7 @@ func readJSONmap(filename string) (map[string]any, error) {
 		return nil, err
 	}
 	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, _ := io.ReadAll(jsonFile)
 	var result map[string]any
 	json.Unmarshal([]byte(byteValue), &result)
 	return result, nil
@@ -94,7 +98,7 @@ func readJSONlist(filename string) ([]any, error) {
 		return nil, err
 	}
 	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, _ := io.ReadAll(jsonFile)
 	var result []any
 	json.Unmarshal([]byte(byteValue), &result)
 	return result, nil
@@ -110,7 +114,13 @@ func TestMQinterceptorTests(t *testing.T) {
 
 func (testsuite *MQinterceptorTests) SetupSuite() {
 	var err error
+	if !flag.Parsed() {
+		flag.Parse()
+	}
 	t := testsuite.T()
+	if *logOutput {
+		log.SetOutput(testWriter{testsuite.T()}) // output logs from main code also
+	}
 	viper.Set("log.level", "debug")
 	t.Log("\n---------- Environment ----------")
 	for k, v := range settings {
@@ -124,6 +134,13 @@ func (testsuite *MQinterceptorTests) SetupSuite() {
 	}
 	jsonValidator = validator.NewJSONValidator("test/schemas")
 	t.Log("\n---------- Run tests ----------")
+}
+
+type testWriter struct{ t *testing.T }
+
+func (tw testWriter) Write(p []byte) (n int, err error) {
+	tw.t.Log(string(p))
+	return len(p), nil
 }
 
 func (testsuite *MQinterceptorTests) TearDownSuite() {
@@ -348,10 +365,10 @@ func (testsuite *MQinterceptorTests) Test_forwardDeliveryTo() {
 		testname := forwardTest["testname"].(string)
 		shouldFail := forwardTest["fails"].(bool)
 		queue := forwardTest["queue"].(string)
-        contentType, ok := forwardTest["contentType"].(string)
-        if !ok {
-            contentType = "application/json"
-        }
+		contentType, ok := forwardTest["contentType"].(string)
+		if !ok {
+			contentType = "application/json"
+		}
 		newuser, _ := forwardTest["enduser"].(string)
 		olduser := ""
 		cause, _ := forwardTest["cause"].(string)
