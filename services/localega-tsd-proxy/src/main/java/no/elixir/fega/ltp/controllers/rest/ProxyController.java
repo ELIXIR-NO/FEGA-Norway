@@ -160,7 +160,8 @@ public class ProxyController {
       throws IOException {
     Token token =
         tsdFileAPIClient.getToken(tokenType, oidcType, getElixirAAIToken(bearerAuthorization));
-    return ResponseEntity.ok(tsdFileAPIClient.deleteFile(token.getToken(), tsdAppId, fileName));
+    var deleteResponse = tsdFileAPIClient.deleteFile(token.getToken(), tsdAppId, fileName);
+    return ResponseEntity.status(deleteResponse.getStatusCode()).body(deleteResponse);
   }
 
   /**
