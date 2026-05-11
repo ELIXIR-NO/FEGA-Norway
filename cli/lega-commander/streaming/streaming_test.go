@@ -17,6 +17,7 @@ import (
 )
 
 var uploader Streamer
+var directUploader Streamer
 var dir string
 var file *os.File
 var existingFile *os.File
@@ -47,6 +48,12 @@ func setup() {
 	if err != nil {
 		log.Fatal(aurora.Red(err))
 	}
+	_ = os.Setenv("TSD_PROXY_URL", "http://localhost")
+	_ = os.Setenv("TSD_PROJ_NAME", "p2184")
+	directUploader, err = NewStreamer(&client, filesManager, resumablesManager, true)
+	if err != nil {
+		log.Fatal(aurora.Red(err))
+	}
 	dir = "../test/files"
 	file, err = os.Open("../test/files/sample.txt.enc")
 	if err != nil {
@@ -67,10 +74,31 @@ func (mockClient) DoRequest(
 	headers, params map[string]string,
 	_, _ string,
 ) (*http.Response, error) {
+	// TSD token exchange (used by -b mode, no Proxy-Authorization header)
+	if strings.Contains(url, "/auth/lifesc/token") && method == http.MethodPost {
+		mockJWT := "eyJhbGciOiJub25lIn0.eyJ1c2VyIjoidGVzdHVzZXIifQ."
+		body := ioutil.NopCloser(strings.NewReader(`{"token":"` + mockJWT + `"}`))
+		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+	}
+
+	// TSD direct file upload (used by -b mode, uses Authorization not Proxy-Authorization)
+	if strings.Contains(url, "/files/") && method == http.MethodPatch {
+		body := ioutil.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
+		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+	}
+
 	//auth check
 	if !strings.HasPrefix(headers["Proxy-Authorization"], "Bearer ") {
 		return &http.Response{
 			StatusCode: http.StatusUnauthorized,
+			Body:       ioutil.NopCloser(strings.NewReader("")),
+		}, nil
+	}
+
+	// notify endpoint for direct upload completion
+	if strings.Contains(url, "/notify") && method == http.MethodPost {
+		return &http.Response{
+			StatusCode: http.StatusOK,
 			Body:       ioutil.NopCloser(strings.NewReader("")),
 		}, nil
 	}
@@ -177,9 +205,18 @@ func TestDownloadFileLocalExists(t *testing.T) {
 	}
 }
 
+func TestDirectUploadFile(t *testing.T) {
+	err := directUploader.Upload(file.Name(), false, true, false)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func teardown() {
 	_ = os.Unsetenv("CENTRAL_EGA_USERNAME")
 	_ = os.Unsetenv("CENTRAL_EGA_PASSWORD")
 	_ = os.Unsetenv("LOCAL_EGA_INSTANCE_URL")
 	_ = os.Unsetenv("ELIXIR_AAI_TOKEN")
+	_ = os.Unsetenv("TSD_PROXY_URL")
+	_ = os.Unsetenv("TSD_PROJ_NAME")
 }
