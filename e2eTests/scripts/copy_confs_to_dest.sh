@@ -14,3 +14,6 @@ cp -R ./postgres/* /volumes/postgres-confs/
 
 # cegamq
 cp -R ./cegamq/* /volumes/cegamq-confs
+
+# sda pipeline
+cp -R ./sda/* /volumes/sda-config/

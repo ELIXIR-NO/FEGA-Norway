@@ -29,7 +29,7 @@ public class FinalizeTest {
     props.setProperty("user", E2EState.env.getSdaDbUsername());
     props.setProperty("password", E2EState.env.getSdaDbPassword());
     props.setProperty("application_name", "LocalEGA");
-    props.setProperty("sslmode", "verify-full");
+    props.setProperty("sslmode", "verify-ca");
     props.setProperty("sslcert", client.getAbsolutePath());
     props.setProperty("sslkey", clientKey.getAbsolutePath());
     props.setProperty("sslrootcert", rootCA.getAbsolutePath());
@@ -41,6 +41,9 @@ public class FinalizeTest {
     String subject = E2EState.env.getLsaaiSubject();
     statement.setString(
         1, "/%s-%s/files/%s".formatted(tsdProject, subject, E2EState.encFile.getName()));
+
+    E2EState.log.info("Query inbox_path: {}",
+              "/%s-%s/files/%s".formatted(tsdProject, subject, E2EState.encFile.getName()));
     ResultSet resultSet = statement.executeQuery();
     if (resultSet.wasNull() || !resultSet.next()) {
       fail("Verification failed");
