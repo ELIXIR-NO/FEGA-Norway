@@ -174,7 +174,7 @@ services:
   db:
     container_name: db
     hostname: db
-    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47-postgres
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.61-postgres
     ports:
       - "5432:5432"
     environment:
@@ -201,7 +201,7 @@ services:
   ingest:
     container_name: ingest
     hostname: ingest
-    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.61
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -213,8 +213,6 @@ services:
       - mq
       - db
     environment:
-      - ARCHIVE_TYPE=<<SDA_ARCHIVE_TYPE>>
-      - ARCHIVE_LOCATION=<<SDA_ARCHIVE_LOCATION>>
       - BROKER_HOST=<<SDA_BROKER_HOST>>
       - BROKER_PORT=<<SDA_BROKER_PORT>>
       - BROKER_USER=<<SDA_BROKER_USER>>
@@ -229,8 +227,6 @@ services:
       - BROKER_CACERT=<<SDA_BROKER_CACERT>>
       - BROKER_CLIENTCERT=<<SDA_BROKER_CLIENTCERT>>
       - BROKER_CLIENTKEY=<<SDA_BROKER_CLIENTKEY>>
-      - C4GH_PASSPHRASE=<<SDA_C4GH_PASSPHRASE>>
-      - C4GH_FILEPATH=<<SDA_C4GH_FILEPATH>>
       - DB_HOST=<<SDA_DB_HOST>>
       - DB_PORT=<<SDA_DB_PORT>>
       - DB_USER=<<SDA_DB_USER>>
@@ -239,20 +235,20 @@ services:
       - DB_SSLMODE=<<SDA_DB_SSLMODE>>
       - DB_CLIENTCERT=<<SDA_DB_CLIENTCERT>>
       - DB_CLIENTKEY=<<SDA_DB_CLIENTKEY>>
-      - INBOX_TYPE=<<SDA_INBOX_TYPE>>
-      - INBOX_LOCATION=<<SDA_INBOX_LOCATION>>
       - LOG_LEVEL=<<SDA_LOG_LEVEL>>
+      - CONFIGFILE=/sda-config/config.yaml
     volumes:
       - tsd-inbox:/ega/inbox/
       - tsd-vault:/ega/archive/
       - sda-certs:/etc/ega/
       - db-client-certs:/db-client-certs
+      - sda-config:/sda-config
     command: "sda-ingest"
 
   verify:
     container_name: verify
     hostname: verify
-    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.61
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -264,8 +260,6 @@ services:
       - mq
       - db
     environment:
-      - ARCHIVE_TYPE=<<SDA_ARCHIVE_TYPE>>
-      - ARCHIVE_LOCATION=<<SDA_ARCHIVE_LOCATION>>
       - BROKER_HOST=<<SDA_BROKER_HOST>>
       - BROKER_PORT=<<SDA_BROKER_PORT>>
       - BROKER_USER=<<SDA_BROKER_USER>>
@@ -280,8 +274,6 @@ services:
       - BROKER_CACERT=<<SDA_BROKER_CACERT>>
       - BROKER_CLIENTCERT=<<SDA_BROKER_CLIENTCERT>>
       - BROKER_CLIENTKEY=<<SDA_BROKER_CLIENTKEY>>
-      - C4GH_PASSPHRASE=<<SDA_C4GH_PASSPHRASE>>
-      - C4GH_FILEPATH=<<SDA_C4GH_FILEPATH>>
       - DB_HOST=<<SDA_DB_HOST>>
       - DB_PORT=<<SDA_DB_PORT>>
       - DB_USER=<<SDA_DB_USER>>
@@ -290,19 +282,20 @@ services:
       - DB_SSLMODE=<<SDA_DB_SSLMODE>>
       - DB_CLIENTCERT=<<SDA_DB_CLIENTCERT>>
       - DB_CLIENTKEY=<<SDA_DB_CLIENTKEY>>
-      - INBOX_LOCATION=<<SDA_INBOX_LOCATION>>
       - LOG_LEVEL=<<SDA_LOG_LEVEL>>
+      - CONFIGFILE=/sda-config/config.yaml
     volumes:
       - tsd-inbox:/ega/inbox/
       - tsd-vault:/ega/archive/
       - sda-certs:/etc/ega/
       - db-client-certs:/db-client-certs
+      - sda-config:/sda-config
     command: "sda-verify"
 
   finalize:
     container_name: finalize
     hostname: finalize
-    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.61
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -345,7 +338,7 @@ services:
   mapper:
     container_name: mapper
     hostname: mapper
-    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.61
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -379,17 +372,18 @@ services:
       - DB_CLIENTCERT=<<SDA_DB_CLIENTCERT>>
       - DB_CLIENTKEY=<<SDA_DB_CLIENTKEY>>
       - LOG_LEVEL=<<SDA_LOG_LEVEL>>
-      - INBOX_LOCATION=<<SDA_INBOX_LOCATION>>
+      - CONFIGFILE=/sda-config/config.yaml
     volumes:
       - tsd-inbox:/ega/inbox
       - sda-certs:/etc/ega/
       - db-client-certs:/db-client-certs
+      - sda-config:/sda-config
     command: "sda-mapper"
 
   intercept:
     container_name: intercept
     hostname: intercept
-    image: ghcr.io/neicnordic/sensitive-data-archive:v0.3.47
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.61
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -438,7 +432,7 @@ services:
   doa:
     container_name: doa
     hostname: doa
-    image: ghcr.io/neicnordic/sensitive-data-archive:v1.0.18-doa
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.61-doa
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -474,6 +468,7 @@ services:
       - tsd-vault:/ega/archive/
       - tsd-outbox:/ega/outbox/
       - doa-certs:/etc/ega/
+      - sda-config:/volumes/sda-config
     command:
       - "java"
       - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8088"
@@ -637,6 +632,7 @@ services:
       - cegamq-certs:/volumes/cegamq-certs
       - cegamq-confs:/volumes/cegamq-confs
       - heartbeat-confs:/volumes/heartbeat-confs
+      - sda-config:/volumes/sda-config
       - storage:/storage
     healthcheck:
       test: [ "CMD", "sh", "-c", "[ -f /storage/ready ]" ]  # Check for the ready file
@@ -714,3 +710,4 @@ volumes:
   cegamq-confs:
   heartbeat-confs:
   storage:
+  sda-config:
