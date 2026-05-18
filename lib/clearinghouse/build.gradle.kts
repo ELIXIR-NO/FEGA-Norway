@@ -27,7 +27,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.14.0")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
 
-    implementation("org.slf4j:slf4j-jdk14:2.0.17")
+    implementation("org.slf4j:slf4j-jdk14:2.0.18")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
