@@ -23,7 +23,7 @@ dependencies {
     testRuntimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
     testImplementation("commons-io:commons-io:2.22.0")
     testImplementation(project(":lib:crypt4gh"))
-    testImplementation("org.slf4j:slf4j-api:2.0.17")
+    testImplementation("org.slf4j:slf4j-api:2.0.18")
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
     testCompileOnly("org.projectlombok:lombok:1.18.46")
     testAnnotationProcessor("org.projectlombok:lombok:1.18.46")
