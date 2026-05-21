@@ -62,7 +62,7 @@ var resumablesOptionsParser = flags.NewParser(&resumablesOptions, flags.None)
 var uploadingOptions struct {
 	FileName         string `short:"f"  long:"file" description:"File or folder to upload" value-name:"FILE" required:"true"`
 	Resume           bool   `short:"r" long:"resume" description:"Resumes interrupted upload"`
-	Straight         bool   `short:"b" long:"beta" description:"Upload the files without the proxy service;i.e. directly to tsd file api"`
+	Straight         bool   `long:"direct" description:"Upload the files without the proxy service;i.e. directly to tsd file api"`
 	NoDuplicateCheck bool   `long:"no-duplicate-check" description:"Skip checking whether the file already exists in the inbox before upload"`
 }
 
@@ -70,7 +70,7 @@ var uploadingOptionsParser = flags.NewParser(&uploadingOptions, flags.None)
 
 var downloadingOptions struct {
 	FileName string `short:"f"  long:"file" description:"File to download\t[optional]"`
-	Straight bool   `short:"b" long:"beta" description:"download the files without the proxy service;i.e. directly from tsd file api"`
+	Straight bool   `long:"direct" description:"download the files without the proxy service;i.e. directly from tsd file api"`
 }
 
 var downloadingOptionsParser = flags.NewParser(&downloadingOptions, flags.None)

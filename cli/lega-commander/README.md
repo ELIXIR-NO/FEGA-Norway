@@ -120,7 +120,7 @@ lega-commander [inbox | outbox | resumables | upload | download] <args>
  upload:
   -f, --file=FILE or =FOLDER    File or folder to upload
   -r, --resume                  Resumes interrupted upload
-  -b, --beta                    Upload directly to the TSD File API through the configured TSD proxy URL, bypassing the normal Local EGA proxy streaming endpoint.
+  --direct                      Upload directly to the TSD File API through the configured TSD proxy URL, bypassing the normal Local EGA proxy streaming endpoint.
   --no-duplicate-check          Skip checking whether the file already exists in the inbox before upload.
 
  download:
