@@ -219,7 +219,7 @@ public class PublishMQAspect {
     if (elixirId == null) {
       throw new IllegalStateException("ELIXIR_ID request attribute is not set");
     }
-    return String.format(inboxPathFormat, tsdProjectId, elixirId.toString()) + fileName;
+    return String.format(inboxPathFormat) + fileName;
   }
 
   private void publishMessage(FileDescriptor fileDescriptor, String type) {
