@@ -102,7 +102,6 @@ Table below shows how there variables must be set:
 
 ## Usage
 
-> For the time being, all of **upload** and **download** commands **should** not run with `-b` argument.
 ```
 $ lega-commander
 lega-commander [inbox | outbox | resumables | upload | download] <args>
@@ -121,7 +120,8 @@ lega-commander [inbox | outbox | resumables | upload | download] <args>
  upload:
   -f, --file=FILE or =FOLDER    File or folder to upload
   -r, --resume                  Resumes interrupted upload
-  -b, --beta                    Upload the files without the proxy service;i.e. directly to tsd file api. This means the parts of the file are sent to tsd file api instead of sending them to proxy service and then proxy service forward them to tsd file api. So it would be one-part transferring instead of two-part transferring.
+  --direct                      Upload directly to the TSD File API through the configured TSD proxy URL, bypassing the normal Local EGA proxy streaming endpoint.
+  --no-duplicate-check          Skip checking whether the file already exists in the inbox before upload.
 
  download:
   -f, --file= FILE or =FOLDER   File or folder to download
@@ -145,6 +145,16 @@ that contains c4gh files, we can use this example command:
 ```
 lega-commander upload  -f /path/to/a/folder/containing/c4gh/files
 ```
+### Skipping the duplicate-file check
+
+By default, lega-commander checks whether a file with the same name already exists in the inbox before uploading.
+
+For large inboxes, this check can be slow because it requires listing existing inbox files. If you are sure that the file does not already exist, you can skip this check with `--no-duplicate-check`:
+
+```
+lega-commander upload -f /path/to/a/c4gh/file/sample-c4gh-file.c4gh --no-duplicate-check
+```
+Be aware that existing files with the same name may be overwritten if the duplicate check is skipped.
 
 <!--
 ### How it works
