@@ -152,6 +152,7 @@ public class Resumables {
       throws IOException {
     File destinationFile =
         new File(tsdElixirImport.formatted(project, userName), resumable.getFileName());
+    log.info("generated file path: " + destinationFile.getAbsolutePath());
 
     try (OutputStream outputStream =
         Files.newOutputStream(
