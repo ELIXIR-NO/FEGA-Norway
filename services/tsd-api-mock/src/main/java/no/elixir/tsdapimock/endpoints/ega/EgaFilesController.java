@@ -1,5 +1,6 @@
 package no.elixir.tsdapimock.endpoints.ega;
 
+
 import no.elixir.tsdapimock.core.exceptions.CredentialsMismatchException;
 import no.elixir.tsdapimock.core.exceptions.FileProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/v1/{project}/ega/{userName}")
 public class EgaFilesController {
@@ -49,6 +52,7 @@ public class EgaFilesController {
       var response =
           egaFilesService.handleResumableUpload(
               project, fileName, authorizationHeader, userName, chunk, id, content);
+              log.info("Request reach here ---->>> " + chunk);
       return ResponseEntity.status(HttpStatus.CREATED).body(response);
     } catch (IllegalArgumentException e) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
