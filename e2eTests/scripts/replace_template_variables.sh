@@ -29,5 +29,6 @@ frepl "<<SDA_C4GH_FILEPATH>>" "$SDA_C4GH_FILEPATH" $sda_config_file
 frepl "<<SDA_C4GH_PASSPHRASE>>" "$SDA_C4GH_PASSPHRASE" $sda_config_file
 frepl "<<SDA_INBOX_LOCATION>>" "$SDA_INBOX_LOCATION" $sda_config_file
 frepl "<<SDA_ARCHIVE_LOCATION>>" "$SDA_ARCHIVE_LOCATION" $sda_config_file
+frepl "<<PROJECT_CODE>>" "$PROJECT_CODE" $sda_config_file
 
 echo "Replaced all the template variables using .env ✅"

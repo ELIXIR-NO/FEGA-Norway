@@ -140,6 +140,7 @@ export SDA_DB_CLIENTCERT=/db-client-certs/client.cert
 export SDA_DB_CLIENTKEY=/db-client-certs/client-key.cert
 export SDA_LOG_LEVEL=debug
 export SDA_INBOX_LOCATION=/ega/inbox
+export PROJECT_CODE=p11
 export SDA_C4GH_PASSPHRASE=$CRYPT4GH_KEY_PASSWORD
 export SDA_C4GH_FILEPATH=/etc/ega/ega.sec
 # Ingest
