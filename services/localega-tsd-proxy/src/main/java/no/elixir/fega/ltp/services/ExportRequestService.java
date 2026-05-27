@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Service
@@ -28,6 +30,8 @@ public class ExportRequestService {
 
   private final TokenService tokenService;
   private final RabbitTemplate tsdRabbitTemplate;
+  private final JsonSchemaValidationService jsonSchemaValidationService;
+  private final ObjectMapper objectMapper;
 
   @Value("${mq.tsd.exchange}")
   private String exchange;
@@ -36,9 +40,15 @@ public class ExportRequestService {
   private String routingKey;
 
   @Autowired
-  public ExportRequestService(TokenService tokenService, RabbitTemplate tsdRabbitTemplate) {
+  public ExportRequestService(
+      TokenService tokenService,
+      RabbitTemplate tsdRabbitTemplate,
+      JsonSchemaValidationService jsonSchemaValidationService,
+      ObjectMapper objectMapper) {
     this.tokenService = tokenService;
     this.tsdRabbitTemplate = tsdRabbitTemplate;
+    this.jsonSchemaValidationService = jsonSchemaValidationService;
+    this.objectMapper = objectMapper;
   }
 
   public void exportRequestGDI(GdiExportRequestDto gdiExportRequestDto)
@@ -128,6 +138,11 @@ public class ExportRequestService {
   }
 
   private void sendToRabbitMQ(DOAExportRequest message) throws AmqpException {
+    try {
+      jsonSchemaValidationService.validate(objectMapper.writeValueAsString(message));
+    } catch (JacksonException e) {
+      throw new IllegalStateException("Failed to serialize export request message", e);
+    }
     tsdRabbitTemplate.convertAndSend(
         exchange,
         routingKey,
