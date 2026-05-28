@@ -39,10 +39,7 @@ public class IngestTest {
 
     String message =
         Strings.INGEST_MESSAGE.formatted(
-            E2EState.env.getCegaAuthUsername(),
-            E2EState.env.getTsdProject(),
-            E2EState.env.getLsaaiSubject(),
-            E2EState.encFile.getName());
+            E2EState.env.getCegaAuthUsername(), E2EState.encFile.getName());
     E2EState.log.info(message);
     channel.basicPublish("localega", "files", properties, message.getBytes());
     channel.close();
