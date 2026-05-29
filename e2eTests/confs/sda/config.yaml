@@ -8,7 +8,7 @@ storage:
     posix:
       - path: <<SDA_INBOX_LOCATION>>
     projectCode: <<PROJECT_CODE>>
-    projectCodeDelimiter: <<PROJECT_CODE_DELIMITER>>
+    projectCodeDelimiter: "<<PROJECT_CODE_DELIMITER>>"
     normalizeUsername: <<NORMALIZE_USERNAME>>
   archive:
     posix:
