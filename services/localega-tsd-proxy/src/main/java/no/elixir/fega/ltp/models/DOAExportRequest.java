@@ -1,5 +1,6 @@
 package no.elixir.fega.ltp.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,6 +14,7 @@ import no.elixir.fega.ltp.dto.GdiExportRequestDto;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class DOAExportRequest {
 
   @JsonProperty("jwtToken")

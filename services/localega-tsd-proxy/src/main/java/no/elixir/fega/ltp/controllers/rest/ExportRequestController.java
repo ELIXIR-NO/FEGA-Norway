@@ -5,6 +5,7 @@ import no.elixir.fega.ltp.dto.FegaExportRequestDto;
 import no.elixir.fega.ltp.dto.GdiExportRequestDto;
 import no.elixir.fega.ltp.dto.GenericResponse;
 import no.elixir.fega.ltp.exceptions.GenericException;
+import no.elixir.fega.ltp.exceptions.JsonSchemaValidationException;
 import no.elixir.fega.ltp.services.ExportRequestService;
 import org.springframework.amqp.AmqpException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,10 @@ public class ExportRequestController {
     } catch (GenericException e) {
       log.error("Export request failed for user: {}", e.getMessage(), e);
       return ResponseEntity.status(e.getHttpStatus()).body(new GenericResponse(e.getMessage()));
+    } catch (JsonSchemaValidationException e) {
+      log.error("Export request message failed schema validation: {}", e.getMessage(), e);
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(new GenericResponse(e.getMessage()));
     } catch (IllegalArgumentException e) {
       log.error("Invalid export request: {}", e.getMessage(), e);
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -56,6 +61,10 @@ public class ExportRequestController {
     } catch (GenericException e) {
       log.error("FEGA export request failed: {}", e.getMessage(), e);
       return ResponseEntity.status(e.getHttpStatus()).body(new GenericResponse(e.getMessage()));
+    } catch (JsonSchemaValidationException e) {
+      log.error("FEGA export request message failed schema validation: {}", e.getMessage(), e);
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(new GenericResponse(e.getMessage()));
     } catch (IllegalArgumentException e) {
       log.error("Invalid FEGA export request: {}", e.getMessage(), e);
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)

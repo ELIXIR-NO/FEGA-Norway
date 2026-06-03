@@ -57,6 +57,14 @@ spring.data.redis:
   database: ${REDIS_DB:0}
 ```
 
+### JSON Schema Configuration
+
+The export request JSON schema can be overridden by setting the following environment variable:
+
+```yaml
+json.schema.export-request.location: ${EXPORT_REQUEST_SCHEMA_LOCATION:classpath:export-request.json}
+```
+
 ### RabbitMQ Configuration
 
 ```yaml
