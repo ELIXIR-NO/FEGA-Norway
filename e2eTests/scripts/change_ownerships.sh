@@ -70,6 +70,14 @@ echo "Inspecting /volumes/doa-certs/"
 ls -alh /volumes/doa-certs/
 echo
 
+# sda-config (read by the SDA pipeline services running as uid 65534)
+chmod -R 644 /volumes/sda-config/
+chown -R 65534:65534 /volumes/sda-config/
+chmod 755 /volumes/sda-config/
+echo "Inspecting /volumes/sda-config/"
+ls -alh /volumes/sda-config/
+echo
+
 cd .. # Go back to the working directory.
 
 echo "Done modifying the file ownerships to match expected uid:gid(s) ✅"
