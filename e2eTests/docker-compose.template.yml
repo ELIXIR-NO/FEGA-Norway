@@ -8,6 +8,9 @@ services:
     container_name: tsd
     hostname: tsd
     image: tsd-api-mock:latest
+    # Run as the SDA service uid (65534) so inbox files the mock writes are owned by
+    # 65534, letting the mapper (also 65534) delete them after mapping.
+    user: "65534:65534"
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -692,6 +695,8 @@ services:
       # - E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH=
     volumes:
       - storage:/storage
+      # read-only inbox so the suite can assert the mapper removed the uploaded file
+      - tsd-inbox:/ega/inbox:ro
 
 volumes:
   tsd-inbox:

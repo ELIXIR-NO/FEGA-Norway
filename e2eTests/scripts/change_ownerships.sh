@@ -5,6 +5,9 @@ cd confs || exit 1
 # tsd
 chmod 777 /volumes/tsd-outbox/*
 chown -R 65534:65534 /volumes/tsd-outbox/*
+# The tsd mock now runs as uid 65534 (same as the SDA services), so the inbox it
+# writes is owned by 65534 and the mapper can delete files from it after mapping.
+chown -R 65534:65534 /volumes/tsd-inbox/
 
 # proxy
 chmod -R 777 /volumes/proxy-certs/*
