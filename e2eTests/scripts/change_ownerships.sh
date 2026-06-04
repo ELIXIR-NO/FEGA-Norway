@@ -66,6 +66,8 @@ echo
 chmod -R 777 /volumes/doa-certs/
 chown -R 65534:65534 /volumes/doa-certs/
 chmod 755 /volumes/doa-certs/
+# pgJDBC's PEMKeyManager rejects a DB client key readable by group/other; lock it to owner-only.
+chmod 600 /volumes/doa-certs/ssl/client.key
 echo "Inspecting /volumes/doa-certs/"
 ls -alh /volumes/doa-certs/
 echo
