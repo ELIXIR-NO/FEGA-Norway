@@ -76,9 +76,11 @@ ls -alh /volumes/doa-certs/
 echo
 
 # sda-config (read by the SDA pipeline services running as uid 65534)
-chmod -R 644 /volumes/sda-config/
+# Set dirs and files separately so directories keep +x (traversable) at any nesting depth;
+# a blanket `chmod -R 644` would strip execute from subdirectories. See FEGA-Norway#819 review.
 chown -R 65534:65534 /volumes/sda-config/
-chmod 755 /volumes/sda-config/
+find /volumes/sda-config/ -type d -exec chmod 755 {} \;
+find /volumes/sda-config/ -type f -exec chmod 644 {} \;
 echo "Inspecting /volumes/sda-config/"
 ls -alh /volumes/sda-config/
 echo
