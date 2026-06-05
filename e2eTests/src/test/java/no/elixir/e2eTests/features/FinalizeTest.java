@@ -37,10 +37,9 @@ public class FinalizeTest {
     String sql =
         "select archive_path,stable_id from local_ega.files where status = 'READY' AND inbox_path = ?";
     PreparedStatement statement = conn.prepareStatement(sql);
-    String tsdProject = E2EState.env.getTsdProject();
-    String subject = E2EState.env.getLsaaiSubject();
-    statement.setString(
-        1, "/%s-%s/files/%s".formatted(tsdProject, subject, E2EState.encFile.getName()));
+    // The DB stores the anonymized submission path; SDA reconstructs the physical
+    // p11-<user>/files/ path on access. See ELIXIR-NO/FEGA-Norway#820.
+    statement.setString(1, "/files/%s".formatted(E2EState.encFile.getName()));
     ResultSet resultSet = statement.executeQuery();
     if (resultSet.wasNull() || !resultSet.next()) {
       fail("Verification failed");

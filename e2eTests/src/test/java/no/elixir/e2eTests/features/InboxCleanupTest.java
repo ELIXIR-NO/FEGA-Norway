@@ -20,10 +20,15 @@ public class InboxCleanupTest {
    */
   public static void verifyInboxFileRemovedAfterMapping() {
     String tsdProject = E2EState.env.getTsdProject();
+    // The physical inbox dir is <projectCode>-<LS-AAI subject> (e.g. p11-dummy@elixir-europe.org).
+    // It matches what the mapper deletes only because the mq-interceptor maps the CEGA user to
+    // exactly this LS-AAI subject, which SDA reconstructs via ResolveInboxPath. See
+    // FEGA-Norway#820.
     String subject = E2EState.env.getLsaaiSubject();
     File inboxFile =
         new File(
-            INBOX_ROOT, "%s-%s/files/%s".formatted(tsdProject, subject, E2EState.encFile.getName()));
+            INBOX_ROOT,
+            "%s-%s/files/%s".formatted(tsdProject, subject, E2EState.encFile.getName()));
     E2EState.log.info("Verifying mapper removed the inbox file: {}", inboxFile.getAbsolutePath());
 
     int attempts = 20;

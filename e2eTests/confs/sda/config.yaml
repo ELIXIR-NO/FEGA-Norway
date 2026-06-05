@@ -7,9 +7,11 @@ storage:
   inbox:
     posix:
       - path: <<SDA_INBOX_LOCATION>>
-    # FEGA-Norway stores the full project-code inbox path (p11-<user>/files/...)
-    # verbatim, so ingest and mapper must not re-apply the username transform.
-    useSubmissionPathVerbatim: true
+    # SDA rebuilds the physical inbox dir "p11-<user>/files/..." from the anonymized submission
+    # path + the message user. TSD keeps the raw "@", so normalizeUsername is false. See #820.
+    projectCode: p11
+    projectCodeDelimiter: "-"
+    normalizeUsername: false
   archive:
     posix:
       - path: <<SDA_ARCHIVE_LOCATION>>

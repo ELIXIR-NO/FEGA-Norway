@@ -41,8 +41,6 @@ public class AccessionTest {
         String.format(
             Strings.ACCESSION_MESSAGE,
             E2EState.env.getCegaAuthUsername(),
-            E2EState.env.getTsdProject(),
-            E2EState.env.getLsaaiSubject(),
             E2EState.encFile.getName(),
             randomFileAccessionID,
             E2EState.rawSHA256Checksum,

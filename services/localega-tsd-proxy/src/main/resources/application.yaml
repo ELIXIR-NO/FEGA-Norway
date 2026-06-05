@@ -77,8 +77,10 @@ tsd:
   app-id: ${TSD_APP_ID:ega}
   app-out-id: ${TSD_APP_OUT_ID:egaout}
   access-key: ${TSD_ACCESS_KEY}
-  # Format: /<tsd-project-id>-<elixir-user-id>/files/ — the trailing slash is required because the filename is appended at the end.
-  inbox-path-format: ${TSD_INBOX_PATH_FORMAT:/%s-%s/files/}
+  # Anonymized inbox prefix published in the MQ message; the filename is appended (trailing slash
+  # required). SDA reconstructs the physical p11-<user>/files/ path from the message user + its own
+  # inbox config — see ELIXIR-NO/FEGA-Norway#820.
+  inbox-path-format: ${TSD_INBOX_PATH_FORMAT:/files/}
   root-ca: ${TSD_ROOT_CERT_PATH:/etc/ega/ssl/CA.cert}
   root-ca-password: ${TSD_ROOT_CERT_PASSWORD:}
 

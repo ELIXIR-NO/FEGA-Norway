@@ -204,7 +204,7 @@ services:
   ingest:
     container_name: ingest
     hostname: ingest
-    # Custom image: stock v3.1.61 + the gated verbatim inbox-path resolver.
+    # Custom image: stock v3.1.61 + the projectCode inbox-path resolver (helper.ResolveInboxPath / InboxConfig, see ELIXIR-NO/FEGA-Norway#820).
     image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.61-norway
     pull_policy: never
     depends_on:
@@ -343,7 +343,7 @@ services:
   mapper:
     container_name: mapper
     hostname: mapper
-    # Custom image: stock v3.1.61 + the gated verbatim inbox-path resolver.
+    # Custom image: stock v3.1.61 + the projectCode inbox-path resolver (helper.ResolveInboxPath / InboxConfig, see ELIXIR-NO/FEGA-Norway#820).
     image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.61-norway
     pull_policy: never
     depends_on:
