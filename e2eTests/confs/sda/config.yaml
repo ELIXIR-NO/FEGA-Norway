@@ -8,10 +8,10 @@ storage:
     posix:
       - path: <<SDA_INBOX_LOCATION>>
     # SDA rebuilds the physical inbox dir "p11-<user>/files/..." from the anonymized submission
-    # path + the message user. TSD keeps the raw "@", so normalizeUsername is false. See #820.
+    # path + the message user. A configured project code stores the raw username (TSD keeps the
+    # "@"), so normalization is off by derivation — no separate toggle. See #820.
     projectCode: p11
     projectCodeDelimiter: "-"
-    normalizeUsername: false
   archive:
     posix:
       - path: <<SDA_ARCHIVE_LOCATION>>
