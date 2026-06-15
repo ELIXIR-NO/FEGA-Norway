@@ -186,18 +186,14 @@ public class Resumables {
   }
 
   /**
-   * Lists files in the specified outbox/export directory after checking if it exists and contains
-   * files Creates the directory if it doesn't exist.
+   * Lists the files in the given directory, creating it first when {@code createIfNotExists} is
+   * set.
    *
-   * @param project the project parameter
-   * @param userName the username parameter
+   * @param dirPath the absolute directory to list
    * @param createIfNotExists whether to create the directory if it doesn't exist
-   * @return List of file names, or empty list if directory doesn't exist or is empty
+   * @return the files in the directory, or an empty list if it doesn't exist or is empty
    */
-  public List<File> listFiles(String project, String userName, boolean createIfNotExists) {
-    // Construct the directory path
-    String dirPath = tsdElixirExport.formatted(project, userName);
-
+  private List<File> listFilesInDirectory(String dirPath, boolean createIfNotExists) {
     // Create File object for the directory
     File directory = new File(dirPath);
 
@@ -236,5 +232,15 @@ public class Resumables {
 
     log.info("Found {} files in: {}", files.length, dirPath);
     return List.of(files);
+  }
+
+  /** Lists the files in the user's outbox (export) directory. */
+  public List<File> listFiles(String project, String userName, boolean createIfNotExists) {
+    return listFilesInDirectory(tsdElixirExport.formatted(project, userName), createIfNotExists);
+  }
+
+  /** Lists the files in the user's inbox (import) directory. */
+  public List<File> listInboxFiles(String project, String userName, boolean createIfNotExists) {
+    return listFilesInDirectory(tsdElixirImport.formatted(project, userName), createIfNotExists);
   }
 }

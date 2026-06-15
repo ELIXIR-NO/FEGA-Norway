@@ -1,17 +1,28 @@
 package no.elixir.tsdapimock.endpoints.ega;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import no.elixir.tsdapimock.core.exceptions.CredentialsMismatchException;
 import no.elixir.tsdapimock.core.exceptions.FileProcessingException;
 import no.elixir.tsdapimock.core.resumables.*;
 import no.elixir.tsdapimock.core.utils.JwtService;
+import no.elixir.tsdapimock.endpoints.egaout.dto.OutboxFileListingDto;
+import no.elixir.tsdapimock.endpoints.egaout.dto.TSDFileDto;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class EgaFilesService {
 
@@ -84,5 +95,65 @@ public class EgaFilesService {
     }
 
     return Resumables.convertToDto(uploadedResumable);
+  }
+
+  public OutboxFileListingDto listInboxFiles(
+      String authorizationHeader, String project, String userName) {
+    if (!authorizationHeader.startsWith("Bearer ")) {
+      throw new IllegalArgumentException("Header must contain a bearer auth token");
+    }
+    if (!jwtService.verify(authorizationHeader)) {
+      throw new CredentialsMismatchException("Stream processing failed");
+    }
+    boolean createUserDirectoryIfNotExists = false;
+    List<File> files = resumables.listInboxFiles(project, userName, createUserDirectoryIfNotExists);
+
+    List<TSDFileDto> tsdFiles = new ArrayList<>();
+    for (File file : files) {
+      if (file.isFile()) {
+        tsdFiles.add(createTSDFileDtoFromFile(file, userName));
+      }
+    }
+
+    final String PAGE_NUMBER = "1";
+    return new OutboxFileListingDto(tsdFiles, PAGE_NUMBER);
+  }
+
+  /** Creates a TSDFileDto record from a File object. */
+  private static TSDFileDto createTSDFileDtoFromFile(File file, String owner) {
+    try {
+      Path path = file.toPath();
+      BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
+
+      DateTimeFormatter formatter =
+          DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
+      String modifiedDate = formatter.format(attrs.lastModifiedTime().toInstant());
+
+      String mimeType = Files.probeContentType(path);
+      if (mimeType == null) {
+        mimeType = "application/octet-stream";
+      }
+
+      return new TSDFileDto(
+          file.getName(),
+          file.length(),
+          modifiedDate,
+          "/files/" + file.getName(),
+          true,
+          null,
+          mimeType,
+          owner);
+    } catch (Exception e) {
+      log.error("Error reading file attributes for: {}", file.getName(), e);
+      return new TSDFileDto(
+          file.getName(),
+          file.length(),
+          "Unknown",
+          "/files/" + file.getName(),
+          false,
+          "Error reading file attributes",
+          "application/octet-stream",
+          owner);
+    }
   }
 }
