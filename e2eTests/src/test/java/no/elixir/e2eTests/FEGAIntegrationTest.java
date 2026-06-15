@@ -67,7 +67,7 @@ public class FEGAIntegrationTest {
 
   @Test
   @Order(6)
-  void InboxCleanupTest() {
+  void InboxCleanupTest() throws Exception {
     // The mapper removes the inbox file after mapping; this is the only assertion
     // that exercises that cleanup (no DB signal records it).
     InboxCleanupTest.verifyInboxFileRemovedAfterMapping();
