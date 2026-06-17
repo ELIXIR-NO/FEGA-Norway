@@ -213,4 +213,23 @@
     "enduser"    : "alice@elixir.org",
     "message"    : "This is just a regular text"
   }
+ ,
+  {
+    "testname"   : "test cancel",
+    "description": [
+                     "Test cancel-message sent from CEGA to LEGA.",
+                     "The message is validated against the same schema as ingest-messages, i.e. 'ingestion-trigger.json'.",
+                     "The user name should be replaced, and the message should end up in the 'files' queue in LEGA."
+                   ],
+    "direction"  : "lega",
+    "queue"      : "files",
+    "fails"      : false,
+    "enduser"    : "alice@elixir.org",
+    "message"    : {
+                     "type": "cancel",
+                     "user": "alice@ega.org",
+                     "filepath": "/inbox/user/dir1/file.txt.c4gh",
+                     "encrypted_checksums": [ { "type": "sha256", "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" } ]
+                   }
+  }
 ]

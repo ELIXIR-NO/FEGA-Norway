@@ -12,6 +12,7 @@ import (
 // mapping between message "type" and JSON schema file (excluding suffix)
 var schemaMapping = map[string]string{
 	"accession":          "ingestion-accession",
+	"cancel":             "ingestion-trigger",
 	"contact.updated":    "user-contact-updated",
 	"dac":                "dac-information",
 	"dac.dataset":        "dac-dataset-mapping",
