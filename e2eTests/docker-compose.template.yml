@@ -177,7 +177,7 @@ services:
   db:
     container_name: db
     hostname: db
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.72-postgres
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73-postgres
     ports:
       - "5432:5432"
     environment:
@@ -204,9 +204,8 @@ services:
   ingest:
     container_name: ingest
     hostname: ingest
-    # Custom image: stock v3.1.72 + the projectCode inbox-path resolver (helper.ResolveInboxPath / InboxConfig, see ELIXIR-NO/FEGA-Norway#820).
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.72-norway
-    pull_policy: never
+    # Stock image: the projectCode inbox-path resolver shipped in v3.1.73 (neicnordic#2466).
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -242,7 +241,7 @@ services:
       - DATABASE_CLIENT_KEY=<<SDA_DB_CLIENTKEY>>
       - LOG_LEVEL=<<SDA_LOG_LEVEL>>
       - CONFIGFILE=/sda-config/config.yaml
-      # v3.1.72 ingest loads config through config/v2, which reads the config file from
+      # v3.1.73 ingest loads config through config/v2, which reads the config file from
       # CONFIG_FILE / config-path rather than the legacy CONFIGFILE.
       - CONFIG_FILE=/sda-config/config.yaml
     volumes:
@@ -256,7 +255,7 @@ services:
   verify:
     container_name: verify
     hostname: verify
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.72
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -303,7 +302,7 @@ services:
   finalize:
     container_name: finalize
     hostname: finalize
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.72
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -346,9 +345,8 @@ services:
   mapper:
     container_name: mapper
     hostname: mapper
-    # Custom image: stock v3.1.72 + the projectCode inbox-path resolver (helper.ResolveInboxPath / InboxConfig, see ELIXIR-NO/FEGA-Norway#820).
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.72-norway
-    pull_policy: never
+    # Stock image: the projectCode inbox-path resolver shipped in v3.1.73 (neicnordic#2466).
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -393,7 +391,7 @@ services:
   intercept:
     container_name: intercept
     hostname: intercept
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.72
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -442,7 +440,7 @@ services:
   doa:
     container_name: doa
     hostname: doa
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.72-doa
+    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73-doa
     depends_on:
       file-orchestrator:
         condition: service_healthy
