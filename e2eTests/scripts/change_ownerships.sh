@@ -5,6 +5,9 @@ cd confs || exit 1
 # tsd
 chmod 777 /volumes/tsd-outbox/*
 chown -R 65534:65534 /volumes/tsd-outbox/*
+# The tsd mock now runs as uid 65534 (same as the SDA services), so the inbox it
+# writes is owned by 65534 and the mapper can delete files from it after mapping.
+chown -R 65534:65534 /volumes/tsd-inbox/
 
 # proxy
 chmod -R 777 /volumes/proxy-certs/*
@@ -66,8 +69,20 @@ echo
 chmod -R 777 /volumes/doa-certs/
 chown -R 65534:65534 /volumes/doa-certs/
 chmod 755 /volumes/doa-certs/
+# pgJDBC's PEMKeyManager rejects a DB client key readable by group/other; lock it to owner-only.
+chmod 600 /volumes/doa-certs/ssl/client.key
 echo "Inspecting /volumes/doa-certs/"
 ls -alh /volumes/doa-certs/
+echo
+
+# sda-config (read by the SDA pipeline services running as uid 65534)
+# Set dirs and files separately so directories keep +x (traversable) at any nesting depth;
+# a blanket `chmod -R 644` would strip execute from subdirectories. See FEGA-Norway#819 review.
+chown -R 65534:65534 /volumes/sda-config/
+find /volumes/sda-config/ -type d -exec chmod 755 {} \;
+find /volumes/sda-config/ -type f -exec chmod 644 {} \;
+echo "Inspecting /volumes/sda-config/"
+ls -alh /volumes/sda-config/
 echo
 
 cd .. # Go back to the working directory.

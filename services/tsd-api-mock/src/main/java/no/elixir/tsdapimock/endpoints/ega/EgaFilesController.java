@@ -33,6 +33,23 @@ public class EgaFilesController {
     }
   }
 
+  @GetMapping(value = "/files", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<?> getFiles(
+      @PathVariable String project,
+      @PathVariable String userName,
+      @RequestHeader("Authorization") String authorizationHeader) {
+    try {
+      var response = egaFilesService.listInboxFiles(authorizationHeader, project, userName);
+      return ResponseEntity.status(HttpStatus.OK)
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(response);
+    } catch (CredentialsMismatchException e) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+  }
+
   @PatchMapping(
       value = "/files/{fileName}",
       consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE,

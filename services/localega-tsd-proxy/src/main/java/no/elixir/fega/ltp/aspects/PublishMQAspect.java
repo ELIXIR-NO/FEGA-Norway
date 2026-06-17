@@ -30,9 +30,6 @@ public class PublishMQAspect {
 
   private final RabbitTemplate tsdRabbitTemplate;
 
-  @Value("${tsd.project}")
-  private String tsdProjectId;
-
   @Value("${tsd.inbox-path-format}")
   private String inboxPathFormat;
 
@@ -207,19 +204,16 @@ public class PublishMQAspect {
   }
 
   /**
-   * Builds the user-specific relative inbox path by formatting the inbox path format string with
-   * the TSD project ID and the Elixir user ID, then appending the filename. The resulting path
-   * follows the pattern: {@code /<tsd-project-id>-<elixir-user-id>/files/<fileName>}.
+   * Builds the anonymized inbox path published in the MQ message: the configured inbox prefix
+   * followed by the filename (e.g. {@code /files/<fileName>}). The project code and username are
+   * deliberately omitted — SDA reconstructs the physical {@code p11-<user>/files/...} path from the
+   * message's user field and its own inbox configuration. See ELIXIR-NO/FEGA-Norway#820.
    *
-   * @param fileName the name of the file to append to the inbox path.
-   * @return the fully constructed inbox path for the given file.
+   * @param fileName the name of the file to append to the inbox prefix.
+   * @return the anonymized inbox path for the given file.
    */
   private String buildInboxPath(String fileName) {
-    Object elixirId = request.getAttribute(ELIXIR_ID);
-    if (elixirId == null) {
-      throw new IllegalStateException("ELIXIR_ID request attribute is not set");
-    }
-    return String.format(inboxPathFormat, tsdProjectId, elixirId.toString()) + fileName;
+    return inboxPathFormat + fileName;
   }
 
   private void publishMessage(FileDescriptor fileDescriptor, String type) {

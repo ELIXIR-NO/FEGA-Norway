@@ -30,7 +30,7 @@ public class Strings {
               {
                 "type": "ingest",
                 "user": "%s",
-                "filepath": "/%s-%s/files/%s"
+                "filepath": "/files/%s"
               }
             """;
 
@@ -39,7 +39,7 @@ public class Strings {
             {
                 "type": "accession",
                 "user": "%s",
-                "filepath": "/%s-%s/files/%s",
+                "filepath": "/files/%s",
                 "accession_id": "%s",
                 "decrypted_checksums": [
                     {
