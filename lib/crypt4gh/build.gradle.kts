@@ -7,7 +7,7 @@ plugins {
     id("formatting-conventions")
     id("maven-publish")
     id("signing")
-    id("com.gradleup.shadow") version "9.4.1"
+    id("com.gradleup.shadow") version "9.4.2"
     id("org.jreleaser") version "1.24.0"
 }
 
