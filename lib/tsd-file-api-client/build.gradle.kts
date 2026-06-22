@@ -24,7 +24,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-impl:0.13.0")
     implementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
-    api("com.squareup.okhttp3:okhttp:5.3.2")
+    api("com.squareup.okhttp3:okhttp:5.4.0")
     implementation("org.slf4j:slf4j-jdk14:2.0.18")
 
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.0")

@@ -29,7 +29,7 @@ dependencies {
 
     implementation("org.slf4j:slf4j-jdk14:2.0.18")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
-    implementation("com.squareup.okhttp3:okhttp:5.3.2")
+    implementation("com.squareup.okhttp3:okhttp:5.4.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.0")
@@ -37,7 +37,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.0")
     testImplementation("org.bouncycastle:bcprov-jdk15to18:1.84")
     testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.84")
-    testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.4.0")
 }
 
 tasks.test {

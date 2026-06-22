@@ -15,7 +15,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.1.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.0")
     testRuntimeOnly("org.junit.platform:junit-platform-console-standalone:6.1.0")
-    testImplementation("com.rabbitmq:amqp-client:5.31.0")
+    testImplementation("com.rabbitmq:amqp-client:5.32.0")
     testImplementation("com.konghq:unirest-java:3.14.5")
     testImplementation("org.postgresql:postgresql:42.7.11")
     testImplementation("io.jsonwebtoken:jjwt-api:0.13.0")
