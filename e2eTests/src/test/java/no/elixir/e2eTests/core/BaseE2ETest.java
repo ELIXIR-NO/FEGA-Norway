@@ -8,8 +8,8 @@ import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.HashMap;
-import kong.unirest.Unirest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.Unirest;
+import kong.unirest.core.UnirestInstance;
 import no.elixir.crypt4gh.stream.Crypt4GHOutputStream;
 import no.elixir.e2eTests.utils.CertificateUtils;
 import no.elixir.e2eTests.utils.CommonUtils;
@@ -17,7 +17,6 @@ import no.elixir.e2eTests.utils.TokenUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 
 public abstract class BaseE2ETest {
 
@@ -59,7 +58,7 @@ public abstract class BaseE2ETest {
     E2EState.log.info("Enc SHA256 checksum: {}", E2EState.encSHA256Checksum);
 
     try (UnirestInstance instance = Unirest.primaryInstance()) {
-      instance.config().verifySsl(false).hostnameVerifier(NoopHostnameVerifier.INSTANCE);
+      instance.config().verifySsl(false);
     }
   }
 
