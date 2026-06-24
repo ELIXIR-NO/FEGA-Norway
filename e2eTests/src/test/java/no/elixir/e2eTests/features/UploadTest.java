@@ -30,33 +30,37 @@ public class UploadTest {
             E2EState.env.getProxyPort(),
             E2EState.encFile.getName(),
             md5Hex);
-      JsonNode jsonResponse;
-      HttpResponse<JsonNode> res;
-      try (UnirestInstance isolatedClient = Unirest.spawnInstance()) {
-          isolatedClient.config().connectTimeout(1000000);
-          jsonResponse = isolatedClient.patch(uploadURL)
-                  .basicAuth(E2EState.env.getCegaAuthUsername(), E2EState.env.getCegaAuthPassword())
-                  .header("Proxy-Authorization", "Bearer " + token)
-                  .body(FileUtils.readFileToByteArray(E2EState.encFile))
-                  .asJson()
-                  .getBody();
-          String uploadId = jsonResponse.getObject().getString("id");
-          E2EState.log.info("Upload ID: {}", uploadId);
-          String finalizeURL =
-            String.format(
-                "https://%s:%s/stream/%s?uploadId=%s&chunk=end&sha256=%s&fileSize=%s",
-                E2EState.env.getProxyHost(),
-                E2EState.env.getProxyPort(),
-                E2EState.encFile.getName(),
-                uploadId,
-                E2EState.encSHA256Checksum,
-                FileUtils.sizeOf(E2EState.encFile));
-          res = isolatedClient.patch(finalizeURL)
-                  .basicAuth(E2EState.env.getCegaAuthUsername(), E2EState.env.getCegaAuthPassword())
-                  .header("Proxy-Authorization", "Bearer " + token)
-                  .asJson();
-      }
-      jsonResponse = res.getBody();
+    JsonNode jsonResponse;
+    HttpResponse<JsonNode> res;
+    try (UnirestInstance isolatedClient = Unirest.spawnInstance()) {
+      isolatedClient.config().connectTimeout(1000000);
+      jsonResponse =
+          isolatedClient
+              .patch(uploadURL)
+              .basicAuth(E2EState.env.getCegaAuthUsername(), E2EState.env.getCegaAuthPassword())
+              .header("Proxy-Authorization", "Bearer " + token)
+              .body(FileUtils.readFileToByteArray(E2EState.encFile))
+              .asJson()
+              .getBody();
+      String uploadId = jsonResponse.getObject().getString("id");
+      E2EState.log.info("Upload ID: {}", uploadId);
+      String finalizeURL =
+          String.format(
+              "https://%s:%s/stream/%s?uploadId=%s&chunk=end&sha256=%s&fileSize=%s",
+              E2EState.env.getProxyHost(),
+              E2EState.env.getProxyPort(),
+              E2EState.encFile.getName(),
+              uploadId,
+              E2EState.encSHA256Checksum,
+              FileUtils.sizeOf(E2EState.encFile));
+      res =
+          isolatedClient
+              .patch(finalizeURL)
+              .basicAuth(E2EState.env.getCegaAuthUsername(), E2EState.env.getCegaAuthPassword())
+              .header("Proxy-Authorization", "Bearer " + token)
+              .asJson();
+    }
+    jsonResponse = res.getBody();
     assertEquals(201, jsonResponse.getObject().get("statusCode"));
   }
 
