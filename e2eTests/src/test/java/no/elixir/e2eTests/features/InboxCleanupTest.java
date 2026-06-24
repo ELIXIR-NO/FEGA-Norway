@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.Collection;
-import kong.unirest.HttpResponse;
-import kong.unirest.Unirest;
+import kong.unirest.core.HttpResponse;
+import kong.unirest.core.Unirest;
 import no.elixir.e2eTests.core.E2EState;
 import no.elixir.e2eTests.utils.CommonUtils;
 import no.elixir.e2eTests.utils.TokenUtils;
