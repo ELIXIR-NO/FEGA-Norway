@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 import kong.unirest.core.HttpResponse;
 import kong.unirest.core.JsonNode;
 import kong.unirest.core.Unirest;
+import kong.unirest.core.UnirestInstance;
 import no.elixir.crypt4gh.stream.Crypt4GHInputStream;
 import no.elixir.e2eTests.constants.Strings;
 import no.elixir.e2eTests.core.E2EState;
@@ -175,27 +176,30 @@ public class DownloadWithExportRequestTest {
     final long INTERVAL = E2EState.env.getExportRequestIntervalInSeconds();
     E2EState.log.info("Waiting {} second(s) before the initial call...", INTERVAL);
     Thread.sleep(1000 * INTERVAL);
-    for (int i = 1; i <= MAX_RETRIES; i++) {
-      HttpResponse<FileListingResponse> res =
-          Unirest.get(listFilesEndpoint)
-              .socketTimeout(300000)
-              .header("Proxy-Authorization", "Bearer " + accessToken)
-              .asObject(FileListingResponse.class);
-      E2EState.log.info("List files request response: {}", res);
-      // if something went wrong with this request
-      if (200 != res.getStatus()) {
-        return res;
-      }
-      FileListingResponse body = res.getBody();
-      // Check if files array exists and is not empty
-      if (!body.files.isEmpty()) {
-        E2EState.log.info("Files found on attempt {}", i);
-        return res;
-      }
-      if (i < MAX_RETRIES) {
-        E2EState.log.info(
-            "Files not found, waiting {} second(s) before attempt {}", INTERVAL, i + 1);
-        Thread.sleep(1000 * INTERVAL);
+    try (UnirestInstance isolatedClient = Unirest.spawnInstance()) {
+      isolatedClient.config().connectTimeout(300000);
+      for (int i = 1; i <= MAX_RETRIES; i++) {
+        HttpResponse<FileListingResponse> res =
+            isolatedClient
+                .get(listFilesEndpoint)
+                .header("Proxy-Authorization", "Bearer " + accessToken)
+                .asObject(FileListingResponse.class);
+        E2EState.log.info("List files request response: {}", res);
+        // if something went wrong with this request
+        if (200 != res.getStatus()) {
+          return res;
+        }
+        FileListingResponse body = res.getBody();
+        // Check if files array exists and is not empty
+        if (!body.files.isEmpty()) {
+          E2EState.log.info("Files found on attempt {}", i);
+          return res;
+        }
+        if (i < MAX_RETRIES) {
+          E2EState.log.info(
+              "Files not found, waiting {} second(s) before attempt {}", INTERVAL, i + 1);
+          Thread.sleep(1000 * INTERVAL);
+        }
       }
     }
     E2EState.log.warn("No files found after {} attempts", MAX_RETRIES);
