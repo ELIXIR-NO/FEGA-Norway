@@ -1,31 +1,42 @@
 # Use a lightweight base image with necessary tools
-FROM --platform=linux/amd64 eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin:21-jdk-alpine
 
 ARG MKCERT_VERSION="v1.4.4"
+ARG CRYPT4GH_VERSION="v1.14.0"
 ARG LOCAL_BIN="/usr/local/bin"
 
 WORKDIR /storage
 
 RUN apk update && apk add --no-cache bash openssl curl
 
-# Install mkcert
-RUN echo "Installing mkcert locally..." && \
-    curl -fsSL "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-amd64" -o "${LOCAL_BIN}/mkcert" && \
-    chmod +x "${LOCAL_BIN}/mkcert" && \
-    echo "mkcert installed successfully for the current user."
+# Install mkcert (arch-aware: the container runs on the host architecture)
+RUN set -eux; \
+    case "$(uname -m)" in \
+      x86_64) arch=amd64 ;; \
+      aarch64 | arm64) arch=arm64 ;; \
+      *) echo "unsupported arch: $(uname -m)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/FiloSottile/mkcert/releases/download/${MKCERT_VERSION}/mkcert-${MKCERT_VERSION}-linux-${arch}" -o "${LOCAL_BIN}/mkcert"; \
+    chmod +x "${LOCAL_BIN}/mkcert"
 
-# Install crypt4gh
-RUN echo "Installing crypt4gh locally..." && \
-    curl -fsSL "https://raw.githubusercontent.com/neicnordic/crypt4gh/master/install.sh" | sh -s -- -b "$LOCAL_BIN" -- 'latest' && \
-    chmod +x "$LOCAL_BIN/crypt4gh" && \
-    echo "crypt4gh installed successfully for the current user."
+# Install crypt4gh (pinned; download the release tarball directly because the
+# upstream install.sh rejects linux/arm64). Asset arch: x86_64 / arm64.
+RUN set -eux; \
+    case "$(uname -m)" in \
+      x86_64) c4arch=x86_64 ;; \
+      aarch64 | arm64) c4arch=arm64 ;; \
+      *) echo "unsupported arch: $(uname -m)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/neicnordic/crypt4gh/releases/download/${CRYPT4GH_VERSION}/crypt4gh_linux_${c4arch}.tar.gz" \
+      | tar -xz -C "${LOCAL_BIN}" crypt4gh; \
+    chmod +x "${LOCAL_BIN}/crypt4gh"
 
 RUN mkdir -p "confs"
 RUN mkdir -p "certs"
 RUN mkdir -p "schemas"
 
 COPY confs confs
-COPY scripts/* .
+COPY scripts/ .
 
 COPY "env.sh" "env.sh"
 
