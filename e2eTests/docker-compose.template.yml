@@ -643,6 +643,13 @@ services:
       - storage:/storage
     healthcheck:
       test: [ "CMD", "sh", "-c", "[ -f /storage/ready ]" ]  # Check for the ready file
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      # Cert + crypt4gh provisioning takes ~2min under linux/amd64 emulation on
+      # arm64 hosts; without a start_period the container is declared unhealthy
+      # at ~25s and every dependent service aborts before it ever goes ready.
+      start_period: 180s
 
 
   # E2E Setup
