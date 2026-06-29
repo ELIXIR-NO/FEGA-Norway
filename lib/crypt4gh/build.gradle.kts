@@ -7,7 +7,7 @@ plugins {
     id("formatting-conventions")
     id("maven-publish")
     id("signing")
-    id("com.gradleup.shadow") version "9.4.2"
+    id("com.gradleup.shadow") version "9.4.3"
     id("org.jreleaser") version "1.24.0"
 }
 
@@ -32,7 +32,7 @@ dependencies {
     implementation("commons-cli:commons-cli:1.11.0")
     implementation("commons-io:commons-io:2.22.0")
     implementation("com.rfksystems:blake2b:2.0.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.1.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

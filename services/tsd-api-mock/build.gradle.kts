@@ -30,5 +30,5 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.hibernate.validator:hibernate-validator:9.1.0.Final")
+    testImplementation("org.hibernate.validator:hibernate-validator:9.1.1.Final")
 }
