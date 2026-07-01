@@ -141,7 +141,6 @@ jobs:
         run: |
           declare -A component_paths=(
             [lega-commander]="cli:lega-commander"
-            [e2eTests]="e2eTests"
             [clearinghouse]="lib:clearinghouse"
             [crypt4gh]="lib:crypt4gh"
             [tsd-file-api-client]="lib:tsd-file-api-client"
@@ -156,7 +155,6 @@ jobs:
         run: |
           declare -A component_paths=(
             [lega-commander]="cli/lega-commander"
-            [e2eTests]="e2eTests"
             [clearinghouse]="lib/clearinghouse"
             [crypt4gh]="lib/crypt4gh"
             [tsd-file-api-client]="lib/tsd-file-api-client"

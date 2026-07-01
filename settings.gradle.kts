@@ -11,7 +11,7 @@ include(":services:tsd-api-mock")
 include(":services:mq-interceptor")
 include(":services:localega-tsd-proxy")
 
-include(":e2eTests")
+include(":e2e")
 
 findProject(":cli:lega-commander")?.name = "lega-commander"
 findProject(":lib:crypt4gh")?.name = "crypt4gh"

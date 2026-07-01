@@ -1,0 +1,8 @@
+/build/
+.gradle/
+
+# Rendered from docker-compose.template.yml by scripts/bootstrap.sh apply_configs
+docker-compose.yml
+
+# Transient machine-local egress workaround — never commit
+docker-compose.override.yml
