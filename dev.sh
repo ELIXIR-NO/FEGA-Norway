@@ -2,7 +2,7 @@
 
 set -Eeuo pipefail
 
-source ./e2eTests/env.sh
+source ./e2e/env.sh
 
 # Cross-platform compatibility checks
 OS="$(uname)"
@@ -83,7 +83,7 @@ function start() {
     log_step "Starting development environment"
 
     log_step "Preparing configuration"
-    cd e2eTests
+    cd e2e
     source env.sh
     ./scripts/bootstrap.sh apply_configs
     ./scripts/bootstrap.sh check_requirements
@@ -102,7 +102,7 @@ function stop() {
     show_header
     log_step "Stopping development environment"
 
-    cd e2eTests
+    cd e2e
     if docker compose down --rmi local -v; then
         cd ..
         log_success "Development environment stopped successfully!"
@@ -119,7 +119,7 @@ function reexecute_tests_in_container() {
 
     docker rm e2e-tests -f > /dev/null 2>&1 &&
     docker rmi fega-norway-e2e-tests:latest -f > /dev/null 2>&1 &&
-    cd e2eTests &&
+    cd e2e &&
     docker compose up --build -d e2e-tests > /dev/null &&
     cd .. &&
     log_success "E2E tests rebuilt and reexecuted!"
@@ -131,7 +131,7 @@ function rebuild_and_deploy_proxy() {
 
     docker rm proxy -f > /dev/null 2>&1 &&
     docker rmi tsd-proxy:latest -f > /dev/null 2>&1 &&
-    cd e2eTests &&
+    cd e2e &&
     docker compose up --build -d proxy > /dev/null &&
     cd .. &&
     log_success "Proxy service rebuilt and deployed!"
@@ -143,7 +143,7 @@ function rebuild_and_deploy_mq_interceptor() {
 
     docker rm interceptor -f > /dev/null 2>&1 &&
     docker rmi mq-interceptor:latest -f > /dev/null 2>&1 &&
-    cd e2eTests &&
+    cd e2e &&
     docker compose up --build -d interceptor > /dev/null &&
     cd .. &&
     log_success "MQ interceptor rebuilt and deployed!"
@@ -155,7 +155,7 @@ function rebuild_and_deploy_heartbeat_sub() {
 
     docker rm heartbeat-sub -f > /dev/null 2>&1 &&
     docker rmi ghcr.io/elixir-no/pipeline-heartbeat:latest -f > /dev/null 2>&1 &&
-    cd e2eTests &&
+    cd e2e &&
     docker compose up -d heartbeat-sub > /dev/null &&
     cd .. &&
     log_success "Heartbeat subscriber rebuilt and deployed!"
@@ -167,11 +167,11 @@ function rebuild_and_deploy_heartbeat_pub() {
 
     docker rm heartbeat-pub -f > /dev/null 2>&1 &&
     docker rmi ghcr.io/elixir-no/pipeline-heartbeat:latest -f > /dev/null 2>&1 &&
-    cd e2eTests &&
+    cd e2e &&
     docker compose up -d heartbeat-pub > /dev/null &&
     cd .. &&
     log_success "Heartbeat publisher rebuilt and deployed!"
-    log_warning "Note: If you have static config changes (mapped via e2eTests/confs), manually map them again."
+    log_warning "Note: If you have static config changes (mapped via e2e/confs), manually map them again."
 }
 
 function rebuild_and_deploy_tsd() {
@@ -180,7 +180,7 @@ function rebuild_and_deploy_tsd() {
 
     docker rm tsd -f > /dev/null 2>&1 &&
     docker rmi tsd-api-mock:latest -f > /dev/null 2>&1 &&
-    cd e2eTests &&
+    cd e2e &&
     docker compose up --build -d tsd > /dev/null &&
     cd .. &&
     log_success "TSD API mock rebuilt and deployed!"
@@ -260,15 +260,13 @@ function apply_all_spotless_checks() {
     printf "  - lib:crypt4gh\n"
     printf "  - lib:tsd-file-api-client\n"
     printf "  - services:localega-tsd-proxy\n"
-    printf "  - services:tsd-api-mock\n"
-    printf "  - e2eTests\n\n"
+    printf "  - services:tsd-api-mock\n\n"
 
     if ./gradlew :lib:clearinghouse:spotlessApply \
         :lib:crypt4gh:spotlessApply \
         :lib:tsd-file-api-client:spotlessApply \
         :services:localega-tsd-proxy:spotlessApply \
-        :services:tsd-api-mock:spotlessApply \
-        :e2eTests:spotlessApply; then
+        :services:tsd-api-mock:spotlessApply; then
         log_success "All Spotless checks applied successfully!"
     else
         log_error "Some Spotless checks failed"
@@ -359,7 +357,7 @@ function cleanup_environment() {
     # Use docker-compose if available
     if [[ -n "$compose_cmd" ]]; then
         log_verbose "Using $compose_cmd for cleanup"
-        cd e2eTests 2>/dev/null || true
+        cd e2e 2>/dev/null || true
         run_command "$compose_cmd down --remove-orphans" "Stopping compose services"
         run_command "$compose_cmd down --volumes --remove-orphans" "Removing volumes with compose"
         cd .. 2>/dev/null || true

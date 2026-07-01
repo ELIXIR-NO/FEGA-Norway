@@ -23,8 +23,6 @@ jobs:
           filters: |
             lega-commander:
               - 'cli/lega-commander/**'
-            e2eTests:
-              - 'e2eTests/**'
             clearinghouse:
               - 'lib/clearinghouse/**'
             crypt4gh:
@@ -45,7 +43,6 @@ jobs:
         run: |
           components=("FEGA-Norway")
           [[ "${{ steps.changes.outputs.lega-commander }}" == "true" ]] && components+=("lega-commander")
-          [[ "${{ steps.changes.outputs.e2eTests }}" == "true" ]] && components+=("e2eTests")
           [[ "${{ steps.changes.outputs.clearinghouse }}" == "true" ]] && components+=("clearinghouse")
           [[ "${{ steps.changes.outputs.crypt4gh }}" == "true" ]] && components+=("crypt4gh")
           [[ "${{ steps.changes.outputs.tsd-file-api-client }}" == "true" ]] && components+=("tsd-file-api-client")

@@ -14,8 +14,7 @@ COPY services/localega-tsd-proxy/build.gradle.kts services/localega-tsd-proxy/
 COPY services/tsd-api-mock/build.gradle.kts services/tsd-api-mock/
 COPY services/cega-mock/build.gradle.kts services/cega-mock/
 COPY services/mq-interceptor/build.gradle.kts services/mq-interceptor/
-COPY e2eTests/build.gradle.kts e2eTests/
-RUN mkdir -p cli/lega-commander
+RUN mkdir -p cli/lega-commander e2e
 
 # Layer 3: resolve dependencies (cached until build.gradle.kts changes)
 RUN ./gradlew :services:localega-tsd-proxy:dependencies --no-daemon || true
