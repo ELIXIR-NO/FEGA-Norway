@@ -8,15 +8,20 @@
 package config
 
 import (
+	"fmt"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 // Integration identifies the test variant, which selects the token shape and
 // pipeline branching.
+type Integration string
+
 const (
-	IntegrationFEGA   = "FEGA"
-	IntegrationEgaDev = "EGA_DEV"
+	IntegrationFEGA   Integration = "FEGA"
+	IntegrationEgaDev Integration = "EGA_DEV"
 )
 
 // Config holds the test configuration, populated from the environment.
@@ -40,7 +45,7 @@ type Config struct {
 	TruststorePassword string
 
 	// Integration is set by the binary, not read from the environment.
-	Integration string
+	Integration Integration
 
 	ProxyTokenAudience string
 	ProxyAdminUsername string
@@ -64,8 +69,9 @@ type Config struct {
 }
 
 // Load reads the configuration from the environment. integration is supplied by
-// the calling binary (IntegrationFEGA / IntegrationEgaDev).
-func Load(integration string) *Config {
+// the calling binary (IntegrationFEGA / IntegrationEgaDev). Load only reads;
+// call Validate to check the result before use.
+func Load(integration Integration) *Config {
 	return &Config{
 		Integration: integration,
 
@@ -104,6 +110,71 @@ func Load(integration string) *Config {
 		EgaDevJwtPrivKeyPath: os.Getenv("E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH"),
 		EgaDevPubKeyPath:     os.Getenv("E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH"),
 	}
+}
+
+// Validate checks that the environment supplied every field the selected
+// variant actually needs, aggregating all problems into a single error. Calling
+// it right after Load makes a misconfigured run fail immediately at startup with
+// a clear list of what is missing, instead of dying deep in a stage on an empty
+// host or a silently-zeroed retry count.
+func (c *Config) Validate() error {
+	if c.Integration != IntegrationFEGA && c.Integration != IntegrationEgaDev {
+		return fmt.Errorf("unknown integration %q (want %q or %q)",
+			c.Integration, IntegrationFEGA, IntegrationEgaDev)
+	}
+
+	var problems []string
+	req := func(envName, value string) {
+		if value == "" {
+			problems = append(problems, envName)
+		}
+	}
+	positive := func(envName string, value int64) {
+		if value <= 0 {
+			problems = append(problems, envName+" (must be a positive integer)")
+		}
+	}
+
+	// Needed by both variants: the proxy endpoint, CEGA credentials and broker,
+	// and the inbox/outbox polling knobs (a zero retry count means the poll loop
+	// never runs).
+	req("E2E_TESTS_PROXY_HOST", c.ProxyHost)
+	req("E2E_TESTS_PROXY_PORT", c.ProxyPort)
+	req("E2E_TESTS_CEGAAUTH_USERNAME", c.CegaAuthUsername)
+	req("E2E_TESTS_CEGAAUTH_PASSWORD", c.CegaAuthPassword)
+	req("E2E_TESTS_CEGAMQ_CONN_STR", c.CegaConnString)
+	positive("E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES", int64(c.ExportRequestMaxRetries))
+	positive("E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS", c.ExportRequestIntervalInSeconds)
+
+	switch c.Integration {
+	case IntegrationFEGA:
+		// Local drives the SDA database directly (finalize) and the DOA
+		// (download), and mints its own visa against the proxy audience.
+		req("E2E_TESTS_SDA_DB_HOST", c.SdaDbHost)
+		req("E2E_TESTS_SDA_DB_PORT", c.SdaDbPort)
+		req("E2E_TESTS_SDA_DB_USERNAME", c.SdaDbUsername)
+		req("E2E_TESTS_SDA_DB_PASSWORD", c.SdaDbPassword)
+		req("E2E_TESTS_SDA_DB_DATABASE_NAME", c.SdaDbDatabaseName)
+		req("E2E_TESTS_SDA_DOA_HOST", c.SdaDoaHost)
+		req("E2E_TESTS_SDA_DOA_PORT", c.SdaDoaPort)
+		req("E2E_TESTS_PROXY_TOKEN_AUDIENCE", c.ProxyTokenAudience)
+	case IntegrationEgaDev:
+		// Staging authenticates with a real LS-AAI token, encrypts to the egadev
+		// archive key, signs visas with the egadev key, and drives the export
+		// endpoint with the proxy-admin credentials.
+		req("E2E_TESTS_LSAAI_TOKEN", c.LSAAIToken)
+		req("E2E_TESTS_EGA_DEV_BASE_DIRECTORY", c.EgaDevBaseDirectory)
+		req("E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH", c.EgaDevPubKeyPath)
+		req("E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH", c.EgaDevJwtPrivKeyPath)
+		req("E2E_TESTS_PROXY_ADMIN_USERNAME", c.ProxyAdminUsername)
+		req("E2E_TESTS_PROXY_ADMIN_PASSWORD", c.ProxyAdminPassword)
+	}
+
+	if len(problems) > 0 {
+		sort.Strings(problems)
+		return fmt.Errorf("invalid %s config: %s", c.Integration, strings.Join(problems, ", "))
+	}
+	return nil
 }
 
 func atoiOr(s string, def int) int {
