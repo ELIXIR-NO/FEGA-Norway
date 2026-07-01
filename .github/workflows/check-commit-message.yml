@@ -6,7 +6,7 @@ on:
 
 env:
   BUMPS: "major minor patch"
-  COMPONENTS: "lega-commander e2eTests clearinghouse crypt4gh tsd-file-api-client cega-mock localega-tsd-proxy mq-interceptor tsd-api-mock FEGA-Norway"
+  COMPONENTS: "lega-commander clearinghouse crypt4gh tsd-file-api-client cega-mock localega-tsd-proxy mq-interceptor tsd-api-mock FEGA-Norway"
 
 jobs:
   check-commit-message:

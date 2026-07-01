@@ -19,7 +19,6 @@ updates:
   # Java
   - package-ecosystem: gradle
     directories:
-      - /e2eTests
       - /buildSrc
       - /lib/clearinghouse
       - /lib/crypt4gh
@@ -42,7 +41,6 @@ updates:
   # Docker Java
   - package-ecosystem: docker
     directories:
-      - /e2eTests
       - /services/tsd-api-mock
       - /services/localega-tsd-proxy
     groups:
