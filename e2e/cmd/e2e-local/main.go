@@ -18,6 +18,10 @@ func main() { os.Exit(run()) }
 func run() int {
 	log := report.New(os.Stdout)
 	cfg := config.Load(config.IntegrationFEGA)
+	if err := cfg.Validate(); err != nil {
+		log.Error("invalid config", "err", err)
+		return 1
+	}
 
 	st, err := state.SetupLocal(cfg, log)
 	if err != nil {
