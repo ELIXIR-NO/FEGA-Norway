@@ -43,11 +43,10 @@ func run(ctx context.Context, s *state.State, name string, steps []step) error {
 }
 
 // RunLocal runs the FEGA pipeline against the mocked stack:
-// C1 -> upload -> ingest -> accession -> finalize -> mapping -> inbox-cleanup ->
+// upload -> ingest -> accession -> finalize -> mapping -> inbox-cleanup ->
 // release -> download.
 func RunLocal(ctx context.Context, s *state.State) error {
 	return run(ctx, s, "FEGA (local)", []step{
-		{"C1JwtSignatureVerification", stages.C1JwtSignatureVerification, 0},
 		{"UploadViaLegaCmd", stages.UploadViaLegaCmd, 5000},
 		{"Ingest", stages.Ingest, 5000},
 		{"Accession", stages.Accession, 5000},
@@ -61,7 +60,7 @@ func RunLocal(ctx context.Context, s *state.State) error {
 
 // RunStaging runs the EGA_DEV pipeline against the live egadev environment:
 // upload(proxy) -> ingest -> accession -> mapping -> release ->
-// download(export-request). It has no C1, finalize or inbox-cleanup stage.
+// download(export-request). It has no finalize or inbox-cleanup stage.
 func RunStaging(ctx context.Context, s *state.State) error {
 	return run(ctx, s, "EGA_DEV (staging)", []step{
 		{"UploadThroughProxy", stages.UploadThroughProxy, 5000},
