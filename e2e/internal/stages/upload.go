@@ -99,6 +99,11 @@ func UploadThroughProxy(ctx context.Context, s *state.State) error {
 	if err := json.Unmarshal(res.Body, &uploaded); err != nil {
 		return fmt.Errorf("parsing upload response: %w", err)
 	}
+	// An empty id would only surface as a finalize failure blamed on the wrong
+	// request; refuse the upload response here where the cause is visible.
+	if uploaded.ID == "" {
+		return check.Failf("upload response missing id: %s", res.Body)
+	}
 	s.Log.Info("upload id", "id", uploaded.ID)
 
 	finalizeURL := fmt.Sprintf("https://%s:%s/stream/%s?uploadId=%s&chunk=end&sha256=%s&fileSize=%d",

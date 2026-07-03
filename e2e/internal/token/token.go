@@ -118,6 +118,11 @@ func ExtractLSAAIDetails(jwt string) (sub, aud string, err error) {
 	if err := json.Unmarshal(payload, &claims); err != nil {
 		return "", "", fmt.Errorf("parsing JWT payload: %w", err)
 	}
+	// A token without sub or aud would mint a visa with empty claims and fail
+	// much later, at the proxy; refuse it here where the cause is still visible.
+	if claims.Sub == "" || claims.Aud == "" {
+		return "", "", fmt.Errorf("JWT payload missing sub or aud claim")
+	}
 	return claims.Sub, claims.Aud, nil
 }
 

@@ -1,6 +1,39 @@
 package token
 
-import "testing"
+import (
+	"encoding/base64"
+	"testing"
+)
+
+// TestExtractLSAAIDetails checks that sub and aud are read from an unverified
+// payload and that a payload missing either claim is refused instead of
+// yielding empty values.
+func TestExtractLSAAIDetails(t *testing.T) {
+	jwtWithPayload := func(payload string) string {
+		return "header." + base64.RawURLEncoding.EncodeToString([]byte(payload)) + ".signature"
+	}
+
+	sub, aud, err := ExtractLSAAIDetails(jwtWithPayload(`{"sub":"user@elixir-europe.org","aud":"audience-id"}`))
+	if err != nil {
+		t.Fatalf("ExtractLSAAIDetails: %v", err)
+	}
+	if sub != "user@elixir-europe.org" || aud != "audience-id" {
+		t.Fatalf("got sub=%q aud=%q", sub, aud)
+	}
+
+	for name, payload := range map[string]string{
+		"missing sub": `{"aud":"audience-id"}`,
+		"missing aud": `{"sub":"user@elixir-europe.org"}`,
+	} {
+		if _, _, err := ExtractLSAAIDetails(jwtWithPayload(payload)); err == nil {
+			t.Errorf("%s: expected an error, got none", name)
+		}
+	}
+
+	if _, _, err := ExtractLSAAIDetails("not-a-jwt"); err == nil {
+		t.Error("malformed JWT: expected an error, got none")
+	}
+}
 
 // TestParsePKCS1PrivateKeyAndPublicKey checks that a PKCS#1 RSA private key and
 // its matching PKIX public key both parse, and that the parsed public key

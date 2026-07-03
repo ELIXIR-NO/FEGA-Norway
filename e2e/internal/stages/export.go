@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/adapters/c4gh"
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/adapters/httpx"
@@ -125,7 +126,11 @@ func checkFilesWithRetry(ctx context.Context, s *state.State, client *httpx.Clie
 	common.WaitForProcessing(intervalSec * 1000)
 
 	for i := 1; i <= maxRetries; i++ {
-		res, err := client.Do(ctx, "GET", listURL, httpx.WithProxyBearer(accessToken))
+		// Cap each listing attempt so a wedged proxy fails the poll instead of
+		// hanging the run until the CI job timeout.
+		attemptCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		res, err := client.Do(attemptCtx, "GET", listURL, httpx.WithProxyBearer(accessToken))
+		cancel()
 		if err != nil {
 			return 0, nil, err
 		}
