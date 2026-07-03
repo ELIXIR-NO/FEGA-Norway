@@ -1,15 +1,15 @@
 # Go e2e runner image. Build context is the FEGA-Norway root (compose
-# `context: ..`), so paths below are repo-relative — the build needs both the
+# `context: ..`), so paths below are repo-relative: the build needs both the
 # e2e module and cli/lega-commander, which live outside this directory.
 
 FROM golang:1.26-alpine AS go-builder
 WORKDIR /app
 
-# Layer 1: module graph only — cached until go.mod/go.sum change.
+# Layer 1: module graph only, cached until go.mod/go.sum change.
 COPY e2e/go.mod e2e/go.sum ./
 RUN go mod download
 
-# Layer 2: sources — build the environment binaries (e2e-local, e2e-staging)
+# Layer 2: sources, building the environment binaries (e2e-local, e2e-staging)
 # into /out.
 COPY e2e/ ./
 RUN go build -o /out/ ./cmd/...

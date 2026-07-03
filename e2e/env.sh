@@ -6,7 +6,7 @@ export OPENSSL_ROOT_CERT_PASSWORD=r00t_cert_passw0rd
 export OPENSSL_SERVER_CERT_PASSWORD=server_cert_passw0rd
 export OPENSSL_CLIENT_CERT_PASSWORD=client_cert_passw0rd
 export KEYTOOL_TRUSTSTORE_PASSWORD=trustst0re_passw0rd
-export CRYPT4GH_KEY_PASSWORD=key_passw0rd # CRYPT4GH key password
+export CRYPT4GH_KEY_PASSWORD=key_passw0rd
 
 # CEGAMQ
 # ---------------------------------------------------------------------------

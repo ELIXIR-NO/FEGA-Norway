@@ -2,10 +2,8 @@
 
 set -e
 
-# Map E2E_ENV to the matching binary. This is the Go parallel to the Java
-# suite's `--select-class` switch: the environment picks which binary runs,
-# not a runtime class selector. The Go runner reads /storage/certs directly,
-# so there is no JVM truststore import step here.
+# E2E_ENV selects which binary runs; there is no runtime class selector. The
+# runner reads /storage/certs directly, so no truststore import step is needed.
 case "${E2E_ENV:-local}" in
   local)
     echo "Running FEGA (local) e2e"

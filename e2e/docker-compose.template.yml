@@ -654,10 +654,10 @@ services:
 
   # E2E Setup
 
-  # The Go e2e runner (FEGA-Norway/e2e). E2E_ENV selects the binary — the Go
-  # parallel to the Java suite's --select-class. E2E_TESTS_INTEGRATION and
-  # E2E_TESTS_RUNTIME are gone: the variant is chosen by E2E_ENV and the runner
-  # is container-only, reading /storage/certs directly.
+  # The Go e2e runner (FEGA-Norway/e2e). E2E_TESTS_INTEGRATION and
+  # E2E_TESTS_RUNTIME are gone: the variant is chosen by E2E_ENV (which selects
+  # the binary) and the runner is container-only, reading /storage/certs
+  # directly.
   e2e-tests:
     container_name: e2e-tests
     hostname: e2e_tests

@@ -6,8 +6,8 @@ mocked local stack or the live egadev environment.
 
 ## Layout
 
-Standard `cmd/` + `internal/` layout. The environment selects a **binary**, not
-a class (replacing the Java `--select-class` switch):
+Standard `cmd/` + `internal/` layout. The environment selects a **binary**;
+there is no runtime variant switch:
 
 | `E2E_ENV` | Binary | Pipeline | Target |
 |-----------|--------|----------|--------|
@@ -18,8 +18,8 @@ a class (replacing the Java `--select-class` switch):
 cmd/e2e-local, cmd/e2e-staging   # thin mains, one per environment
 internal/
   config     # E2E_TESTS_* env -> Config
-  constants  # JWT/visa constants + AMQP/HTTP message templates (Strings.java)
-  state      # the *State threaded through stages + setup/teardown (E2EState/BaseE2ETest)
+  constants  # JWT/visa constants + AMQP/HTTP message templates
+  state      # the *State threaded through stages + setup/teardown
   check      # assertion helpers (return error instead of throwing)
   common     # random file, checksums, random digits, JSON compaction, waits
   certs      # /storage/certs material + TLS pools
@@ -30,8 +30,8 @@ internal/
     amqp     #   CEGA broker publisher (publish-only)
     pg       #   post-finalize Postgres mTLS verification
     httpx    #   TLS-skipping HTTP client for proxy/DOA
-  stages     # one function per pipeline stage (features/*.java)
-  pipeline   # the ordered per-environment sequences (the @Order entrypoints)
+  stages     # one function per pipeline stage
+  pipeline   # the ordered per-environment sequences, one per binary
 ```
 
 ## Build & test
@@ -50,7 +50,7 @@ Or via Gradle (the `base`-plugin convention used by the other Go modules):
 
 ## Scope (Phase 1)
 
-Behavior-identical to the Java suite: same stage order, same fixed inter-stage
-waits, same assertions. Deferred to Phase 2 (tracked in
+Phase 1 preserves the proven suite behavior unchanged: stage order, the fixed
+inter-stage waits, and every assertion. Deferred to Phase 2 (tracked in
 `../../docs/e2e-go-rewrite/2026-06-19-proposal.md`): replacing fixed sleeps with
 bounded polling and the single-shot finalize DB read.
