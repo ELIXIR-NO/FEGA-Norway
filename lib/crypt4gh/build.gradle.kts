@@ -7,8 +7,8 @@ plugins {
     id("formatting-conventions")
     id("maven-publish")
     id("signing")
-    id("com.gradleup.shadow") version "9.4.3"
-    id("org.jreleaser") version "1.24.0"
+    id("com.gradleup.shadow") version "9.5.0"
+    id("org.jreleaser") version "1.25.0"
 }
 
 group = "no.elixir"
