@@ -14,6 +14,7 @@ import (
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/check"
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/common"
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/config"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/constants"
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/report"
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/state"
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/token"
@@ -127,7 +128,7 @@ func UploadThroughProxy(ctx context.Context, s *state.State) error {
 // otherwise the provided token (only valid under EGA_DEV).
 func resolveUploadToken(s *state.State) (string, error) {
 	if s.Config.LSAAIToken == "" {
-		return token.GenerateVisaToken(s.Config, "upload", "jwt.priv.pem")
+		return token.GenerateVisaToken(s.Config, constants.UploadResource, "jwt.priv.pem")
 	}
 	if s.Config.Integration != config.IntegrationEgaDev {
 		return "", check.Failf("Life Science AAI token provided but the runtime is not set to EGA_DEV")

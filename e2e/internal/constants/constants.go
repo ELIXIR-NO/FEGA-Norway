@@ -26,6 +26,11 @@ const (
 	VisaSource              = "https://login.elixir-czech.org/google-idp/"
 	VisaType                = "ControlledAccessGrants"
 	VisaValueTemplate       = "https://ega.tsd.usit.uio.no/datasets/%s/"
+
+	// UploadResource fills the {dataset} slot for flows that only need a
+	// structurally valid signed visa to authenticate, so it names a dataset
+	// that does not exist.
+	UploadResource = "upload"
 )
 
 // IngestMessage is the ingest event body. Format args: user, encFileName.

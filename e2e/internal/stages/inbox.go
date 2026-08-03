@@ -8,6 +8,7 @@ import (
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/adapters/httpx"
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/check"
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/common"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/constants"
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/state"
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/token"
 )
@@ -71,7 +72,7 @@ func InboxCleanup(ctx context.Context, s *state.State) error {
 // resolveListingToken returns a provided LS-AAI token, otherwise a minted visa.
 func resolveListingToken(s *state.State) (string, error) {
 	if s.Config.LSAAIToken == "" {
-		return token.GenerateVisaToken(s.Config, "upload", "jwt.priv.pem")
+		return token.GenerateVisaToken(s.Config, constants.UploadResource, "jwt.priv.pem")
 	}
 	return s.Config.LSAAIToken, nil
 }

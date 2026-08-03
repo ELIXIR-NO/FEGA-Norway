@@ -28,10 +28,8 @@ import (
 //
 // resource fills the {dataset} slot of the visa value claim
 // (https://ega.tsd.usit.uio.no/datasets/<resource>/). For download it is a real
-// dataset id (EGAD...). For upload and inbox-listing it is the literal string
-// "upload": those flows only need a structurally valid signed visa to
-// authenticate, so the grant points at a dataset that does not exist.
-// TODO: hoist these scope strings into named constants.
+// dataset id (EGAD...); for upload and inbox-listing it is
+// constants.UploadResource.
 func GenerateVisaToken(cfg *config.Config, resource, privateKeyPath string) (string, error) {
 	priv, err := loadPrivateKey(cfg, privateKeyPath)
 	if err != nil {
