@@ -4,7 +4,7 @@ set -e
 
 # E2E_ENV selects which binary runs; there is no runtime class selector. The
 # runner reads /storage/certs directly, so no truststore import step is needed.
-case "${E2E_ENV:-local}" in
+case "${E2E_ENV}" in
   local)
     echo "Running FEGA (local) e2e"
     exec e2e-local

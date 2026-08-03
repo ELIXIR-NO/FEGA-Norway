@@ -22,7 +22,7 @@ func Download(ctx context.Context, s *state.State) error {
 	if err != nil {
 		return err
 	}
-	client := httpx.New()
+	client := httpx.New(s.Config)
 	doa := func(path string) string {
 		return fmt.Sprintf("https://%s:%s%s", s.Config.SdaDoaHost, s.Config.SdaDoaPort, path)
 	}

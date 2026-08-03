@@ -31,7 +31,7 @@ func DownloadViaFegaExportRequest(ctx context.Context, s *state.State) error {
 		return err
 	}
 	passportToken := s.Config.LSAAIToken
-	client := httpx.New()
+	client := httpx.New(s.Config)
 
 	// 1) FEGA export request
 	payload, err := buildFegaExportPayload(s, visaToken)

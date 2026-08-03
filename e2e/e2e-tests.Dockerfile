@@ -22,10 +22,11 @@ COPY cli/lega-commander/ .
 RUN go build -o /lega-commander .
 
 FROM alpine:3.21
-# No package install needed: every TLS path in the runner anchors on
-# /storage/certs/rootCA.pem explicitly (httpx skips verify, pg/amqp build their
-# own pools) and lega-commander runs with TLS_SKIP_VERIFY, so the system CA
-# bundle is never consulted. busybox sh runs the entrypoint.
+# The local stack anchors on /storage/certs/rootCA.pem explicitly (pg and amqp
+# build their own pools, httpx skips verification, lega-commander runs with
+# TLS_SKIP_VERIFY), but the staging run validates the live egadev certificate,
+# so the system CA bundle has to be present. busybox sh runs the entrypoint.
+RUN apk add --no-cache ca-certificates
 
 # Writable working dir: SetupLocal writes the 10 MiB raw + .enc fixtures to CWD.
 WORKDIR /fega-norway

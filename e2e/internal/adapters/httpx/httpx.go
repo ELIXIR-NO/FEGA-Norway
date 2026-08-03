@@ -1,6 +1,5 @@
 // Package httpx is the HTTP client the suite uses to talk to the proxy and the
-// DOA. TLS verification is skipped: the stack uses mkcert certificates the
-// runner does not otherwise trust.
+// DOA.
 package httpx
 
 import (
@@ -9,9 +8,11 @@ import (
 	"crypto/tls"
 	"io"
 	"net/http"
+
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/config"
 )
 
-// Client is a TLS-skipping HTTP client.
+// Client is an HTTP client whose TLS trust matches the stack it targets.
 type Client struct {
 	hc *http.Client
 }
@@ -22,15 +23,19 @@ type Response struct {
 	Body   []byte
 }
 
-// New builds a client that skips TLS verification. It sets no overall timeout:
-// uploads are large, so per-call deadlines are controlled through the request
-// context instead.
-func New() *Client {
+// New builds a client for cfg's integration. The local stack serves mkcert
+// certificates the runner does not trust, so verification is skipped there;
+// staging talks to a real endpoint whose certificate the suite must validate.
+// It sets no overall timeout: uploads are large, so per-call deadlines are
+// controlled through the request context instead.
+func New(cfg *config.Config) *Client {
+	tlsConfig := &tls.Config{MinVersion: tls.VersionTLS12}
+	if cfg.Integration == config.IntegrationFEGA {
+		tlsConfig.InsecureSkipVerify = true //nolint:gosec // mkcert stack, certs not trusted by the runner
+	}
 	return &Client{
 		hc: &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // mkcert stack, certs not trusted by the runner
-			},
+			Transport: &http.Transport{TLSClientConfig: tlsConfig},
 		},
 	}
 }

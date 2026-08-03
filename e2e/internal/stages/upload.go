@@ -23,7 +23,7 @@ import (
 // UploadViaLegaCmd uploads the encrypted file by invoking the lega-commander
 // CLI as a subprocess, asserting a zero exit code.
 func UploadViaLegaCmd(ctx context.Context, s *state.State) error {
-	const legaCommanderTimeout = 2 * time.Minute
+	const legaCommanderTimeout = 5 * time.Minute
 	s.Log.Info("uploading a file via lega-commander CLI")
 	tok, err := resolveUploadToken(s)
 	if err != nil {
@@ -84,7 +84,7 @@ func UploadThroughProxy(ctx context.Context, s *state.State) error {
 		return err
 	}
 
-	client := httpx.New()
+	client := httpx.New(s.Config)
 	uploadURL := fmt.Sprintf("https://%s:%s/stream/%s?md5=%s",
 		s.Config.ProxyHost, s.Config.ProxyPort, s.EncName(), md5Hex)
 	res, err := client.Do(ctx, "PATCH", uploadURL,

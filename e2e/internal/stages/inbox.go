@@ -33,7 +33,7 @@ func InboxCleanup(ctx context.Context, s *state.State) error {
 	listURL := fmt.Sprintf("https://%s:%s/files?inbox=true", s.Config.ProxyHost, s.Config.ProxyPort)
 	s.Log.Info("verifying mapper removed file from inbox", "file", fileName, "url", listURL)
 
-	client := httpx.New()
+	client := httpx.New(s.Config)
 	attempts := s.Config.ExportRequestMaxRetries
 	intervalMillis := int(s.Config.ExportRequestIntervalInSeconds * 1000)
 	present := true
@@ -50,6 +50,9 @@ func InboxCleanup(ctx context.Context, s *state.State) error {
 		var listing fileListing
 		if err := json.Unmarshal(res.Body, &listing); err != nil {
 			return fmt.Errorf("parsing inbox listing: %w", err)
+		}
+		if listing.Files == nil {
+			return check.Failf("inbox listing carries no files array, cannot conclude the file is gone: %s", res.Body)
 		}
 		present = false
 		for _, f := range listing.Files {

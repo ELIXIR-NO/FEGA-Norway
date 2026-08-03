@@ -15,7 +15,7 @@ import (
 
 func main() { os.Exit(run()) }
 
-func run() int {
+func run() (code int) {
 	log := report.New(os.Stdout)
 	cfg := config.Load(config.IntegrationFEGA)
 
@@ -26,7 +26,8 @@ func run() int {
 	}
 	defer func() {
 		if err := st.Cleanup(); err != nil {
-			log.Warn("cleanup failed", "err", err)
+			log.Error("cleanup failed", "err", err)
+			code = 1
 		}
 	}()
 
