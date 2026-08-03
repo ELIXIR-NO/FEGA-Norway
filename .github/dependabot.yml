@@ -62,6 +62,7 @@ updates:
       - /services/mq-interceptor
       - /services/cega-mock
       - /cli/lega-commander
+      - /e2e
     groups:
       all-modules:
         patterns:
@@ -80,6 +81,7 @@ updates:
     directories:
       - /services/mq-interceptor
       - /services/cega-mock
+      - /e2e
     groups:
       all-modules:
         patterns:
