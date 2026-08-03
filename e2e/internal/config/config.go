@@ -147,12 +147,23 @@ func (c *Config) Validate() error {
 			problems = append(problems, envName+" (must be a positive integer)")
 		}
 	}
+	// Ports stay strings because they are interpolated straight into URLs and
+	// the postgres DSN, so a non-numeric value only surfaces when a stage dials.
+	port := func(envName, value string) {
+		if value == "" {
+			problems = append(problems, envName)
+			return
+		}
+		if n, err := strconv.Atoi(value); err != nil || n < 1 || n > 65535 {
+			problems = append(problems, envName+" (must be a TCP port in 1-65535)")
+		}
+	}
 
 	// Needed by both variants: the proxy endpoint, CEGA credentials and broker,
 	// and the inbox/outbox polling knobs (a zero retry count means the poll loop
 	// never runs).
 	req("E2E_TESTS_PROXY_HOST", c.ProxyHost)
-	req("E2E_TESTS_PROXY_PORT", c.ProxyPort)
+	port("E2E_TESTS_PROXY_PORT", c.ProxyPort)
 	req("E2E_TESTS_CEGAAUTH_USERNAME", c.CegaAuthUsername)
 	req("E2E_TESTS_CEGAAUTH_PASSWORD", c.CegaAuthPassword)
 	req("E2E_TESTS_CEGAMQ_CONN_STR", c.CegaConnString)
@@ -164,12 +175,12 @@ func (c *Config) Validate() error {
 		// Local drives the SDA database directly (finalize) and the DOA
 		// (download), and mints its own visa against the proxy audience.
 		req("E2E_TESTS_SDA_DB_HOST", c.SdaDbHost)
-		req("E2E_TESTS_SDA_DB_PORT", c.SdaDbPort)
+		port("E2E_TESTS_SDA_DB_PORT", c.SdaDbPort)
 		req("E2E_TESTS_SDA_DB_USERNAME", c.SdaDbUsername)
 		req("E2E_TESTS_SDA_DB_PASSWORD", c.SdaDbPassword)
 		req("E2E_TESTS_SDA_DB_DATABASE_NAME", c.SdaDbDatabaseName)
 		req("E2E_TESTS_SDA_DOA_HOST", c.SdaDoaHost)
-		req("E2E_TESTS_SDA_DOA_PORT", c.SdaDoaPort)
+		port("E2E_TESTS_SDA_DOA_PORT", c.SdaDoaPort)
 		req("E2E_TESTS_PROXY_TOKEN_AUDIENCE", c.ProxyTokenAudience)
 	case IntegrationEgaDev:
 		// Staging authenticates with a real LS-AAI token, encrypts to the egadev

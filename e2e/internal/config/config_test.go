@@ -119,6 +119,36 @@ func TestValidateReportsProblems(t *testing.T) {
 			mutate: func(c *Config) { c.ProxyHost, c.SdaDoaPort = "", "" },
 			wantIn: []string{"E2E_TESTS_PROXY_HOST", "E2E_TESTS_SDA_DOA_PORT"},
 		},
+		{
+			name:   "non-numeric proxy port rejected",
+			base:   validFEGA,
+			mutate: func(c *Config) { c.ProxyPort = "abc" },
+			wantIn: []string{"E2E_TESTS_PROXY_PORT", "TCP port"},
+		},
+		{
+			name:   "out-of-range db port rejected",
+			base:   validFEGA,
+			mutate: func(c *Config) { c.SdaDbPort = "70000" },
+			wantIn: []string{"E2E_TESTS_SDA_DB_PORT", "TCP port"},
+		},
+		{
+			name:   "zero doa port rejected",
+			base:   validFEGA,
+			mutate: func(c *Config) { c.SdaDoaPort = "0" },
+			wantIn: []string{"E2E_TESTS_SDA_DOA_PORT", "TCP port"},
+		},
+		{
+			name:   "EGA_DEV validates the proxy port too",
+			base:   validEgaDev,
+			mutate: func(c *Config) { c.ProxyPort = "-1" },
+			wantIn: []string{"E2E_TESTS_PROXY_PORT", "TCP port"},
+		},
+		{
+			name:   "EGA_DEV does not validate the local SDA ports",
+			base:   validEgaDev,
+			mutate: func(c *Config) { c.SdaDbPort, c.SdaDoaPort = "abc", "abc" },
+			wantIn: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
