@@ -81,6 +81,7 @@ function show_header() {
 function start() {
     show_header
     log_step "Starting development environment"
+    log_info "E2E suite: ${E2E_SUITE} (override with E2E_SUITE=go|java $0 start)"
 
     log_step "Preparing configuration"
     cd e2e
@@ -115,14 +116,30 @@ function stop() {
 
 function reexecute_tests_in_container() {
     show_header
-    log_step "Rebuilding and reexecuting E2E tests"
+    log_step "Rebuilding and reexecuting E2E tests (${E2E_SUITE} suite)"
 
-    docker rm e2e-tests -f > /dev/null 2>&1 &&
-    docker rmi fega-norway-e2e-tests:latest -f > /dev/null 2>&1 &&
+    # Re-render the compose file first: E2E_SUITE may have changed since start,
+    # and the runner's image and dockerfile are both derived from it.
+    docker rm e2e-tests -f > /dev/null 2>&1 || true
+    docker rmi "fega-norway-e2e-tests-${E2E_SUITE}:latest" -f > /dev/null 2>&1 || true
     cd e2e &&
+    ./scripts/bootstrap.sh apply_configs > /dev/null &&
     docker compose up --build -d e2e-tests > /dev/null &&
     cd .. &&
     log_success "E2E tests rebuilt and reexecuted!"
+}
+
+function switch_e2e_suite() {
+    show_header
+    case "${E2E_SUITE}" in
+        go)   export E2E_SUITE=java ;;
+        java) export E2E_SUITE=go ;;
+    esac
+    source ./e2e/env.sh
+    log_success "E2E suite switched to: ${E2E_SUITE}"
+    log_info "Applies to the next start / reexecute in this session only."
+    log_warning "Stop the stack before starting the other suite: both ingest the"
+    log_warning "same fixture, so leftovers from one fail the other."
 }
 
 function rebuild_and_deploy_proxy() {
@@ -419,6 +436,8 @@ function cleanup_environment() {
         "tsd-proxy:latest"
         "mq-interceptor:latest"
         "cega-mock:latest"
+        "fega-norway-e2e-tests-go:latest"
+        "fega-norway-e2e-tests-java:latest"
         "fega-norway-e2e-tests:latest"
         "e2etests-e2e-tests:latest"
     )
@@ -576,10 +595,11 @@ function show_menu() {
     printf "13) Reexecute E2E tests\n"
     printf "14) Replace RootCA\n"
     printf "15) Deep cleanup Docker environment\n"
-    printf "16) Exit\n"
+    printf "16) Switch E2E suite (currently: %s)\n" "${E2E_SUITE}"
+    printf "17) Exit\n"
 
     while true; do
-        printf "\n${CYAN}${BOLD}Select an option (1-15): ${NC}"
+        printf "\n${CYAN}${BOLD}Select an option (1-17): ${NC}"
         read -r choice
 
         case $choice in
@@ -598,13 +618,14 @@ function show_menu() {
             13) reexecute_tests_in_container; break;;
             14) replace_root_ca file-orchestrator /storage/certs/rootCA.pem fega; break;;
             15) cleanup_environment; break;;
-            16)
+            16) switch_e2e_suite; break;;
+            17)
                 printf "\n"
                 printf "${DIM}Goodbye!${NC}\n"
                 exit 0
                 ;;
             *)
-                log_warning "Invalid option. Please select a number between 1 and 15."
+                log_warning "Invalid option. Please select a number between 1 and 17."
                 ;;
         esac
 

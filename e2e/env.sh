@@ -203,16 +203,47 @@ export HEARTBEAT_REDIS_DB=0
 # E2E Test
 # ---------------------------------------------------------------------------
 
-# The suite always runs inside the container, so hosts and ports are the
-# in-network service names.
-export E2E_TESTS_PROXY_HOST=proxy
-export E2E_TESTS_PROXY_PORT=8080
-export E2E_TESTS_SDA_DOA_HOST=doa
-export E2E_TESTS_SDA_DOA_PORT=8080
-export E2E_TESTS_CEGAMQ_CONN_STR="amqps://$CEGAMQ_USERNAME:$CEGAMQ_PASSWORD@$CEGAMQ_HOST:$CEGAMQ_PORT/$CEGAMQ_VHOST"
+# Which runner the e2e-tests container builds and runs. Both suites drive the
+# same stack, so only this image changes:
+#   go   -> e2e/          the Go runner, selected per environment by E2E_ENV
+#   java -> e2eTests/     the retiring JUnit suite, kept until the Go one has
+#                         proven itself, selected by E2E_TESTS_INTEGRATION
+# Override from the shell, e.g. `E2E_SUITE=java ./dev.sh start`.
+export E2E_SUITE=${E2E_SUITE:-go}
+case "$E2E_SUITE" in
+  go)   export E2E_SUITE_DOCKERFILE=e2e/e2e-tests.Dockerfile ;;
+  java) export E2E_SUITE_DOCKERFILE=e2eTests/e2e-tests.Dockerfile ;;
+  *)
+    echo "env.sh: unknown E2E_SUITE '$E2E_SUITE' (expected go|java)" >&2
+    return 1 2>/dev/null || exit 1
+    ;;
+esac
+
+# Go runner: picks the binary, and so the target environment.
+# Either local or staging.
+export E2E_ENV=${E2E_ENV:-local}
+
+# Java runner: picks the top-level test class.
+# Either FEGA, GDI or EGA_DEV.
+export E2E_TESTS_INTEGRATION=${E2E_TESTS_INTEGRATION:-FEGA}
+
+# Java runner only. "container" runs the suite inside the stack; "local" runs it
+# from the host via `./gradlew :e2eTests:test` and remaps the endpoints below to
+# the published ports. The Go runner is container-only and ignores this.
+export E2E_TESTS_RUNTIME=${E2E_TESTS_RUNTIME:-container}
+
+function _runtime_() {
+  if [ "$E2E_TESTS_RUNTIME" = "container" ]; then echo "$1"; else echo "$2"; fi
+}
+
+export E2E_TESTS_PROXY_HOST=$(_runtime_ proxy localhost)
+export E2E_TESTS_PROXY_PORT=$(_runtime_ 8080 10443)
+export E2E_TESTS_SDA_DOA_HOST=$(_runtime_ doa localhost)
+export E2E_TESTS_SDA_DOA_PORT=$(_runtime_ 8080 80)
+export E2E_TESTS_CEGAMQ_CONN_STR="amqps://$CEGAMQ_USERNAME:$CEGAMQ_PASSWORD@$(_runtime_ $CEGAMQ_HOST localhost):$CEGAMQ_PORT/$CEGAMQ_VHOST"
 export E2E_TESTS_CEGAAUTH_USERNAME=$CEGAAUTH_CEGA_USERS_USER
 export E2E_TESTS_CEGAAUTH_PASSWORD=$CEGAAUTH_CEGA_USERS_PASSWORD
-export E2E_TESTS_SDA_DB_HOST=$DB_HOST
+export E2E_TESTS_SDA_DB_HOST=$(_runtime_ "$DB_HOST" localhost)
 export E2E_TESTS_SDA_DB_PORT=$DB_PORT
 export E2E_TESTS_SDA_DB_USERNAME=$DB_POSTGRES_USER
 export E2E_TESTS_SDA_DB_PASSWORD=$DB_POSTGRES_PASSWORD
@@ -226,7 +257,8 @@ export E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS=10
 export E2E_TESTS_TSD_PROJECT=p11
 export E2E_TESTS_LSAAI_SUBJECT=dummy@elixir-europe.org
 
-# EGA_DEV (staging) only; set these when E2E_ENV=staging:
+# EGA_DEV (staging) only; set these when E2E_ENV=staging (or, on the Java
+# runner, E2E_TESTS_INTEGRATION=EGA_DEV):
 # export E2E_TESTS_LSAAI_TOKEN=
 # export E2E_TESTS_EGA_DEV_BASE_DIRECTORY=
 # export E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH=

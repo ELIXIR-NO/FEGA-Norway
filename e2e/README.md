@@ -4,6 +4,31 @@ The FEGA-Norway end-to-end test suite. It drives the full pipeline (upload,
 ingest, accession, finalize, mapping, release, download) against either the
 mocked local stack or the live egadev environment.
 
+This directory also owns the **stack** both suites run against:
+`docker-compose.template.yml`, `confs/`, `scripts/` and `env.sh`.
+
+## Two runners, one stack
+
+The retiring JUnit suite in [`../e2eTests`](../e2eTests) is kept alongside this
+one until the Go suite has proven itself in practice. Only the runner container
+differs; every service under test is shared, so a disagreement between the two
+is a test-suite difference and never an environment difference.
+
+`E2E_SUITE` picks the runner:
+
+```sh
+./dev.sh start                  # go (default)
+E2E_SUITE=java ./dev.sh start   # the JUnit suite
+```
+
+In CI, pushes always run the Go suite. Run the JUnit one on demand from the
+Actions tab: **Build and test** -> Run workflow -> `e2e_suite: java`.
+
+Switching suites needs a **fresh stack** (`./dev.sh stop` first). Both suites
+ingest the same fixture and assert on archive and inbox state, so re-running one
+over the other's leftovers fails for reasons that have nothing to do with either
+suite.
+
 ## Layout
 
 Standard `cmd/` + `internal/` layout. The environment selects a **binary**;
