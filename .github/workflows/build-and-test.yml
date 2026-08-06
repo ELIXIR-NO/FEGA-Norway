@@ -2,10 +2,22 @@ name: Build and test
 
 on:
   push:
+  workflow_dispatch:
+    inputs:
+      e2e_suite:
+        description: "Which e2e runner to exercise the stack with"
+        type: choice
+        options: [go, java]
+        default: go
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    env:
+      # Pushes always run the Go suite; the retiring JUnit suite is available on
+      # demand from the Actions tab until the Go one has proven itself.
+      E2E_SUITE: ${{ inputs.e2e_suite || 'go' }}
 
     steps:
       - uses: actions/checkout@v7
@@ -43,7 +55,7 @@ jobs:
         run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test :e2e:test
 
 
-      - name: Start e2e environment
+      - name: Start e2e environment (${{ env.E2E_SUITE }} suite)
         run: ./dev.sh start
 
       - name: Wait for e2e tests

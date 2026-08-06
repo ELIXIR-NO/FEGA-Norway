@@ -23,6 +23,20 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      # Computes the next version only (DRY_RUN); the tag itself is created
+      # later by the Create GitHub Release step from `<component>-<version>`.
+      #
+      # Versions are per component, keyed by TAG_PREFIX. The action selects the
+      # previous tag with `^<prefix>?[0-9]+\.[0-9]+\.[0-9]+$` over the existing
+      # tags, so prefixes are matched literally and do not nest: `e2e-` cannot
+      # pick up `e2eTests-1.0.58`, because the character after `e2e` must be
+      # `-` or a digit and there it is `T`.
+      #
+      # A component with no prior tag bootstraps rather than failing: nothing
+      # matches the prefix, so the action falls back to INITIAL_VERSION
+      # (default 0.0.0) and applies DEFAULT_BUMP on top of it. With patch that
+      # is 0.0.1, and the first release of a new component is therefore
+      # `<component>-0.0.1`. Verified against the 1.75.0 entrypoint.
       - name: Get New Version
         id: generate-new-tag
         uses: anothrNick/github-tag-action@1.75.0
@@ -141,6 +155,8 @@ jobs:
         run: |
           declare -A component_paths=(
             [lega-commander]="cli:lega-commander"
+            [e2e]="e2e"
+            [e2eTests]="e2eTests"
             [clearinghouse]="lib:clearinghouse"
             [crypt4gh]="lib:crypt4gh"
             [tsd-file-api-client]="lib:tsd-file-api-client"
@@ -155,6 +171,8 @@ jobs:
         run: |
           declare -A component_paths=(
             [lega-commander]="cli/lega-commander"
+            [e2e]="e2e"
+            [e2eTests]="e2eTests"
             [clearinghouse]="lib/clearinghouse"
             [crypt4gh]="lib/crypt4gh"
             [tsd-file-api-client]="lib/tsd-file-api-client"
