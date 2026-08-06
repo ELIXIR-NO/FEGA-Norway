@@ -42,7 +42,7 @@ COPY "env.sh" "env.sh"
 
 RUN chmod +x *.sh
 
-ENTRYPOINT [ "./entrypoint.sh" ]
+ENTRYPOINT [ "./file-orchestrator-entrypoint.sh" ]
 
 # Add a HEALTHCHECK to verify readiness
 HEALTHCHECK --interval=5s --timeout=3s --retries=5 CMD [ "/bin/sh", "-c", "[ -f /storage/ready ] || exit 1" ]

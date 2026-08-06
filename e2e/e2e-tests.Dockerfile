@@ -33,7 +33,7 @@ WORKDIR /fega-norway
 
 COPY --from=go-builder /out/ /usr/local/bin/
 COPY --from=lega-cmd-builder /lega-commander /usr/local/bin/lega-commander
-COPY e2e/entrypoint.sh /fega-norway/entrypoint.sh
+COPY e2e/go-runner-entrypoint.sh /fega-norway/entrypoint.sh
 RUN chmod +x /fega-norway/entrypoint.sh
 
 ENTRYPOINT ["/fega-norway/entrypoint.sh"]
