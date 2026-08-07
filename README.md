@@ -6,6 +6,10 @@ architecture, local development, contribution rules and operational runbooks.
 Built with [Astro](https://astro.build) and [Starlight](https://starlight.astro.build). This
 replaces the project's GitHub wiki as the single source of truth.
 
+> This is the `gh-pages` branch, and it shares no history with `main`. It holds only the
+> documentation site, which is why the tree looks nothing like the monorepo. Code changes belong on
+> `main`; nothing here is built or released with the project.
+
 ## Quick start
 
 Requires **Node 22.12 or newer**.
@@ -67,11 +71,14 @@ If you find a page that contradicts the code, the page is the bug.
 
 ## Deployment
 
-Pushing to the `gh-pages` branch builds and publishes the site through GitHub Actions.
+The site is published at **<https://elixir-no.github.io/FEGA-Norway/>**. Pushing to `gh-pages`
+builds and deploys it through GitHub Actions (`.github/workflows/deploy.yml`).
 
-The branch holds this source rather than generated HTML, so the repository's Pages source must be
-set to **GitHub Actions** under Settings → Pages. With the default "Deploy from a branch", Pages
-would serve the source tree as raw files.
+The branch holds this source rather than generated HTML, which is the inverse of the usual
+`gh-pages` convention, so the repository's Pages source must be set to **GitHub Actions** under
+Settings → Pages. Under "Deploy from a branch", GitHub additionally runs its legacy Jekyll build
+over this tree, which fails on the `.astro` frontmatter and leaves a red `pages-build-deployment`
+run beside every green `Deploy docs` one.
 
 ## Working on this with an AI agent
 
