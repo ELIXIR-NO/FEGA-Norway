@@ -1,0 +1,50 @@
+---
+title: FEGA Norway
+description: 'Engineering documentation for the Norwegian Federated EGA node: architecture, local development, contribution rules and operational runbooks.'
+template: splash
+hero:
+  tagline: Engineering documentation for the Norwegian node of the Federated European Genome-phenome Archive. Architecture, local setup, release rules and runbooks, in one place.
+  actions:
+    - text: Start here
+      link: start/overview/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/ELIXIR-NO/FEGA-Norway
+      icon: external
+      variant: minimal
+---
+
+<div class="fega-cards">
+	<a class="fega-card" href="architecture/system/">
+		<span class="fega-card__eyebrow">Architecture</span>
+		<span class="fega-card__title">Understand the system</span>
+		<span class="fega-card__body">
+			How a file travels from a researcher's laptop, through the proxy into TSD, and back out
+			as a released dataset.
+		</span>
+	</a>
+	<a class="fega-card" href="local/prerequisites/">
+		<span class="fega-card__eyebrow">Local development</span>
+		<span class="fega-card__title">Run it on your machine</span>
+		<span class="fega-card__body">
+			Prerequisites, the <code>dev.sh</code> orchestration script, and the failure modes that
+			will actually bite you.
+		</span>
+	</a>
+	<a class="fega-card" href="contributing/versioning/">
+		<span class="fega-card__eyebrow">Contributing</span>
+		<span class="fega-card__title">Ship a change</span>
+		<span class="fega-card__body">
+			Commit conventions, and the version-bump markers that decide what gets released and at
+			what level.
+		</span>
+	</a>
+	<a class="fega-card" href="operations/signing-keys/">
+		<span class="fega-card__eyebrow">Operations</span>
+		<span class="fega-card__title">Operate it</span>
+		<span class="fega-card__body">
+			Rotating the Maven Central signing key, and pulling a release that turned out to be
+			broken.
+		</span>
+	</a>
+</div>

@@ -1,0 +1,212 @@
+---
+/**
+ * Replaces Starlight's <select> theme picker with a segmented control.
+ *
+ * The element keeps the `starlight-theme-select` tag name and the
+ * `starlight-theme` localStorage contract so ThemeProvider's inline no-FOUC
+ * script still drives the initial paint. That script's updatePickers() looks
+ * for a <select> inside and guards on finding one, so omitting it is safe;
+ * this component keeps its own radios in sync instead.
+ */
+---
+
+<starlight-theme-select>
+	<fieldset class="theme-switch">
+		<legend class="sr-only">Select theme</legend>
+
+		<span class="theme-switch__thumb" aria-hidden="true"></span>
+
+		<label class="theme-switch__option" title="Match system">
+			<input type="radio" name="theme" value="auto" checked />
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<rect x="2" y="4" width="20" height="13" rx="2"></rect>
+				<path d="M8 21h8m-4-4v4"></path>
+			</svg>
+			<span class="sr-only">System</span>
+		</label>
+
+		<label class="theme-switch__option" title="Light">
+			<input type="radio" name="theme" value="light" />
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<circle cx="12" cy="12" r="4.2"></circle>
+				<path
+					d="M12 2.4v2.4M12 19.2v2.4M4.2 12H1.8M22.2 12h-2.4M6.5 6.5 4.8 4.8M19.2 19.2l-1.7-1.7M6.5 17.5l-1.7 1.7M19.2 4.8l-1.7 1.7"
+				></path>
+			</svg>
+			<span class="sr-only">Light</span>
+		</label>
+
+		<label class="theme-switch__option" title="Dark">
+			<input type="radio" name="theme" value="dark" />
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"></path>
+			</svg>
+			<span class="sr-only">Dark</span>
+		</label>
+	</fieldset>
+</starlight-theme-select>
+
+<script is:inline>
+	StarlightThemeProvider.updatePickers();
+</script>
+
+<script>
+	type Theme = 'auto' | 'dark' | 'light';
+
+	const storageKey = 'starlight-theme';
+
+	const parseTheme = (theme: unknown): Theme =>
+		theme === 'auto' || theme === 'dark' || theme === 'light' ? theme : 'auto';
+
+	const loadTheme = (): Theme =>
+		parseTheme(typeof localStorage !== 'undefined' && localStorage.getItem(storageKey));
+
+	function storeTheme(theme: Theme): void {
+		if (typeof localStorage !== 'undefined') {
+			localStorage.setItem(storageKey, theme === 'light' || theme === 'dark' ? theme : '');
+		}
+	}
+
+	const getPreferredColorScheme = (): Theme =>
+		matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+
+	function onThemeChange(theme: Theme): void {
+		StarlightThemeProvider.updatePickers(theme);
+		document.documentElement.dataset.theme = theme === 'auto' ? getPreferredColorScheme() : theme;
+		storeTheme(theme);
+	}
+
+	matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+		if (loadTheme() === 'auto') onThemeChange('auto');
+	});
+
+	class StarlightThemeSelect extends HTMLElement {
+		constructor() {
+			super();
+			const theme = loadTheme();
+			onThemeChange(theme);
+			this.select(theme);
+
+			for (const input of this.querySelectorAll<HTMLInputElement>('input[name="theme"]')) {
+				input.addEventListener('change', () => {
+					const next = parseTheme(input.value);
+					onThemeChange(next);
+					this.position(next);
+				});
+			}
+		}
+
+		/** Check the radio matching theme and move the thumb without animating on first paint. */
+		private select(theme: Theme) {
+			const input = this.querySelector<HTMLInputElement>(`input[value="${theme}"]`);
+			if (input) input.checked = true;
+			const fieldset = this.querySelector('.theme-switch');
+			this.position(theme, false);
+			// Re-enable the transition after the initial position is applied.
+			requestAnimationFrame(() => fieldset?.classList.add('is-animated'));
+		}
+
+		private position(theme: Theme, _animate = true) {
+			const index = { auto: 0, light: 1, dark: 2 }[theme];
+			this.querySelector<HTMLElement>('.theme-switch')?.style.setProperty(
+				'--thumb-index',
+				String(index)
+			);
+		}
+	}
+
+	customElements.define('starlight-theme-select', StarlightThemeSelect);
+</script>
+
+<style>
+	.theme-switch {
+		--thumb-index: 0;
+		position: relative;
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0;
+		margin: 0;
+		padding: 0.1875rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 999px;
+		background: var(--sl-color-black);
+	}
+
+	.theme-switch__thumb {
+		position: absolute;
+		top: 0.1875rem;
+		left: 0.1875rem;
+		width: calc((100% - 0.375rem) / 3);
+		height: calc(100% - 0.375rem);
+		border-radius: 999px;
+		background: var(--sl-color-accent);
+		transform: translateX(calc(var(--thumb-index) * 100%));
+	}
+
+	/* Only animate after the initial theme is applied, so the thumb does not
+	   slide in from the wrong segment on page load. */
+	.theme-switch.is-animated .theme-switch__thumb {
+		transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.theme-switch__option {
+		position: relative;
+		z-index: 1;
+		display: grid;
+		place-items: center;
+		padding: 0.3125rem 0.5rem;
+		border-radius: 999px;
+		cursor: pointer;
+		color: var(--sl-color-gray-3);
+		transition: color 160ms ease;
+	}
+
+	.theme-switch__option:hover {
+		color: var(--sl-color-white);
+	}
+
+	.theme-switch__option svg {
+		width: 1rem;
+		height: 1rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.9;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.theme-switch__option input {
+		position: absolute;
+		opacity: 0;
+		inset: 0;
+		margin: 0;
+		cursor: pointer;
+	}
+
+	.theme-switch__option:has(input:checked) {
+		color: var(--sl-color-black);
+	}
+
+	.theme-switch__option:has(input:focus-visible) {
+		outline: 2px solid var(--sl-color-accent-high);
+		outline-offset: 2px;
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.theme-switch__thumb {
+			transition: none !important;
+		}
+	}
+</style>
