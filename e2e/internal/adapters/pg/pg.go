@@ -61,15 +61,15 @@ func VerifyFinalized(ctx context.Context, cfg *config.Config, inboxPath string) 
 // client.pem, client-key.der and rootCA.pem. The client key is distributed in
 // DER form, so it is parsed into a tls.Certificate here.
 func buildTLSConfig(cfg *config.Config) (*tls.Config, error) {
-	clientPEMPath, err := certs.CertFile("client.pem")
+	clientPEMPath, err := certs.CertFile(cfg.CertsDir, "client.pem")
 	if err != nil {
 		return nil, err
 	}
-	clientKeyPath, err := certs.CertFile("client-key.der")
+	clientKeyPath, err := certs.CertFile(cfg.CertsDir, "client-key.der")
 	if err != nil {
 		return nil, err
 	}
-	pool, err := certs.LoadRootCAPool()
+	pool, err := certs.LoadRootCAPool(cfg.CertsDir)
 	if err != nil {
 		return nil, err
 	}

@@ -46,9 +46,9 @@ func (s *State) EncName() string { return filepath.Base(s.EncFile) }
 
 // SetupLocal builds the FEGA (local) test fixture: a 10 MiB random file, its
 // checksums, a fresh sender keypair, and a Crypt4GH encryption to the archive
-// public key staged at /storage/certs/ega.pub.pem.
+// public key staged as ega.pub.pem in the certs directory.
 func SetupLocal(cfg *config.Config, log *report.Reporter) (*State, error) {
-	archiveKeyPath, err := certs.CertFile("ega.pub.pem")
+	archiveKeyPath, err := certs.CertFile(cfg.CertsDir, "ega.pub.pem")
 	if err != nil {
 		return nil, err
 	}

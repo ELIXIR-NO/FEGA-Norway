@@ -1,10 +1,10 @@
 // Package config loads the test configuration from E2E_TESTS_* environment
 // variables.
 //
-// The test variant is selected by which binary runs (cmd/e2e-local or
-// cmd/e2e-staging): each sets Integration itself rather than reading it from the
-// environment. The suite always runs inside the container and reads its certs
-// from /storage/certs.
+// The test variant is selected by which binary runs (cmd/e2e-fega or
+// cmd/e2e-egadev): each sets Integration itself rather than reading it from the
+// environment. Staged certs are read from CertsDir, which defaults to the
+// in-container /storage/certs, so e2e-egadev can also run on a host.
 package config
 
 import (
@@ -42,6 +42,10 @@ type Config struct {
 	// Integration is set by the binary, not read from the environment.
 	Integration string
 
+	// CertsDir is where the staged TLS/crypto material lives. Inside the
+	// container this is the file-orchestrator volume at /storage/certs.
+	CertsDir string
+
 	ProxyTokenAudience string
 	ProxyAdminUsername string
 	ProxyAdminPassword string
@@ -68,6 +72,8 @@ type Config struct {
 func Load(integration string) *Config {
 	return &Config{
 		Integration: integration,
+
+		CertsDir: getenvOr("E2E_TESTS_CERTS_DIR", "/storage/certs"),
 
 		CegaAuthUsername: os.Getenv("E2E_TESTS_CEGAAUTH_USERNAME"),
 		CegaAuthPassword: os.Getenv("E2E_TESTS_CEGAAUTH_PASSWORD"),
@@ -104,6 +110,13 @@ func Load(integration string) *Config {
 		EgaDevJwtPrivKeyPath: os.Getenv("E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH"),
 		EgaDevPubKeyPath:     os.Getenv("E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH"),
 	}
+}
+
+func getenvOr(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }
 
 func atoiOr(s string, def int) int {

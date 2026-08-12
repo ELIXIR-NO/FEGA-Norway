@@ -125,7 +125,7 @@ func ExtractLSAAIDetails(jwt string) (sub, aud string, err error) {
 }
 
 // loadPrivateKey resolves the key path (absolute path under EGA_DEV, otherwise
-// /storage/certs) and parses it.
+// relative to the certs directory) and parses it.
 func loadPrivateKey(cfg *config.Config, path string) (*rsa.PrivateKey, error) {
 	resolved, err := resolveKeyPath(cfg, path)
 	if err != nil {
@@ -142,7 +142,7 @@ func resolveKeyPath(cfg *config.Config, path string) (string, error) {
 	if cfg.Integration == config.IntegrationEgaDev {
 		return certs.File(path)
 	}
-	return certs.CertFile(path)
+	return certs.CertFile(cfg.CertsDir, path)
 }
 
 // ParseRSAPrivateKeyPEM parses a PEM-encoded RSA private key in either PKCS#1

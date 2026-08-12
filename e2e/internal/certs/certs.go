@@ -1,6 +1,7 @@
-// Package certs locates the TLS/crypto material the suite needs. It is
-// container-only: the file-orchestrator stages everything into /storage/certs
-// and the runner reads it directly from the mounted volume.
+// Package certs locates the TLS/crypto material the suite needs: files staged
+// under the configured certs directory (config.Config.CertsDir) plus absolute
+// key paths given in the environment. It reads nothing from the environment
+// itself; callers pass the directory in.
 package certs
 
 import (
@@ -10,13 +11,9 @@ import (
 	"path/filepath"
 )
 
-// CertsDir is where the file-orchestrator stages all generated certs/keys.
-const CertsDir = "/storage/certs"
-
-// CertFile returns the path to a file under /storage/certs, erroring if it does
-// not exist.
-func CertFile(name string) (string, error) {
-	return File(filepath.Join(CertsDir, name))
+// CertFile returns the path to name under dir, erroring if it does not exist.
+func CertFile(dir, name string) (string, error) {
+	return File(filepath.Join(dir, name))
 }
 
 // File returns absPath, erroring if it does not exist (used for the EGA-Dev key
@@ -28,10 +25,10 @@ func File(absPath string) (string, error) {
 	return absPath, nil
 }
 
-// LoadRootCAPool builds a cert pool from /storage/certs/rootCA.pem, the mkcert
-// CA that anchors the broker and database TLS connections.
-func LoadRootCAPool() (*x509.CertPool, error) {
-	path, err := CertFile("rootCA.pem")
+// LoadRootCAPool builds a cert pool from rootCA.pem under dir, the mkcert CA
+// that anchors the local stack's broker and database TLS connections.
+func LoadRootCAPool(dir string) (*x509.CertPool, error) {
+	path, err := CertFile(dir, "rootCA.pem")
 	if err != nil {
 		return nil, err
 	}

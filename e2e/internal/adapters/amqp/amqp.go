@@ -22,14 +22,15 @@ const (
 )
 
 // Publish sends body to the CEGA broker with persistent delivery,
-// application/json, UTF-8 and the given correlation id. For amqps URIs it
-// trusts the mkcert rootCA.
+// application/json, UTF-8 and the given correlation id. For amqps URIs the
+// local stack anchors on the staged mkcert rootCA; EGA_DEV verifies against
+// the system roots.
 //
 // Close errors are reported: the broker signals a rejected publish (unknown
 // exchange, revoked write permission) by closing the channel asynchronously, so
 // discarding them would let a rejected message pass as sent.
 func Publish(cfg *config.Config, correlationID string, body []byte) (err error) {
-	conn, err := dial(cfg.CegaConnString)
+	conn, err := dial(cfg)
 	if err != nil {
 		return fmt.Errorf("connecting to CEGA broker: %w", err)
 	}
@@ -59,13 +60,19 @@ func closing(err *error, context string, close func() error) {
 	}
 }
 
-func dial(uri string) (*amqp.Connection, error) {
-	if strings.HasPrefix(uri, "amqps") {
-		pool, err := certs.LoadRootCAPool()
-		if err != nil {
-			return nil, fmt.Errorf("loading rootCA for amqps: %w", err)
-		}
-		return amqp.DialTLS(uri, &tls.Config{RootCAs: pool})
+func dial(cfg *config.Config) (*amqp.Connection, error) {
+	uri := cfg.CegaConnString
+	if !strings.HasPrefix(uri, "amqps") {
+		return amqp.Dial(uri)
 	}
-	return amqp.Dial(uri)
+	// The egadev broker cert chains to a public CA the staged mkcert pool
+	// cannot verify, so EGA_DEV anchors on the system roots (nil RootCAs).
+	if cfg.Integration == config.IntegrationEgaDev {
+		return amqp.DialTLS(uri, &tls.Config{})
+	}
+	pool, err := certs.LoadRootCAPool(cfg.CertsDir)
+	if err != nil {
+		return nil, fmt.Errorf("loading rootCA for amqps: %w", err)
+	}
+	return amqp.DialTLS(uri, &tls.Config{RootCAs: pool})
 }
