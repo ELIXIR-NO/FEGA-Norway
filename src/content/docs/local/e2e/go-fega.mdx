@@ -1,0 +1,106 @@
+---
+title: "Go: fega"
+description: "Nine stages against the local compose stack: the default distribution, and what CI runs on every push."
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+`e2e-fega` runs the nine-stage FEGA pipeline (the C1 forged-visa check, upload via
+`lega-commander`, ingest, accession, finalize, mapping, inbox cleanup, release, download)
+against the self-contained compose stack: what CI runs on every push.
+
+:::note[Ahead of `main`]
+The Go runner lands through [#833](https://github.com/ELIXIR-NO/FEGA-Norway/pull/833) and
+[#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834) and is not on `main` yet, where the
+JUnit runner is the only one.
+:::
+
+<Steps>
+
+1. **Select the distribution and start the stack**
+
+   ```bash
+   E2E_SUITE=go E2E_ENV=fega ./dev.sh start
+   ```
+
+   Both values are the defaults, so plain `./dev.sh start` does the same. No other setup:
+   `env.sh` supplies a working default for every `E2E_TESTS_*` variable.
+
+2. **Follow the run**
+
+   ```bash
+   docker logs -f e2e-tests
+   ```
+
+3. **Read the verdict**
+
+   ```bash
+   docker inspect --format='{{.State.ExitCode}}' e2e-tests
+   ```
+
+   The exit code is the result; `./dev.sh start` does not wait for it. See
+   [the boot chain](../../dev-script/#the-boot-chain) for how the run is sequenced.
+
+</Steps>
+
+:::note[Switching between the two suites]
+`E2E_SUITE` is read when `dev.sh` sources `env.sh` and re-renders the compose file, so changing
+it and running `./dev.sh start` again rebuilds and recreates the `e2e-tests` service.
+
+An earlier run's leftovers do not interfere. Every run namespaces itself: a UUID-named fixture,
+an accession id of `EGAF5` plus ten random digits, a dataset id of `EGAD` plus eleven. Every
+assertion matches on those, so a stale file in the inbox or outbox is invisible to the next run
+rather than fatal to it.
+:::
+
+<details>
+<summary>what do I have to configure?</summary>
+
+Nothing. `env.sh` defaults every `E2E_TESTS_*` variable, and the file-orchestrator stages all
+crypto material into the certs directory before the runner is allowed to start: the mkcert root
+CA that anchors the broker and database TLS connections, the RSA pair for JWT signing, and the
+Crypt4GH archive key. The runner reads that volume directly, so unlike the JUnit suite it has no
+`keytool` import step. The names it needs (`jwt.priv.pem`, `ega.pub.pem`, `rootCA.pem`) resolve
+as bare filenames under the certs directory, which `E2E_TESTS_CERTS_DIR` locates and defaults to
+the in-container `/storage/certs`.
+
+</details>
+
+<details>
+<summary>why is there more than one selector?</summary>
+
+`E2E_SUITE` picks the runner (`go` or `java`) and `E2E_ENV` picks which Go binary runs, so the
+pair selects one of the six distributions. The retiring JUnit runner uses its own
+`E2E_TESTS_INTEGRATION` selector instead and ignores `E2E_ENV`. Neither runner selects an
+environment at runtime: choosing the environment is choosing the program.
+
+</details>
+
+<details>
+<summary>can I pass my own LS-AAI token?</summary>
+
+No. The runner mints its own GA4GH visa, signed with the staged `jwt.priv.pem`, whose public
+half the proxy in the stack is configured to trust. Do not set `E2E_TESTS_LSAAI_TOKEN` here:
+the upload stage refuses a provided token outside the egadev variant, by design.
+
+</details>
+
+<details>
+<summary>why does it skip TLS verification?</summary>
+
+The stack serves mkcert certificates the runner does not trust as a system CA, so its HTTP
+client skips verification and `lega-commander` runs with `LEGA_COMMANDER_TLS_SKIP_VERIFY=true`.
+
+</details>
+
+<details>
+<summary>what is the C1 stage checking?</summary>
+
+C1 runs first and is the suite's only negative check: it presents a structurally valid visa
+signed with an untrusted key and requires the proxy to refuse it, so a security regression
+aborts the run before anything is uploaded. The proxy's own unit tests cover the same decoder
+in isolation; this covers the part they cannot, that the check is reached by a client on a live
+endpoint. The wider red suite is tracked in
+[#854](https://github.com/ELIXIR-NO/FEGA-Norway/issues/854).
+
+</details>

@@ -1,0 +1,60 @@
+---
+title: "JUnit: GDI"
+description: "Seven empty test methods that pass without testing anything: why a green GDI run is a false green."
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+`E2E_SUITE=java` with `E2E_TESTS_INTEGRATION=GDI` runs
+`no.elixir.e2eTests.GDIIntegrationTest`, which targets nothing and proves nothing: run it
+only to see the false green for yourself.
+
+<Steps>
+
+1. **Start with the GDI class**
+
+   ```bash
+   E2E_SUITE=java E2E_TESTS_INTEGRATION=GDI ./dev.sh start
+   ```
+
+2. **Do not read the result as a pass**
+
+   It reports seven passing tests every time, whatever the stack does.
+
+</Steps>
+
+<details>
+<summary>what does it test?</summary>
+
+Nothing. Seven `@Order`-ed methods with **empty bodies**, plus an empty `@BeforeAll` and
+`@AfterAll`. It connects to nothing and asserts nothing.
+
+</details>
+
+<details>
+<summary>why is a green run worse than a failure?</summary>
+
+Because it is a false green. This is the one place where the retiring runner is not merely
+equivalent-but-older: [`e2e-gdi`](../go-gdi/) exits non-zero precisely so it cannot be read
+as a pass, while this class passes on every run.
+
+</details>
+
+<details>
+<summary>does either runner cover GDI?</summary>
+
+No. Neither runner has GDI coverage; only one of them says so. The Go placeholder prints
+`the GDI pipeline is not implemented` to stderr and exits 1.
+
+</details>
+
+<details>
+<summary>why is there more than one selector?</summary>
+
+`E2E_SUITE` picks the runner: `go` or `java`. `E2E_TESTS_INTEGRATION` picks the JUnit test
+class; the Go runner uses its own `E2E_ENV` instead and ignores `E2E_TESTS_INTEGRATION`.
+Choosing the environment is choosing the program (a test class here, a binary for Go), and
+the entrypoint refuses an unknown value with a non-zero exit rather than falling back to a
+default.
+
+</details>

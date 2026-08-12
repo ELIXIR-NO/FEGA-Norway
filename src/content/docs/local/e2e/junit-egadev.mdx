@@ -1,0 +1,98 @@
+---
+title: "JUnit: EGA_DEV"
+description: "Run the retiring JUnit suite's six-test EGA_DEV class against the live egadev.uio.no environment."
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+`E2E_SUITE=java` with `E2E_TESTS_INTEGRATION=EGA_DEV` runs
+`no.elixir.e2eTests.EgaDevIntegrationTest` against the live `egadev.uio.no` environment: six
+`@Order`-ed tests matching [`e2e-egadev`](../go-egadev/) stage for stage.
+
+:::note[Switching between the two suites]
+`E2E_SUITE` is read when `dev.sh` sources `env.sh` and re-renders the compose file, so changing
+it and running `./dev.sh start` again rebuilds and recreates the `e2e-tests` service.
+
+An earlier run's leftovers do not interfere. Every run namespaces itself: a UUID-named fixture,
+an accession id of `EGAF5` plus ten random digits, a dataset id of `EGAD` plus eleven. Every
+assertion matches on those, so a stale file in the inbox or outbox is invisible to the next run
+rather than fatal to it.
+:::
+
+<Steps>
+
+1. **Select the JUnit runner and the EGA_DEV class**
+
+   ```bash
+   export E2E_SUITE=java
+   export E2E_TESTS_INTEGRATION=EGA_DEV
+   ```
+
+2. **Export the EGA_DEV credentials and key paths**
+
+   ```bash
+   export E2E_TESTS_LSAAI_TOKEN=...
+   export E2E_TESTS_EGA_DEV_BASE_DIRECTORY=...
+   export E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH=...
+   export E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH=...
+   export E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH=...
+   ```
+
+   `env.sh` leaves all five commented: per-operator values. Getting them into the container
+   is on you; see the wiring accordion below before starting.
+
+3. **Start the stack**
+
+   ```bash
+   ./dev.sh start
+   ```
+
+</Steps>
+
+<details>
+<summary>why is there more than one selector?</summary>
+
+`E2E_SUITE` picks the runner: `go` or `java`. `E2E_TESTS_INTEGRATION` picks the JUnit test
+class; the Go runner uses its own `E2E_ENV` instead and ignores `E2E_TESTS_INTEGRATION`.
+Choosing the environment is choosing the program (a test class here, a binary for Go), and
+the entrypoint refuses an unknown value with a non-zero exit rather than falling back to a
+default.
+
+</details>
+
+<details>
+<summary>which six tests, and what is missing?</summary>
+
+Upload through the proxy, ingest, accession, mapping, release, and download via a FEGA
+export request. No C1, finalize or inbox-cleanup test, same as `e2e-egadev`.
+
+</details>
+
+<details>
+<summary>what does it read that the Go binary does not?</summary>
+
+`E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH`, which its export test uses and no Go stage does.
+[#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834) drops the unused Go config field,
+and the variable itself retires with the JUnit suite
+([#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851)).
+
+</details>
+
+<details>
+<summary>how do my key files reach the container?</summary>
+
+They do not on their own: the EGA_DEV variables are commented placeholders in the compose
+template's environment block, and the `e2e-tests` service mounts no volume through which
+host-side key files could reach the container's filesystem. Wiring both in is operator work.
+
+</details>
+
+<details>
+<summary>does E2E_TESTS_RUNTIME point it at egadev?</summary>
+
+No. `local` repoints the endpoints at `localhost` and the **local** compose stack's published
+ports; it is a host-run switch for the mocked stack, not an egadev one. See
+[running the FEGA class from your IDE](../junit-fega/#running-it-from-your-ide) for what it
+is for.
+
+</details>

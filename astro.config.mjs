@@ -106,6 +106,20 @@ export default defineConfig({
 						{ label: 'Prerequisites', slug: 'local/prerequisites' },
 						{ label: 'The dev.sh workflow', slug: 'local/dev-script' },
 						{ label: 'The e2e distributions', slug: 'local/e2e-distributions' },
+						// One page per distribution, indented under the chooser above. Order is
+						// runner first, then environment, so the retiring JUnit half stays grouped.
+						{
+							label: 'Distributions',
+							collapsed: true,
+							items: [
+								{ label: 'Go: fega', slug: 'local/e2e/go-fega' },
+								{ label: 'Go: egadev', slug: 'local/e2e/go-egadev' },
+								{ label: 'Go: gdi', slug: 'local/e2e/go-gdi' },
+								{ label: 'JUnit: FEGA', slug: 'local/e2e/junit-fega' },
+								{ label: 'JUnit: EGA_DEV', slug: 'local/e2e/junit-egadev' },
+								{ label: 'JUnit: GDI', slug: 'local/e2e/junit-gdi' },
+							],
+						},
 						{ label: 'Troubleshooting', slug: 'local/troubleshooting' },
 					],
 				},

@@ -1,0 +1,139 @@
+---
+title: "Go: egadev"
+description: "Six stages against live egadev.uio.no, run from a host with real credentials and key paths."
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+`e2e-egadev` runs the six-stage EGA_DEV pipeline (upload through the proxy, ingest, accession,
+mapping, release, download via a FEGA export request; no C1, finalize or inbox-cleanup stage)
+against the live `egadev.uio.no` environment, and needs real credentials and key paths.
+
+:::note[Ahead of `main`]
+The Go runner lands through [#833](https://github.com/ELIXIR-NO/FEGA-Norway/pull/833) and
+[#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834) and is not on `main` yet, where the
+JUnit runner is the only one.
+:::
+
+<Steps>
+
+1. **Select the distribution**
+
+   ```bash
+   E2E_SUITE=go E2E_ENV=egadev ./dev.sh start
+   ```
+
+   That is the container form, and it needs wiring the operator does (see below): the working
+   path is a host run, steps 2 to 4.
+
+2. **Build the binaries**
+
+   ```bash
+   cd e2e && go build -o build/ ./cmd/...
+   ```
+
+3. **Export credentials, key paths and the real endpoints**
+
+   ```bash
+   export E2E_TESTS_LSAAI_TOKEN=<token>
+   export E2E_TESTS_EGA_DEV_BASE_DIRECTORY=<dir>
+   export E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH=<path>
+   export E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH=<path>
+   export E2E_TESTS_PROXY_HOST=<host> E2E_TESTS_PROXY_PORT=<port>
+   export E2E_TESTS_CEGAMQ_CONN_STR=<amqps-url>
+   export E2E_TESTS_CEGAAUTH_USERNAME=<user> E2E_TESTS_CEGAAUTH_PASSWORD=<password>
+   ```
+
+   The `env.sh` defaults point into the compose stack (the proxy at `proxy`, the CEGA broker
+   at `cegamq:5673`), so a host run sets the real egadev endpoints itself; `env.sh`
+   deliberately does not carry them. The CEGA credentials need real values too: both upload
+   `PATCH` calls send them as HTTP basic auth, and `env.sh` defaults them to the mock stack's
+   `dummy`, so an unset host run sends a credential egadev never issued rather than failing on
+   a missing one.
+
+4. **Run it**
+
+   ```bash
+   ./build/e2e-egadev
+   ```
+
+</Steps>
+
+:::note[Switching between the two suites]
+`E2E_SUITE` is read when `dev.sh` sources `env.sh` and re-renders the compose file, so changing
+it and running `./dev.sh start` again rebuilds and recreates the `e2e-tests` service.
+
+An earlier run's leftovers do not interfere. Every run namespaces itself: a UUID-named fixture,
+an accession id of `EGAF5` plus ten random digits, a dataset id of `EGAD` plus eleven. Every
+assertion matches on those, so a stale file in the inbox or outbox is invisible to the next run
+rather than fatal to it.
+:::
+
+<details>
+<summary>what do I have to configure?</summary>
+
+| Variable | What it is for |
+| --- | --- |
+| `E2E_TESTS_LSAAI_TOKEN` | a real LS-AAI access token. It supplies the subject and audience for the visas the runner mints, and is itself sent as the bearer on upload, outbox listing and download |
+| `E2E_TESTS_EGA_DEV_BASE_DIRECTORY` | where the 10 MiB test fixture and its `.enc` are created, and where the downloaded file is written (`<base>/out/`) |
+| `E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH` | the Crypt4GH public key the fixture is encrypted to |
+| `E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH` | the RSA key that signs the visa carried by the export request |
+| `E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH` | used by the JUnit runner's export test; no Go stage reads it. [#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834) drops the unused Go config field, and the variable retires with the JUnit suite ([#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851)) |
+| `E2E_TESTS_CEGAAUTH_USERNAME` | CEGA HTTP basic auth, sent on both upload `PATCH` calls alongside the LS-AAI bearer. `env.sh` supplies the mock value `dummy`, so a host run must override it with a value the live proxy accepts |
+| `E2E_TESTS_CEGAAUTH_PASSWORD` | the password half of that basic auth, with the same `dummy` default and the same need to override |
+
+The key paths are absolute and resolve anywhere on disk; the fega distribution instead resolves
+bare key filenames under the certs directory. The `env.sh` EGA_DEV block is left commented for
+the same reason: per-operator values, like the endpoints and CEGA credentials in step 3.
+
+</details>
+
+<details>
+<summary>why does it run on a host, and can I run it in the container instead?</summary>
+
+The EGA_DEV pipeline reads no staged certificates at all: its keys come from the absolute paths
+above, the CEGA broker connection verifies against the system roots (the egadev broker
+certificate chains to a public CA that the local stack's mkcert pool cannot verify), the HTTP
+client validates the live certificate, and the direct Postgres check runs only in the FEGA
+pipeline. Running it inside the container instead needs wiring the operator does: the EGA_DEV
+variables are commented placeholders in the compose template's environment block, and the
+`e2e-tests` service mounts no volume through which host-side key files could reach the
+container's filesystem.
+
+</details>
+
+<details>
+<summary>why is there more than one selector?</summary>
+
+`E2E_SUITE` picks the runner (`go` or `java`) and `E2E_ENV` picks which Go binary runs, so the
+pair selects one of the six distributions. The retiring JUnit runner uses its own
+`E2E_TESTS_INTEGRATION` selector instead and ignores `E2E_ENV`. Neither runner selects an
+environment at runtime: choosing the environment is choosing the program.
+
+</details>
+
+<details>
+<summary>does the runner validate my token?</summary>
+
+It never verifies the signature: it base64url-decodes the payload, requires non-empty `sub` and
+`aud` claims, and refuses the run at setup otherwise. Any well-formed token clears the runner
+itself; the live environment validates the token when the runner presents it. That is also why
+the mocked stack needs no token at all: there, the runner signs its own visa with a key the
+stack already trusts. The proxy-side rejection of forged tokens has its own logic-level unit
+tests ([#836](https://github.com/ELIXIR-NO/FEGA-Norway/pull/836)); an endpoint-level check
+against a running proxy is tracked in
+[#854](https://github.com/ELIXIR-NO/FEGA-Norway/issues/854).
+
+</details>
+
+<details>
+<summary>what should I watch out for?</summary>
+
+Today a misconfigured run fails deep inside a stage; startup validation arrives with
+[#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834), which checks the config right after
+loading, aggregates every missing variable into a single error naming them all, range-checks
+ports to 1-65535, and requires positive export polling knobs. And one caveat from the source
+itself: the export request encodes the recipient key as base64 SPKI DER, an encoding the code
+marks as not yet verified against live egadev.
+
+</details>

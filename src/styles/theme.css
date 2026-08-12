@@ -189,6 +189,76 @@ body {
 	}
 }
 
+/* Distribution tiles: the landing cards packed three across, used as the
+   in-page chooser on the e2e distributions page. Tiles carry both classes, so
+   everything but the grid and the retired state comes from .fega-card. */
+.fega-tiles {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.875rem;
+	margin-block: 1.5rem;
+}
+
+@media (min-width: 45rem) {
+	.fega-tiles {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.fega-tile {
+	gap: 0.3rem;
+	padding: 1rem 1.125rem 1.125rem;
+}
+
+.fega-tile__title {
+	font-size: var(--sl-text-lg);
+	font-family: var(--sl-font-mono, ui-monospace, monospace);
+}
+
+.fega-tile__body {
+	font-size: var(--sl-text-xs);
+}
+
+/* Retired distributions stay documented and stay reachable, so they are muted
+   rather than hidden: dashed border, no accent eyebrow, badge in the corner. */
+.fega-tile--retired {
+	border-style: dashed;
+}
+
+.fega-tile--retired .fega-card__eyebrow {
+	color: var(--sl-color-gray-3);
+}
+
+.fega-tile--retired .fega-card__title {
+	color: var(--sl-color-gray-2);
+}
+
+.fega-tile__badge {
+	align-self: flex-start;
+	margin-top: 0.5rem;
+	padding: 0.05rem 0.4rem;
+	border: 1px solid var(--sl-color-gray-4);
+	border-radius: 0.25rem;
+	font-size: var(--sl-text-xs);
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--sl-color-gray-3);
+}
+
+.fega-tiles__label {
+	margin-top: 1.75rem;
+	margin-bottom: 0.5rem;
+	font-size: var(--sl-text-sm);
+	font-weight: 600;
+	color: var(--sl-color-white);
+}
+
+.fega-tiles__label span {
+	font-weight: 400;
+	color: var(--sl-color-gray-3);
+}
+
 /* Mermaid renders inline SVG that ignores the prose max-width and overflows on
    narrow viewports. Contain it and let it scroll on its own axis. */
 .mermaid,

@@ -21,6 +21,18 @@ as empty sections:
 - **Support.** The wiki's Support section was empty. There is no documented support contact
   other than `fega-norway-support@elixir.no`, which appears only in the signing-key context.
 
+## No end-to-end coverage of GDI
+
+Both runners ship a GDI distribution and neither one tests anything. The Go binary `e2e-gdi`
+prints `the GDI pipeline is not implemented` and exits 1. The JUnit `GDIIntegrationTest` is seven
+`@Order`-ed methods with empty bodies, so it reports seven passing tests without connecting to
+anything.
+
+The difference matters more than the gap: one distribution announces that it is empty, the other
+reports a false green. Both are described on
+[the e2e distributions page](../../local/e2e-distributions/); the JUnit class retires with the
+rest of that module in [#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851).
+
 ## Verification status of the diagrams
 
 All nine diagrams have been audited stage by stage against the source: the SDA services, the
@@ -84,3 +96,26 @@ These differ deliberately from the old wiki, having been checked against the cod
 | `tsd-file-api-client` | Maven Central | GitHub Packages |
 | `pre-release-check` | Pure dry run | Genuinely pushes PR-tagged Docker images |
 | Why `dev.sh` needs the repository root | It resolves paths relative to its own location | It resolves them relative to the working directory, which is why the root is required |
+
+## Corrections to this site's own pages
+
+Claims this site published and has since corrected against the code. Listed separately from the
+wiki table above because these were our errors, not inherited ones.
+
+| Page | Was said | Actual |
+| --- | --- | --- |
+| e2e distributions | `lega-commander` runs with `TLS_SKIP_VERIFY` | The variable is `LEGA_COMMANDER_TLS_SKIP_VERIFY=true` (`e2e/internal/stages/upload.go`) |
+| e2e distributions | The egadev host run needs the LS-AAI token, four key paths and the endpoints | It also needs `E2E_TESTS_CEGAAUTH_USERNAME` and `E2E_TESTS_CEGAAUTH_PASSWORD`. `UploadThroughProxy` sends CEGA HTTP basic auth on both upload `PATCH` calls, and `env.sh` defaults both to the mock value `dummy`, so the run inherits a credential the live environment will not accept rather than failing on a missing one |
+| e2e distributions | Switching suites needs a fresh stack, because "both suites ingest the same fixture and assert on archive and inbox state, so one suite's leftovers fail the other" | The rationale was wrong. Every run namespaces itself: `CreateRandomFile` names the fixture from a UUID (the Java suite likewise uses `UUID.randomUUID()`), the accession id is `EGAF5` plus ten random digits and the dataset id `EGAD` plus eleven, and every assertion matches on those values. Leftovers from an earlier run are invisible to the next one, not fatal to it |
+
+## No way to boot the stack without running the suite
+
+`dev.sh` starts the environment with a bare `docker compose up --build -d` and the compose file
+declares no profiles, so the `e2e-tests` service always runs. There is no documented way to bring
+up only the services under test.
+
+This matters for the IDE workflow on
+[the JUnit FEGA distribution](../../local/e2e/junit-fega/#running-it-from-your-ide): a debugging
+session is necessarily a second suite run alongside the container one. The runs do not collide,
+per the namespacing above, but the container run still consumes time and log space on every
+`./dev.sh start`. A compose profile would fix it.

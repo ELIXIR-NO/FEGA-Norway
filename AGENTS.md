@@ -86,8 +86,10 @@ Pages are Markdown in `src/content/docs/<section>/`, with `title` and `descripti
 > not make it appear in navigation. Add the `slug` entry too.
 
 Sections: `start/`, `architecture/`, `local/`, `contributing/`, `operations/`, `reference/`.
+`local/e2e/` is the one nested subsection: one page per e2e distribution, chosen from the tiles
+on `local/e2e-distributions/`.
 
-Conventions the existing 22 pages all follow:
+Conventions every page follows:
 
 - Frontmatter is exactly `title` and `description`. Body starts at `##`; Starlight renders the
   title as the H1.
@@ -97,6 +99,14 @@ Conventions the existing 22 pages all follow:
   card `href`s are emitted verbatim and unprefixed.
 - Asides use Starlight's `:::type[Title]` directive.
 - Only `bash`, `mermaid` and `text` code fences appear.
+- **`.mdx` only where a Starlight component is used**, which today means `index.mdx` and the
+  `local/e2e/` pages. Those need `import { Steps } from '@astrojs/starlight/components';` below
+  the frontmatter; there is no global import, so a missing line fails the build on that page
+  alone. Everything else stays `.md`. Renaming between the two does not change the slug or URL.
+- **The e2e distribution pages share one shape** on purpose: lede, `<Steps>` for the procedure
+  (always visible), then question-shaped `<details>` accordions for the detail. Developers do not
+  read walls of text, so keep the steps runnable and put the why behind a summary. Starlight
+  styles `<details>` natively; do not add CSS for it.
 
 The sidebar `label` and the page `title` are independent and deliberately differ in places.
 

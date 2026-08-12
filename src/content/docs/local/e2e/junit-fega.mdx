@@ -1,0 +1,194 @@
+---
+title: "JUnit: FEGA"
+description: "Run the retiring JUnit suite's nine-test FEGA class against the local compose stack, in the container or from your IDE."
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+`E2E_SUITE=java` with `E2E_TESTS_INTEGRATION=FEGA` runs
+`no.elixir.e2eTests.FEGAIntegrationTest`, nine `@Order`-ed tests covering the same ground as
+[`e2e-fega`](../go-fega/) in the same sequence: the fallback the coexistence period exists
+for.
+
+:::note[Switching between the two suites]
+`E2E_SUITE` is read when `dev.sh` sources `env.sh` and re-renders the compose file, so changing
+it and running `./dev.sh start` again rebuilds and recreates the `e2e-tests` service.
+
+An earlier run's leftovers do not interfere. Every run namespaces itself: a UUID-named fixture,
+an accession id of `EGAF5` plus ten random digits, a dataset id of `EGAD` plus eleven. Every
+assertion matches on those, so a stale file in the inbox or outbox is invisible to the next run
+rather than fatal to it.
+:::
+
+## Running it in the container
+
+<Steps>
+
+1. **Start with the JUnit runner**
+
+   ```bash
+   E2E_SUITE=java E2E_TESTS_INTEGRATION=FEGA ./dev.sh start
+   ```
+
+   `FEGA` is the default test class, so `E2E_TESTS_INTEGRATION` can be dropped, and
+   `env.sh` supplies every other variable.
+
+2. **Read the verdict**
+
+   The result is the `e2e-tests` container's exit code, which `./dev.sh start` does not
+   wait for. See [the boot chain](../../dev-script/#the-boot-chain) for how to follow the
+   run.
+
+</Steps>
+
+<details>
+<summary>why is there more than one selector?</summary>
+
+`E2E_SUITE` picks the runner: `go` or `java`. `E2E_TESTS_INTEGRATION` picks the JUnit test
+class; the Go runner uses its own `E2E_ENV` instead and ignores `E2E_TESTS_INTEGRATION`.
+Choosing the environment is choosing the program (a test class here, a binary for Go), and
+the entrypoint refuses an unknown value with a non-zero exit rather than falling back to a
+default.
+
+</details>
+
+<details>
+<summary>which nine tests does it run?</summary>
+
+The same sequence as `e2e-fega`: the C1 forged-JWT check, upload via `lega-commander`,
+ingest, accession, finalize, mapping, inbox cleanup, release, download.
+
+</details>
+
+<details>
+<summary>why does it need keytool?</summary>
+
+Before running anything the entrypoint imports the root CA into the JDK truststore with
+`keytool -importcert -file /storage/certs/rootCA.pem -cacerts -alias fega-root-ca`, and logs
+an info line and continues if the file is absent. The Go runner has no such step: it reads
+the same PEM directly and builds its pools in process.
+
+</details>
+
+<details>
+<summary>why do ingest and release die with a NullPointerException?</summary>
+
+`E2E_TESTS_TRUSTSTORE_PASSWORD` is unset. It is load-bearing here and dead for Go:
+`CertificateUtils` calls `.toCharArray()` on it when building the AMQPS context, so ingest,
+accession, mapping and release all fail with a null-pointer dereference without it. `env.sh`
+keeps it in a clearly marked JUnit-only block for exactly this reason, to be deleted with the
+module ([#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851)).
+
+</details>
+
+<details>
+<summary>what command runs inside the container?</summary>
+
+The suite is packaged as a fat jar and launched through the JUnit console:
+`java -jar e2eTests.jar execute --select-class no.elixir.e2eTests.FEGAIntegrationTest`.
+
+</details>
+
+## Running it from your IDE
+
+`E2E_TESTS_RUNTIME=local` runs the suite outside the container: from IntelliJ IDEA's green
+play button on the test class, or by executing the jar on the host, while the stack itself
+stays in docker. The point is almost always a debugger on `localega-tsd-proxy` or
+`tsd-api-mock`, not on the test, and the stack ships with JDWP already open on both.
+
+<Steps>
+
+1. **Bring the stack up**
+
+   ```bash
+   ./dev.sh start
+   ```
+
+2. **Put the environment in the shell that starts your IDE**
+
+   ```bash
+   export E2E_TESTS_RUNTIME=local
+   source e2e/env.sh
+   ```
+
+   Launch IntelliJ from that shell, or copy the values into the run configuration's
+   environment instead.
+
+3. **Attach a Remote JVM Debug configuration**
+
+   Point it at `localhost` and the port of the service you are chasing: proxy `5005`,
+   tsd-api-mock `5006`, DOA `8088`.
+
+   If you have not set one up before,
+   [Debugging a running Java app in Docker](https://yasint.dev/debugging-running-java-app-docker/)
+   walks through it screen by screen, with the same flags and the same port. It starts its
+   container with plain `docker run`, which is the only part that differs: here the compose
+   stack already carries the agent and publishes the port.
+
+4. **Run the test class**
+
+   The green play button on `FEGAIntegrationTest`, or from the same shell:
+
+   ```bash
+   ./gradlew :e2eTests:test --tests no.elixir.e2eTests.FEGAIntegrationTest
+   ```
+
+   The `--tests` filter is not optional: `:e2eTests:test` has no filter of its own, so
+   without it Gradle runs the EGA_DEV and GDI classes too.
+
+</Steps>
+
+<details>
+<summary>which ports do I attach to?</summary>
+
+| Service | JDWP port |
+| --- | --- |
+| `proxy` (localega-tsd-proxy) | `5005` |
+| `tsd-api-mock` | `5006` |
+| `doa` | `8088` |
+
+All three are published by the compose stack and carry
+`-agentlib:jdwp=transport=dt_socket,server=y,suspend=n` in the container command.
+
+</details>
+
+<details>
+<summary>do I have to enable JDWP first?</summary>
+
+No. The agents are in the container commands and the ports are published; nothing needs
+switching on. `suspend=n` means each service boots normally without waiting for a debugger,
+so you attach and detach whenever you like and never have to race the stack coming up.
+
+</details>
+
+<details>
+<summary>why does the suite fail as soon as it starts on my host?</summary>
+
+`E2E_TESTS_RUNTIME` is still at its default, `container`, which uses the in-network service
+names, so the suite resolves `proxy` and `doa` as hostnames and fails immediately outside
+the docker network. `local` repoints the proxy, DOA, database and CEGA broker at `localhost`
+and the stack's **published** ports (proxy `10443`, DOA `80`), which is exactly why a
+host-run suite can reach the containers at all. Only the JUnit runner reads it, and it is
+not an egadev switch.
+
+</details>
+
+<details>
+<summary>doesn't ./dev.sh start already run the suite in the container?</summary>
+
+Yes, and there is no supported way to avoid it. `e2e-tests` is a service in the stack, `dev.sh`
+brings the stack up with a bare `docker compose up --build -d`, and the compose file declares no
+profiles, so nothing selects a subset. Your IDE run is therefore a second run alongside the
+container one. That is harmless: each run namespaces itself by a UUID fixture name and random
+accession and dataset ids, so the two do not collide.
+
+</details>
+
+<details>
+<summary>can I run the jar instead of gradle?</summary>
+
+Yes. `./gradlew :e2eTests:jar` builds `e2eTests/build/libs/e2eTests.jar` with the JUnit
+`ConsoleLauncher` as its main class, so from the same shell:
+`java -jar e2eTests/build/libs/e2eTests.jar execute --select-class no.elixir.e2eTests.FEGAIntegrationTest`.
+
+</details>
