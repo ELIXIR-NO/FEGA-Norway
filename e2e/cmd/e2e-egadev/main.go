@@ -1,6 +1,6 @@
-// Command e2e-local runs the FEGA pipeline against the self-contained,
-// fully-mocked docker-compose stack (the GitHub CI environment). Selected by
-// E2E_ENV=local at the container entrypoint.
+// Command e2e-egadev runs the EGA_DEV pipeline against the live egadev
+// environment (real services, real LS-AAI token). It runs directly on a host,
+// or in the container where the entrypoint selects it via E2E_ENV=egadev.
 package main
 
 import (
@@ -17,9 +17,9 @@ func main() { os.Exit(run()) }
 
 func run() (code int) {
 	log := report.New(os.Stdout)
-	cfg := config.Load(config.IntegrationFEGA)
+	cfg := config.Load(config.IntegrationEgaDev)
 
-	st, err := state.SetupLocal(cfg, log)
+	st, err := state.SetupStaging(cfg, log)
 	if err != nil {
 		log.Error("setup failed", "err", err)
 		return 1
@@ -31,7 +31,7 @@ func run() (code int) {
 		}
 	}()
 
-	if err := pipeline.RunLocal(context.Background(), st); err != nil {
+	if err := pipeline.RunStaging(context.Background(), st); err != nil {
 		return 1
 	}
 	return 0

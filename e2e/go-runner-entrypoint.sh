@@ -3,18 +3,23 @@
 set -e
 
 # E2E_ENV selects which binary runs; there is no runtime class selector. The
-# runner reads /storage/certs directly, so no truststore import step is needed.
+# runner reads its certs from E2E_TESTS_CERTS_DIR (default /storage/certs), so
+# no truststore import step is needed.
 case "${E2E_ENV}" in
-  local)
-    echo "Running FEGA (local) e2e"
-    exec e2e-local
+  fega)
+    echo "Running FEGA e2e"
+    exec e2e-fega
     ;;
-  staging)
-    echo "Running EGA_DEV (staging) e2e"
-    exec e2e-staging
+  egadev)
+    echo "Running EGA_DEV (egadev) e2e"
+    exec e2e-egadev
+    ;;
+  gdi)
+    echo "Running GDI e2e"
+    exec e2e-gdi
     ;;
   *)
-    echo "Error: unknown E2E_ENV value: '${E2E_ENV}' (expected local|staging)" >&2
+    echo "Error: unknown E2E_ENV value: '${E2E_ENV}' (expected fega|egadev|gdi)" >&2
     exit 1
     ;;
 esac

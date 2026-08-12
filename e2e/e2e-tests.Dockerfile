@@ -9,8 +9,8 @@ WORKDIR /app
 COPY e2e/go.mod e2e/go.sum ./
 RUN go mod download
 
-# Layer 2: sources, building the environment binaries (e2e-local, e2e-staging)
-# into /out.
+# Layer 2: sources, building the environment binaries (e2e-fega, e2e-egadev,
+# e2e-gdi) into /out.
 COPY e2e/ ./
 RUN go build -o /out/ ./cmd/...
 
@@ -22,9 +22,9 @@ COPY cli/lega-commander/ .
 RUN go build -o /lega-commander .
 
 FROM alpine:3.21
-# The local stack anchors on /storage/certs/rootCA.pem explicitly (pg and amqp
+# The local stack anchors on the staged rootCA.pem explicitly (pg and amqp
 # build their own pools, httpx skips verification, lega-commander runs with
-# TLS_SKIP_VERIFY), but the staging run validates the live egadev certificate,
+# TLS_SKIP_VERIFY), but the egadev run validates the live egadev certificate,
 # so the system CA bundle has to be present. busybox sh runs the entrypoint.
 RUN apk add --no-cache ca-certificates
 
