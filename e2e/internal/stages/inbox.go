@@ -54,13 +54,7 @@ func InboxCleanup(ctx context.Context, s *state.State) error {
 		if listing.Files == nil {
 			return check.Failf("inbox listing carries no files array, cannot conclude the file is gone: %s", res.Body)
 		}
-		present = false
-		for _, f := range listing.Files {
-			if f.FileName == fileName {
-				present = true
-				break
-			}
-		}
+		present = countMatching(&listing, fileName) > 0
 		if !present {
 			s.Log.Info("inbox cleanup verified", "file", fileName, "attempt", i)
 			break

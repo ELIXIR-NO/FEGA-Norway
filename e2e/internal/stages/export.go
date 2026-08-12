@@ -55,7 +55,8 @@ func DownloadViaFegaExportRequest(ctx context.Context, s *state.State) error {
 		return err
 	}
 	if listing == nil {
-		return check.Failf("no files listed after %d attempts", s.Config.ExportRequestMaxRetries)
+		return check.Failf("outbox listing never ran: E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES is %d",
+			s.Config.ExportRequestMaxRetries)
 	}
 	if err := check.Equal(status, 200, "outbox listing status"); err != nil {
 		return err
@@ -63,13 +64,7 @@ func DownloadViaFegaExportRequest(ctx context.Context, s *state.State) error {
 	if err := check.False(len(listing.Files) == 0, "outbox listing is empty"); err != nil {
 		return err
 	}
-	matches := 0
-	for _, f := range listing.Files {
-		if f.FileName == s.EncName() {
-			matches++
-		}
-	}
-	if err := check.Equal(matches, 1, "exactly one outbox file matching the upload"); err != nil {
+	if err := check.Equal(countMatching(listing, s.EncName()), 1, "exactly one outbox file matching the upload"); err != nil {
 		return err
 	}
 
@@ -116,15 +111,24 @@ func DownloadViaFegaExportRequest(ctx context.Context, s *state.State) error {
 	return check.Equal(common.Md5HexBytes(decrypted), s.RawMD5, "decrypted MD5 matches original")
 }
 
-// checkFilesWithRetry polls GET /files?inbox=false until files appear, the
-// request fails, or the retries are exhausted (in which case listing is nil).
+// checkFilesWithRetry polls GET /files?inbox=false until the exported file
+// appears, the request fails, or the retries are exhausted. The outbox is never
+// emptied between runs, so a non-empty listing on its own says nothing: only a
+// listing carrying s.EncName() ends the poll. The last listing is returned even
+// when exhausted, so the caller's assertions fail against what was really
+// there. listing is nil only if no attempt was made at all.
 func checkFilesWithRetry(ctx context.Context, s *state.State, client *httpx.Client, accessToken string) (int, *fileListing, error) {
 	listURL := fmt.Sprintf("https://%s:%s/files?inbox=false", s.Config.ProxyHost, s.Config.ProxyPort)
+	wanted := s.EncName()
 	maxRetries := s.Config.ExportRequestMaxRetries
 	intervalSec := int(s.Config.ExportRequestIntervalInSeconds)
 	s.Log.Info("waiting before the initial outbox listing call", "seconds", intervalSec)
 	common.WaitForProcessing(intervalSec * 1000)
 
+	var (
+		lastStatus  int
+		lastListing *fileListing
+	)
 	for i := 1; i <= maxRetries; i++ {
 		// Cap each listing attempt so a wedged proxy fails the poll instead of
 		// hanging the run until the CI job timeout.
@@ -141,16 +145,30 @@ func checkFilesWithRetry(ctx context.Context, s *state.State, client *httpx.Clie
 		if err := json.Unmarshal(res.Body, &listing); err != nil {
 			return 0, nil, fmt.Errorf("parsing outbox listing: %w", err)
 		}
-		if len(listing.Files) > 0 {
-			s.Log.Info("files found", "attempt", i)
+		lastStatus, lastListing = res.Status, &listing
+		if countMatching(&listing, wanted) > 0 {
+			s.Log.Info("exported file found in the outbox", "file", wanted, "attempt", i)
 			return res.Status, &listing, nil
 		}
+		s.Log.Info("exported file not in the outbox yet",
+			"file", wanted, "listed", len(listing.Files), "attempt", i, "max", maxRetries)
 		if i < maxRetries {
 			common.WaitForProcessing(intervalSec * 1000)
 		}
 	}
-	s.Log.Warn("no files found after retries", "attempts", maxRetries)
-	return 0, nil, nil
+	s.Log.Warn("exported file never appeared in the outbox", "file", wanted, "attempts", maxRetries)
+	return lastStatus, lastListing, nil
+}
+
+// countMatching counts the listed files named fileName.
+func countMatching(listing *fileListing, fileName string) int {
+	n := 0
+	for _, f := range listing.Files {
+		if f.FileName == fileName {
+			n++
+		}
+	}
+	return n
 }
 
 // buildFegaExportPayload builds the /export/fega body, encoding the recipient
