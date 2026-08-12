@@ -87,7 +87,7 @@ Pages are Markdown in `src/content/docs/<section>/`, with `title` and `descripti
 
 Sections: `start/`, `architecture/`, `local/`, `contributing/`, `operations/`, `reference/`.
 
-Conventions the existing 21 pages all follow:
+Conventions the existing 22 pages all follow:
 
 - Frontmatter is exactly `title` and `description`. Body starts at `##`; Starlight renders the
   title as the H1.

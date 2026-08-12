@@ -105,6 +105,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Prerequisites', slug: 'local/prerequisites' },
 						{ label: 'The dev.sh workflow', slug: 'local/dev-script' },
+						{ label: 'The e2e distributions', slug: 'local/e2e-distributions' },
 						{ label: 'Troubleshooting', slug: 'local/troubleshooting' },
 					],
 				},
