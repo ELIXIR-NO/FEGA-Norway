@@ -220,35 +220,23 @@ case "$E2E_SUITE" in
 esac
 
 # Go runner: picks the binary, and so the target environment.
-# Either local or staging.
-export E2E_ENV=${E2E_ENV:-local}
+# Either fega, egadev or gdi.
+export E2E_ENV=${E2E_ENV:-fega}
 
-# Java runner: picks the top-level test class.
-# Either FEGA, GDI or EGA_DEV.
-export E2E_TESTS_INTEGRATION=${E2E_TESTS_INTEGRATION:-FEGA}
-
-# Java runner only. "container" runs the suite inside the stack; "local" runs it
-# from the host via `./gradlew :e2eTests:test` and remaps the endpoints below to
-# the published ports. The Go runner is container-only and ignores this.
-export E2E_TESTS_RUNTIME=${E2E_TESTS_RUNTIME:-container}
-
-function _runtime_() {
-  if [ "$E2E_TESTS_RUNTIME" = "container" ]; then echo "$1"; else echo "$2"; fi
-}
-
-export E2E_TESTS_PROXY_HOST=$(_runtime_ proxy localhost)
-export E2E_TESTS_PROXY_PORT=$(_runtime_ 8080 10443)
-export E2E_TESTS_SDA_DOA_HOST=$(_runtime_ doa localhost)
-export E2E_TESTS_SDA_DOA_PORT=$(_runtime_ 8080 80)
-export E2E_TESTS_CEGAMQ_CONN_STR="amqps://$CEGAMQ_USERNAME:$CEGAMQ_PASSWORD@$(_runtime_ $CEGAMQ_HOST localhost):$CEGAMQ_PORT/$CEGAMQ_VHOST"
+# Endpoints as seen from inside the stack network. The JUnit block at the end of
+# this file overrides them when it runs from the host.
+export E2E_TESTS_PROXY_HOST=proxy
+export E2E_TESTS_PROXY_PORT=8080
+export E2E_TESTS_SDA_DOA_HOST=doa
+export E2E_TESTS_SDA_DOA_PORT=8080
+export E2E_TESTS_CEGAMQ_CONN_STR="amqps://$CEGAMQ_USERNAME:$CEGAMQ_PASSWORD@$CEGAMQ_HOST:$CEGAMQ_PORT/$CEGAMQ_VHOST"
 export E2E_TESTS_CEGAAUTH_USERNAME=$CEGAAUTH_CEGA_USERS_USER
 export E2E_TESTS_CEGAAUTH_PASSWORD=$CEGAAUTH_CEGA_USERS_PASSWORD
-export E2E_TESTS_SDA_DB_HOST=$(_runtime_ "$DB_HOST" localhost)
+export E2E_TESTS_SDA_DB_HOST=$DB_HOST
 export E2E_TESTS_SDA_DB_PORT=$DB_PORT
 export E2E_TESTS_SDA_DB_USERNAME=$DB_POSTGRES_USER
 export E2E_TESTS_SDA_DB_PASSWORD=$DB_POSTGRES_PASSWORD
 export E2E_TESTS_SDA_DB_DATABASE_NAME=$DB_POSTGRES_DB
-export E2E_TESTS_TRUSTSTORE_PASSWORD=$KEYTOOL_TRUSTSTORE_PASSWORD
 export E2E_TESTS_PROXY_TOKEN_AUDIENCE=$PROXY_TOKEN_AUDIENCE
 export E2E_TESTS_PROXY_ADMIN_USERNAME=$PROXY_ADMIN_USER
 export E2E_TESTS_PROXY_ADMIN_PASSWORD=$PROXY_ADMIN_PASSWORD
@@ -257,9 +245,47 @@ export E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS=10
 export E2E_TESTS_TSD_PROJECT=p11
 export E2E_TESTS_LSAAI_SUBJECT=dummy@elixir-europe.org
 
-# EGA_DEV (staging) only; set these when E2E_ENV=staging (or, on the Java
-# runner, E2E_TESTS_INTEGRATION=EGA_DEV):
+# Where the Go runner finds the staged TLS material (rootCA.pem, client certs,
+# archive key). Exists so a binary can run on a host, where /storage/certs does
+# not; the in-binary default covers the container, so this is deliberately not
+# passed through the compose template (a host override must never leak into the
+# stack).
+export E2E_TESTS_CERTS_DIR=${E2E_TESTS_CERTS_DIR:-/storage/certs}
+
+# EGA_DEV only; set these when E2E_ENV=egadev (or, on the Java runner,
+# E2E_TESTS_INTEGRATION=EGA_DEV):
 # export E2E_TESTS_LSAAI_TOKEN=
 # export E2E_TESTS_EGA_DEV_BASE_DIRECTORY=
 # export E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH=
 # export E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH=
+
+# JUnit runner only (e2eTests/)
+# ---------------------------------------------------------------------------
+# Everything below exists solely for the retiring JUnit suite. The Go runner
+# reads none of it. Delete this whole block together with the module, see
+# ELIXIR-NO/FEGA-Norway#851.
+
+# Picks the top-level test class. Either FEGA, GDI or EGA_DEV.
+export E2E_TESTS_INTEGRATION=${E2E_TESTS_INTEGRATION:-FEGA}
+
+# CertificateUtils.createSslContext opens truststore.p12 with this, so
+# AccessionTest, MappingTest and ReleaseTest all fail on a null password when it
+# is unset. The Go runner builds its own TLS pools and never reads it.
+export E2E_TESTS_TRUSTSTORE_PASSWORD=$KEYTOOL_TRUSTSTORE_PASSWORD
+
+# TokenUtils.generateVisaToken takes a public key path as well as a private one,
+# which the Go runner does not. EGA_DEV only:
+# export E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH=
+
+# "container" runs the suite inside the stack, which is what the endpoints above
+# are set for. "local" runs it from the host via `./gradlew :e2eTests:test`, so
+# the endpoints move to the ports the stack publishes.
+export E2E_TESTS_RUNTIME=${E2E_TESTS_RUNTIME:-container}
+if [ "$E2E_TESTS_RUNTIME" = "local" ]; then
+  export E2E_TESTS_PROXY_HOST=localhost
+  export E2E_TESTS_PROXY_PORT=10443
+  export E2E_TESTS_SDA_DOA_HOST=localhost
+  export E2E_TESTS_SDA_DOA_PORT=80
+  export E2E_TESTS_SDA_DB_HOST=localhost
+  export E2E_TESTS_CEGAMQ_CONN_STR="amqps://$CEGAMQ_USERNAME:$CEGAMQ_PASSWORD@localhost:$CEGAMQ_PORT/$CEGAMQ_VHOST"
+fi
