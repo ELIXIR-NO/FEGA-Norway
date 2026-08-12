@@ -64,6 +64,16 @@ export default defineConfig({
 		}),
 		starlight({
 			title: 'FEGA Norway',
+			// The mark only, lifted from the official lockup at
+			// https://ega.elixir.no/img/EGA_submarcas_Norway.svg. The full lockup carries
+			// the "Federated European Genome-phenome Archive / Norway" wordmark, which is
+			// unreadable at nav height, so the mark pairs with the title text instead and
+			// replacesTitle stays off. Self-hosted like the fonts: nothing is fetched from
+			// ega.elixir.no at runtime.
+			logo: {
+				src: './src/assets/fega-norway.svg',
+				alt: 'Federated EGA Norway',
+			},
 			description:
 				'Engineering documentation for the Norwegian Federated EGA node: architecture, local development, contribution rules and operational runbooks.',
 			social: [
