@@ -180,7 +180,9 @@ Yes, and there is no supported way to avoid it. `e2e-tests` is a service in the 
 brings the stack up with a bare `docker compose up --build -d`, and the compose file declares no
 profiles, so nothing selects a subset. Your IDE run is therefore a second run alongside the
 container one. That is harmless: each run namespaces itself by a UUID fixture name and random
-accession and dataset ids, so the two do not collide.
+accession and dataset ids, so the two do not collide. It is still wasted time and log noise on
+every start, tracked in
+[known gaps](../../../reference/gaps/#no-way-to-boot-the-stack-without-running-the-suite).
 
 </details>
 
