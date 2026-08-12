@@ -31,10 +31,13 @@ type State struct {
 	EncSHA256 string
 	RawMD5    string
 
-	StableID      string // EGAF5... accession id (client-generated)
-	DatasetID     string // EGAD... dataset id (client-generated)
-	ArchivePath   string // read out of the DB at finalize
-	CorrelationID string // AMQP correlation id threaded ingest -> release
+	StableID    string // EGAF5... accession id (client-generated)
+	DatasetID   string // EGAD... dataset id (client-generated)
+	ArchivePath string // read out of the DB at finalize
+	// CorrelationID is one id the suite reuses for every message it publishes.
+	// A real deployment only threads it ingest -> finalize, which are file
+	// scoped; mapping and release are dataset scoped and carry unrelated ids.
+	CorrelationID string
 
 	Sender    c4gh.KeyPair
 	Recipient c4gh.KeyPair

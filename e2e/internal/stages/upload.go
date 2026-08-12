@@ -65,7 +65,7 @@ func UploadViaLegaCmd(ctx context.Context, s *state.State) error {
 // UploadThroughProxy uploads via the proxy's resumable PATCH endpoint and
 // asserts a 201 finalize status. Deprecated EGA_DEV path.
 func UploadThroughProxy(ctx context.Context, s *state.State) error {
-	s.Log.Info("uploading a file through the proxy")
+	s.Log.Info("uploading a file through the proxy API directly")
 	tok, err := resolveUploadToken(s)
 	if err != nil {
 		return err

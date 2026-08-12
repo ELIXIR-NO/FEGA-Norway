@@ -85,6 +85,29 @@ system roots, so no staged cert material is required. Where staged certs are
 read (the FEGA pipeline), their directory comes from `E2E_TESTS_CERTS_DIR`,
 defaulting to the in-container `/storage/certs`.
 
+## Choosing the integration: FEGA, EGA_DEV or GDI
+
+`E2E_ENV` picks a binary, and each binary fixes its integration, so there is no
+second knob. The three are not variants of one pipeline: they differ in which
+stages run and what they run against.
+
+| | `fega` | `egadev` | `gdi` |
+|---|---|---|---|
+| Stages | 9 | 6 | none |
+| Upload | `lega-commander` | proxy API directly | |
+| Negative check | C1 forged visa | not run | |
+| Finalize (Postgres mTLS) | yes | not run | |
+| Inbox cleanup | yes | not run | |
+| Download | DOA, direct | export request | |
+| Runs against | mocked stack | live egadev.uio.no | |
+
+`fega` is the one CI runs on every push, and the only one that is self
+contained. `egadev` targets a live environment, so it needs real credentials
+and skips the stages that depend on stack-internal access. `gdi` is a
+placeholder: it prints that the pipeline is not implemented and exits non-zero,
+so a scheduled run can never report a false pass. Implementing it is tracked in
+`../../docs/e2e-go-rewrite/2026-06-19-proposal.md`.
+
 ## Scope (Phase 1)
 
 Phase 1 preserves the proven suite behavior unchanged: stage order, the fixed
