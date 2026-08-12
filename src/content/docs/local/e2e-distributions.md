@@ -50,9 +50,16 @@ nothing to do with either.
 
 ## The fega distribution (mocked stack)
 
-`e2e-fega` runs the full eight-stage FEGA pipeline against the self-contained docker compose
-stack: upload via `lega-commander`, ingest, accession, finalize, mapping, inbox cleanup,
-release, download. This is what CI runs on every push.
+`e2e-fega` runs the full nine-stage FEGA pipeline against the self-contained docker compose
+stack: the C1 forged-visa check, upload via `lega-commander`, ingest, accession, finalize,
+mapping, inbox cleanup, release, download. This is what CI runs on every push.
+
+C1 runs first and is the suite's only negative check: it presents a structurally valid visa
+signed with an untrusted key and requires the proxy to refuse it, so a security regression
+aborts the run before anything is uploaded. The proxy's own unit tests cover the same decoder
+in isolation; this covers the part they cannot, that the check is reached by a client on a live
+endpoint. The wider red suite is tracked in
+[#854](https://github.com/ELIXIR-NO/FEGA-Norway/issues/854).
 
 **Setup: none beyond `./dev.sh start`.** `env.sh` supplies a working default for every
 `E2E_TESTS_*` variable, and the file-orchestrator stages all crypto material into the certs
@@ -78,7 +85,7 @@ verdict.
 
 `e2e-egadev` runs the six-stage EGA_DEV pipeline against the live `egadev.uio.no` environment:
 upload through the proxy, ingest, accession, mapping, release, and download via a FEGA export
-request. It has no finalize and no inbox-cleanup stage.
+request. It has no C1, finalize or inbox-cleanup stage.
 
 Unlike the fega distribution it needs real credentials and key material:
 
