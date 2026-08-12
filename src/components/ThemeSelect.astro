@@ -8,6 +8,18 @@
  * for a <select> inside and guards on finding one, so omitting it is safe;
  * this component keeps its own radios in sync instead.
  */
+
+/**
+ * Starlight renders this component twice, in Header.astro and in
+ * MobileMenuFooter.astro. Radio groups are scoped per document, not per
+ * element, so a shared `name` would make both switches one group: whichever
+ * instance initialised last would steal the check and leave the other with
+ * nothing selected, so its icon fell through to the unselected colour. That is
+ * invisible in dark mode, where the unselected grey is light enough to read on
+ * the accent thumb, and it swallows the icon whole in light mode, where the
+ * same token is dark. Starlight's own <select> never had the problem.
+ */
+const group = `theme-${Math.random().toString(36).slice(2, 10)}`;
 ---
 
 <starlight-theme-select>
@@ -17,7 +29,7 @@
 		<span class="theme-switch__thumb" aria-hidden="true"></span>
 
 		<label class="theme-switch__option" title="Match system">
-			<input type="radio" name="theme" value="auto" checked />
+			<input type="radio" name={group} value="auto" checked />
 			<svg viewBox="0 0 24 24" aria-hidden="true">
 				<rect x="2" y="4" width="20" height="13" rx="2"></rect>
 				<path d="M8 21h8m-4-4v4"></path>
@@ -26,7 +38,7 @@
 		</label>
 
 		<label class="theme-switch__option" title="Light">
-			<input type="radio" name="theme" value="light" />
+			<input type="radio" name={group} value="light" />
 			<svg viewBox="0 0 24 24" aria-hidden="true">
 				<circle cx="12" cy="12" r="4.2"></circle>
 				<path
@@ -37,7 +49,7 @@
 		</label>
 
 		<label class="theme-switch__option" title="Dark">
-			<input type="radio" name="theme" value="dark" />
+			<input type="radio" name={group} value="dark" />
 			<svg viewBox="0 0 24 24" aria-hidden="true">
 				<path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"></path>
 			</svg>
@@ -87,7 +99,7 @@
 			onThemeChange(theme);
 			this.select(theme);
 
-			for (const input of this.querySelectorAll<HTMLInputElement>('input[name="theme"]')) {
+			for (const input of this.querySelectorAll<HTMLInputElement>('input[type="radio"]')) {
 				input.addEventListener('change', () => {
 					const next = parseTheme(input.value);
 					onThemeChange(next);
