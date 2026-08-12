@@ -51,6 +51,16 @@ func GenerateVisaToken(cfg *config.Config, resource, privateKeyPath string) (str
 	return signVisa(priv, subject, audience, resource)
 }
 
+// MintForgedVisa builds a structurally-valid visa signed with a freshly
+// generated, untrusted RSA key (resource "download").
+func MintForgedVisa(cfg *config.Config) (string, error) {
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", err
+	}
+	return signVisa(priv, constants.JWTSubject, cfg.ProxyTokenAudience, "download")
+}
+
 // signVisa assembles the shared header/claims and signs them.
 func signVisa(priv *rsa.PrivateKey, subject, audience, resource string) (string, error) {
 	header := map[string]any{

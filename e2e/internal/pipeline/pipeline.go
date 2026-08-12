@@ -24,18 +24,18 @@ type step struct {
 func run(ctx context.Context, s *state.State, name string, steps []step) error {
 	s.Log.Banner(name+" e2e", fmt.Sprintf("%d stages", len(steps)))
 	start := time.Now()
-	for i, st := range steps {
-		s.Log.Stage(i+1, len(steps), st.name)
+	for i, stage := range steps {
+		s.Log.Stage(i+1, len(steps), stage.name)
 		t0 := time.Now()
-		if err := st.fn(ctx, s); err != nil {
+		if err := stage.fn(ctx, s); err != nil {
 			s.Log.Fail(time.Since(t0), err)
 			s.Log.Summary(false, i, len(steps), time.Since(start))
-			return fmt.Errorf("stage %q failed: %w", st.name, err)
+			return fmt.Errorf("stage %q failed: %w", stage.name, err)
 		}
 		s.Log.Pass(time.Since(t0))
-		if st.postWaitMs > 0 {
-			s.Log.Wait(st.postWaitMs)
-			common.WaitForProcessing(st.postWaitMs)
+		if stage.postWaitMs > 0 {
+			s.Log.Wait(stage.postWaitMs)
+			common.WaitForProcessing(stage.postWaitMs)
 		}
 	}
 	s.Log.Summary(true, len(steps), len(steps), time.Since(start))
@@ -43,10 +43,11 @@ func run(ctx context.Context, s *state.State, name string, steps []step) error {
 }
 
 // RunLocal runs the FEGA pipeline against the mocked stack:
-// upload -> ingest -> accession -> finalize -> mapping -> inbox-cleanup ->
+// C1 -> upload -> ingest -> accession -> finalize -> mapping -> inbox-cleanup ->
 // release -> download.
 func RunLocal(ctx context.Context, s *state.State) error {
 	return run(ctx, s, "FEGA (local)", []step{
+		{"C1JwtSignatureVerification", stages.C1JwtSignatureVerification, 0},
 		{"UploadViaLegaCmd", stages.UploadViaLegaCmd, 5000},
 		{"Ingest", stages.Ingest, 5000},
 		{"Accession", stages.Accession, 5000},
@@ -60,7 +61,7 @@ func RunLocal(ctx context.Context, s *state.State) error {
 
 // RunStaging runs the EGA_DEV pipeline against the live egadev environment:
 // upload(proxy) -> ingest -> accession -> mapping -> release ->
-// download(export-request). It has no finalize or inbox-cleanup stage.
+// download(export-request). It has no C1, finalize or inbox-cleanup stage.
 func RunStaging(ctx context.Context, s *state.State) error {
 	return run(ctx, s, "EGA_DEV (staging)", []step{
 		{"UploadThroughProxy", stages.UploadThroughProxy, 5000},
