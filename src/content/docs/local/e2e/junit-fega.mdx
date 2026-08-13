@@ -93,48 +93,98 @@ The suite is packaged as a fat jar and launched through the JUnit console:
 
 `E2E_TESTS_RUNTIME=local` runs the suite outside the container: from IntelliJ IDEA's green
 play button on the test class, or by executing the jar on the host, while the stack itself
-stays in docker. The point is almost always a debugger on `localega-tsd-proxy` or
-`tsd-api-mock`, not on the test, and the stack ships with JDWP already open on both.
+stays in docker. Usually the point is a debugger on `localega-tsd-proxy` or `tsd-api-mock`
+rather than on the test, and the stack ships with JDWP already open on both, but the run
+works the same without one.
+
+:::caution[Two prerequisites the container gets for free]
+Steps 2 and 3 exist because the `e2e-tests` image builds `lega-commander` and imports the
+stack's root CA at startup, and nothing does either of those on your host. Skip them and the
+suite still runs: you get **four passes and five failures** that look like a broken stack and
+are not.
+:::
 
 <Steps>
 
-1. **Bring the stack up**
+1. **Bring the stack up, and wait for it**
 
    ```bash
    ./dev.sh start
+   docker compose -f e2e/docker-compose.yml ps
    ```
 
-2. **Put the environment in the shell that starts your IDE**
+   `dev.sh start` is `docker compose up --build -d`, so it returns while `proxy` and `doa`
+   are still `health: starting`. Starting the tests before both report `healthy` produces
+   connection errors that look like the trust or endpoint problems below. Note this also
+   runs the **Go** suite in the `e2e-tests` container, since `E2E_SUITE` defaults to `go`;
+   that is a separate run and does not interfere.
+
+2. **Build and install `lega-commander`**
+
+   ```bash
+   (cd cli/lega-commander && go build -o /tmp/lega-commander .)
+   sudo install /tmp/lega-commander /usr/local/bin/lega-commander
+   ```
+
+   `UploadViaLegaCMDTest` shells out to the **absolute** path `/usr/local/bin/lega-commander`,
+   so putting the binary anywhere else on `PATH` does not work. Without it the upload fails
+   instantly with `Cannot run program`, and `FinalizeTest` then fails too because nothing was
+   ever uploaded.
+
+3. **Trust the stack's root CA**
+
+   ```bash
+   docker cp file-orchestrator:/storage/certs/rootCA.pem /tmp/rootCA.pem
+   JDK_HOME=$(dirname "$(dirname "$(readlink -f "$(command -v keytool)")")")
+   cp "$JDK_HOME/lib/security/cacerts" /tmp/fega-cacerts && chmod u+w /tmp/fega-cacerts
+   keytool -importcert -noprompt -alias fega-root-ca \
+     -file /tmp/rootCA.pem -keystore /tmp/fega-cacerts -storepass changeit
+   export JAVA_TOOL_OPTIONS="-Djavax.net.ssl.trustStore=/tmp/fega-cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+   ```
+
+   The stack serves mkcert certificates, so every HTTPS call the suite makes fails PKIX
+   validation until the host JVM trusts that CA. This copies the JDK truststore rather than
+   editing it, which needs no root and leaves your JDK alone; in IntelliJ put the same two
+   `-D` flags in the run configuration's VM options. To modify the JDK in place instead, the
+   container's own form works: `sudo keytool -importcert -file /tmp/rootCA.pem -cacerts
+   -alias fega-root-ca`.
+
+4. **Export the environment, in this order**
 
    ```bash
    export E2E_TESTS_RUNTIME=local
    source e2e/env.sh
    ```
 
-   Launch IntelliJ from that shell, or copy the values into the run configuration's
-   environment instead.
+   The order is load-bearing. `env.sh` reads `E2E_TESTS_RUNTIME` to decide whether to rewrite
+   the endpoints, so exporting it *after* sourcing leaves every host on its in-network name
+   and the run fails on connection errors. Launch IntelliJ from that shell, or copy the
+   values into the run configuration's environment.
 
-3. **Attach a Remote JVM Debug configuration**
+5. **Run the test class**
 
-   Point it at `localhost` and the port of the service you are chasing: proxy `5005`,
-   tsd-api-mock `5006`, DOA `8088`.
+   The green play button on `FEGAIntegrationTest`, or from the same shell:
+
+   ```bash
+   ./gradlew :e2eTests:test --tests no.elixir.e2eTests.FEGAIntegrationTest --rerun
+   ```
+
+   `--tests` is not optional: `:e2eTests:test` has no filter of its own, so without it Gradle
+   also runs `EgaDevIntegrationTest`, which fails on the `E2E_TESTS_EGA_DEV_*` variables
+   `env.sh` ships commented out, plus the vacuous `GDIIntegrationTest`. `--rerun` matters from
+   the second run on: environment variables are not task inputs, so Gradle otherwise reports
+   `UP-TO-DATE` without running anything, which reads as a pass.
+
+6. **Attach a debugger, if that is why you are here**
+
+   A Remote JVM Debug configuration pointed at `localhost` and the port of the service you
+   are chasing: proxy `5005`, tsd-api-mock `5006`, DOA `8088`.
 
    If you have not set one up before,
    [Debugging a running Java app in Docker](https://yasint.dev/debugging-running-java-app-docker/)
    walks through it screen by screen, with the same flags and the same port. It starts its
    container with plain `docker run`, which is the only part that differs: here the compose
    stack already carries the agent and publishes the port.
-
-4. **Run the test class**
-
-   The green play button on `FEGAIntegrationTest`, or from the same shell:
-
-   ```bash
-   ./gradlew :e2eTests:test --tests no.elixir.e2eTests.FEGAIntegrationTest
-   ```
-
-   The `--tests` filter is not optional: `:e2eTests:test` has no filter of its own, so
-   without it Gradle runs the EGA_DEV and GDI classes too.
 
 </Steps>
 
@@ -166,10 +216,51 @@ so you attach and detach whenever you like and never have to race the stack comi
 
 `E2E_TESTS_RUNTIME` is still at its default, `container`, which uses the in-network service
 names, so the suite resolves `proxy` and `doa` as hostnames and fails immediately outside
-the docker network. `local` repoints the proxy, DOA, database and CEGA broker at `localhost`
-and the stack's **published** ports (proxy `10443`, DOA `80`), which is exactly why a
-host-run suite can reach the containers at all. Only the JUnit runner reads it, and it is
-not an egadev switch.
+the docker network. `local` rewrites **four** endpoints onto `localhost` and the stack's
+published ports:
+
+| Variable | Value under `local` |
+| --- | --- |
+| `E2E_TESTS_PROXY_HOST` / `_PORT` | `localhost` / `10443` |
+| `E2E_TESTS_SDA_DOA_HOST` / `_PORT` | `localhost` / `80` |
+| `E2E_TESTS_SDA_DB_HOST` | `localhost` |
+| `E2E_TESTS_CEGAMQ_CONN_STR` | `amqps://…@localhost:5673/…` |
+
+The last two are easy to overlook and carry the most: the database host is what
+`FinalizeTest` asserts against, and the broker string is what every ingest, accession,
+mapping and release message publishes to. Only the JUnit runner reads `E2E_TESTS_RUNTIME`,
+and it is not an egadev switch.
+
+</details>
+
+<details>
+<summary>why did four tests pass when nothing was uploaded?</summary>
+
+Because four of the nine only publish a message to the CEGA broker and assert that the
+publish succeeded. `IngestTest`, `AccessionTest`, `MappingTest` and `ReleaseTest` will all go
+green against a stack that never received a file. Only `FinalizeTest`, `InboxCleanupTest` and
+`DownloadTest` assert pipeline state, and `UploadViaLegaCMDTest` and
+`C1JwtSignatureVerificationTest` talk to the proxy. So "4 passed, 5 failed" is not the suite
+half working: it is the suite failing with four tests that cannot tell.
+
+</details>
+
+<details>
+<summary>can I skip the CA import because the suite disables TLS verification?</summary>
+
+No, and the code makes it look as though you could. `BaseE2ETest.setupTestEnvironment` does:
+
+```text
+try (UnirestInstance instance = Unirest.primaryInstance()) {
+  instance.config().verifySsl(false)...;
+}
+```
+
+Try-with-resources **closes the primary instance immediately**, so `verifySsl(false)` never
+applies to any later request. In the container this is invisible, because the entrypoint's
+`keytool` import makes the CA trusted anyway. On a host it is exactly what surfaces as PKIX
+failures. The bug is in the retiring module and is recorded on
+[#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851) rather than fixed.
 
 </details>
 
@@ -189,8 +280,13 @@ every start, tracked in
 <details>
 <summary>can I run the jar instead of gradle?</summary>
 
-Yes. `./gradlew :e2eTests:jar` builds `e2eTests/build/libs/e2eTests.jar` with the JUnit
-`ConsoleLauncher` as its main class, so from the same shell:
+Yes, and it needs the same steps 1 to 4. `./gradlew :e2eTests:jar` builds
+`e2eTests/build/libs/e2eTests.jar` with the JUnit `ConsoleLauncher` as its main class, so from
+the same shell:
 `java -jar e2eTests/build/libs/e2eTests.jar execute --select-class no.elixir.e2eTests.FEGAIntegrationTest`.
+It selects the class directly, so no `--tests` filter and no `--rerun` are involved. One
+difference worth knowing: the 10 MiB fixture and its `.enc` are written to the working
+directory you launch from, whereas Gradle's test worker writes them under `e2eTests/`. Neither
+is gitignored, and they are only cleaned up if the run finishes.
 
 </details>
