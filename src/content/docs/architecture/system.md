@@ -105,11 +105,11 @@ Data-Out REST API does exist and is used by the end-to-end tests, but it is not 
 | Layer | Where it runs | Responsibility |
 | --- | --- | --- |
 | Lega Commander | Submitter's machine | Upload and download through the proxy; validates the Crypt4GH container |
-| Proxy | Outside TSD | Authenticating against CEGA Auth, streaming bytes through the Files API, serving the outbox |
+| Proxy | Outside TSD | Authenticating against CEGA Auth and LS Login, streaming bytes through the Files API, serving both the inbox and the outbox |
 | MQ Interceptor | Outside TSD | Bridging CegaMQ and `external RMQ` in both directions |
-| PostgreSQL | Outside TSD | State for the proxy and interceptor. Not the SDA Database |
+| PostgreSQL | Outside TSD | State for the proxy and interceptor (user mapping only). Not the SDA Database |
 | Files API | TSD boundary | The only route for bytes into and out of the project |
-| SDA Pipeline | Inside the project | Ingest, checksum verification, accession ID registration, dataset mapping |
+| SDA Pipeline | Inside the project | Ingest, checksum verification, accession ID registration, dataset mapping and release |
 | SDA Database | Inside the project | Archive state, file headers, dataset mappings |
 | SDA DOA | Inside the project | Re-encrypting to the recipient and staging exports |
 | Heartbeat Service | Inside the project | Liveness signalling over `internal RMQ` |
