@@ -133,6 +133,31 @@ are not.
 
 3. **Trust the stack's root CA**
 
+   `dev.sh` does this for you. Run it with no arguments and pick **14) Replace RootCA**:
+
+   ```bash
+   ./dev.sh
+   ```
+
+   That copies `rootCA.pem` out of the `file-orchestrator` container and imports it into your
+   JDK's `cacerts` under the alias `fega`, finding the keystore from `JAVA_HOME` or falling
+   back to the usual Linux and macOS locations. It deletes the alias first, so running it
+   again after a stack rebuild is safe. It uses `sudo`, because the system keystore is
+   root-owned.
+
+   The stack serves mkcert certificates, so until the host JVM trusts that CA every HTTPS
+   call the suite makes fails PKIX validation.
+
+   :::note[Use the menu, not a subcommand]
+   `./dev.sh` also runs any of its functions by name, but not this one: it invokes them
+   without arguments, and `replace_root_ca` is the only menu entry that takes any. So
+   `./dev.sh replace_root_ca file-orchestrator /storage/certs/rootCA.pem fega` exits on
+   `$1: unbound variable` and the arguments you passed are ignored. The menu supplies them.
+   :::
+
+   **Without root**, copy the truststore instead of editing it and point the JVM at the copy.
+   In IntelliJ the same two `-D` flags go in the run configuration's VM options:
+
    ```bash
    docker cp file-orchestrator:/storage/certs/rootCA.pem /tmp/rootCA.pem
    JDK_HOME=$(dirname "$(dirname "$(readlink -f "$(command -v keytool)")")")
@@ -141,13 +166,6 @@ are not.
      -file /tmp/rootCA.pem -keystore /tmp/fega-cacerts -storepass changeit
    export JAVA_TOOL_OPTIONS="-Djavax.net.ssl.trustStore=/tmp/fega-cacerts -Djavax.net.ssl.trustStorePassword=changeit"
    ```
-
-   The stack serves mkcert certificates, so every HTTPS call the suite makes fails PKIX
-   validation until the host JVM trusts that CA. This copies the JDK truststore rather than
-   editing it, which needs no root and leaves your JDK alone; in IntelliJ put the same two
-   `-D` flags in the run configuration's VM options. To modify the JDK in place instead, the
-   container's own form works: `sudo keytool -importcert -file /tmp/rootCA.pem -cacerts
-   -alias fega-root-ca`.
 
 4. **Export the environment, in this order**
 
