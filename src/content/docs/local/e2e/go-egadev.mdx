@@ -42,6 +42,8 @@ JUnit runner is the only one.
    export E2E_TESTS_PROXY_HOST=<host> E2E_TESTS_PROXY_PORT=<port>
    export E2E_TESTS_CEGAMQ_CONN_STR=<amqps-url>
    export E2E_TESTS_CEGAAUTH_USERNAME=<user> E2E_TESTS_CEGAAUTH_PASSWORD=<password>
+   export E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES=5
+   export E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS=10
    ```
 
    The `env.sh` defaults point into the compose stack (the proxy at `proxy`, the CEGA broker
@@ -50,6 +52,11 @@ JUnit runner is the only one.
    `PATCH` calls send them as HTTP basic auth, and `env.sh` defaults them to the mock stack's
    `dummy`, so an unset host run sends a credential egadev never issued rather than failing on
    a missing one.
+
+   The two export-request values drive the outbox poll in the download stage. `env.sh` sets
+   them to 5 and 10, but only a container run sources that file: the Go config falls back to
+   `0` for both, and a retry count of 0 skips the poll entirely, so the stage reports
+   `outbox listing never ran` instead of the result of a listing.
 
 4. **Run it**
 
@@ -81,6 +88,8 @@ rather than fatal to it.
 | `E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH` | used by the JUnit runner's export test; no Go stage reads it. [#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834) drops the unused Go config field, and the variable retires with the JUnit suite ([#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851)) |
 | `E2E_TESTS_CEGAAUTH_USERNAME` | CEGA HTTP basic auth, sent on both upload `PATCH` calls alongside the LS-AAI bearer. `env.sh` supplies the mock value `dummy`, so a host run must override it with a value the live proxy accepts |
 | `E2E_TESTS_CEGAAUTH_PASSWORD` | the password half of that basic auth, with the same `dummy` default and the same need to override |
+| `E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES` | how many times the download stage polls the outbox for the exported file before giving up. Defaults to `0` in the Go config, which skips the poll, so a host run must set it. `env.sh` uses 5 |
+| `E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS` | seconds between those polls, and the initial wait before the first one. Same `0` default and the same need to set it. `env.sh` uses 10 |
 
 The key paths are absolute and resolve anywhere on disk; the fega distribution instead resolves
 bare key filenames under the certs directory. The `env.sh` EGA_DEV block is left commented for
