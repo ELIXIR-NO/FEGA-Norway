@@ -135,8 +135,11 @@ export default defineConfig({
 					activationBkgColor: '#bcdde3',
 					activationBorderColor: '#1f7a8c',
 				},
-				flowchart: { curve: 'basis', padding: 16 },
-				sequence: { useMaxWidth: true, wrap: true },
+				// useMaxWidth would write an inline max-width on each SVG, which pins it to
+				// the column at every width and leaves phone readers a 47% render. Off, the
+				// SVG carries its natural size and theme.css decides where it may shrink.
+				flowchart: { curve: 'basis', padding: 16, useMaxWidth: false },
+				sequence: { useMaxWidth: false, wrap: true },
 			},
 		}),
 		starlight({

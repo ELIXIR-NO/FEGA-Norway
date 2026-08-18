@@ -103,9 +103,22 @@ const group = `theme-${Math.random().toString(36).slice(2, 10)}`;
 				input.addEventListener('change', () => {
 					const next = parseTheme(input.value);
 					onThemeChange(next);
-					this.position(next);
+					// Starlight renders this component twice, in the header and in the
+					// mobile menu footer, and its own updatePickers() syncs only <select>
+					// elements. Without this the offscreen instance keeps the old value and
+					// shows it the moment the viewport crosses the breakpoint.
+					for (const picker of document.querySelectorAll('starlight-theme-select')) {
+						if (picker instanceof StarlightThemeSelect) picker.sync(next);
+					}
 				});
 			}
+		}
+
+		/** Check the radio matching theme and move the thumb to it. */
+		sync(theme: Theme) {
+			const input = this.querySelector<HTMLInputElement>(`input[value="${theme}"]`);
+			if (input) input.checked = true;
+			this.position(theme);
 		}
 
 		/** Check the radio matching theme and move the thumb without animating on first paint. */

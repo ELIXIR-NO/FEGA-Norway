@@ -35,7 +35,7 @@ rest of that module in [#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/85
 
 ## Verification status of the diagrams
 
-All nine diagrams have been audited stage by stage against the source: the SDA services, the
+All ten diagrams have been audited stage by stage against the source: the SDA services, the
 proxy, Data-Out, `lega-commander`, the end-to-end suite and the CI workflows. Corrections from
 that audit are applied.
 
@@ -111,6 +111,9 @@ wiki table above because these were our errors, not inherited ones.
 | JUnit: FEGA, running it from your IDE | `./dev.sh start` "already launches the suite in a container" | It launches the **Go** suite, since `E2E_SUITE` defaults to `go`. The sentence named the wrong runner |
 | Go: EGA_DEV, host run | The host run needs the LS-AAI token, the key paths, the endpoints and the CEGA credentials | It also needs `E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES` and `E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS`. Both default to `0` in the Go config, and the working values live in `env.sh`, which only a container run sources. A retry count of 0 skips the outbox poll, so the download stage fails without ever listing. The JUnit runner reaches the same gap earlier, throwing `NumberFormatException` at startup because it parses both without a default |
 | e2e distributions | Switching suites needs a fresh stack, because "both suites ingest the same fixture and assert on archive and inbox state, so one suite's leftovers fail the other" | The rationale was wrong, and both suites were checked. Each run namespaces itself: the fixture is named from a UUID (`CreateRandomFile` in Go, `UUID.randomUUID()` in `CommonUtils`), the accession id is `EGAF5` plus ten random digits and the dataset id `EGAD` plus eleven, generated the same way on both sides. Every assertion matches on those values rather than counting, so leftovers from an earlier run are invisible to the next one, not fatal to it |
+| Versioning | A bump marker goes "anywhere in a commit message" | Subject lines only. The workflow validates commit **subjects**, so a marker in a body is neither validated nor picked up and the release silently does not happen. The page said both things, 27 lines apart |
+| Go: EGA_DEV | Step 1 of the procedure was `E2E_SUITE=go E2E_ENV=egadev ./dev.sh start` | That is the container form, which needs wiring the operator does, and the step said so immediately after giving it. Anyone following the steps in order ran a dead end. The procedure now starts at the host run, and the container command moved into the accordion that answers it |
+| Known gaps | "All nine diagrams have been audited" | There are ten mermaid blocks across nine pages: `architecture/export-download` carries two, and the second was uncounted |
 
 ## No way to boot the stack without running the suite
 

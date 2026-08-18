@@ -16,7 +16,7 @@ publishes it, returning `200` immediately.
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Admin as Operator (admin auth)
+    actor Admin as Operator
     participant Proxy as localega-tsd-proxy
     participant MQ as RabbitMQ
     participant DOA as Data-Out

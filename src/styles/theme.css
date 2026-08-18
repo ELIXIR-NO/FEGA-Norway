@@ -181,6 +181,9 @@ body {
 
 .fega-card code {
 	font-size: 0.9em;
+	/* The body's gray-3 sits on the code chip's own background, which drops the
+	   pair to 3.45:1 in dark mode. gray-2 clears the 4.5:1 AA floor. */
+	color: var(--sl-color-gray-2);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -330,6 +333,27 @@ pre.mermaid {
 .mermaid svg {
 	max-width: 100%;
 	height: auto;
+}
+
+/* With useMaxWidth off the SVG is its natural size, so the cap above is what
+   fits it to the column. Narrow viewports drop the cap: a phone gets the diagram
+   at full size and pans it, rather than a 47% render with 7px labels. */
+@media (max-width: 50rem) {
+	/* astro-mermaid appends its own sheet at runtime carrying
+	   `pre.mermaid svg { max-width: 100% }`, so lifting the cap needs more
+	   specificity than that, not merely a later rule. */
+	pre.mermaid[data-processed] svg {
+		max-width: none;
+		/* pre.mermaid is a flex container, so lifting the cap is not enough on its
+		   own: the SVG is a flex item and shrinks back to the column without this. */
+		flex-shrink: 0;
+	}
+
+	.mermaid,
+	pre.mermaid {
+		justify-content: flex-start;
+		text-align: left;
+	}
 }
 
 /* Wide reference tables (the workflow list, the component map) are the main

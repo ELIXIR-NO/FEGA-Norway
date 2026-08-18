@@ -17,22 +17,13 @@ JUnit runner is the only one.
 
 <Steps>
 
-1. **Select the distribution**
-
-   ```bash
-   E2E_SUITE=go E2E_ENV=egadev ./dev.sh start
-   ```
-
-   That is the container form, and it needs wiring the operator does (see below): the working
-   path is a host run, steps 2 to 4.
-
-2. **Build the binaries**
+1. **Build the binaries**
 
    ```bash
    cd e2e && go build -o build/ ./cmd/...
    ```
 
-3. **Export credentials, key paths and the real endpoints**
+2. **Export credentials, key paths and the real endpoints**
 
    ```bash
    export E2E_TESTS_LSAAI_TOKEN=<token>
@@ -58,7 +49,7 @@ JUnit runner is the only one.
    `0` for both, and a retry count of 0 skips the poll entirely, so the stage reports
    `outbox listing never ran` instead of the result of a listing.
 
-4. **Run it**
+3. **Run it**
 
    ```bash
    ./build/e2e-egadev
@@ -93,7 +84,7 @@ rather than fatal to it.
 
 The key paths are absolute and resolve anywhere on disk; the fega distribution instead resolves
 bare key filenames under the certs directory. The `env.sh` EGA_DEV block is left commented for
-the same reason: per-operator values, like the endpoints and CEGA credentials in step 3.
+the same reason: per-operator values, like the endpoints and CEGA credentials in step 2.
 
 </details>
 
@@ -104,7 +95,8 @@ The EGA_DEV pipeline reads no staged certificates at all: its keys come from the
 above, the CEGA broker connection verifies against the system roots (the egadev broker
 certificate chains to a public CA that the local stack's mkcert pool cannot verify), the HTTP
 client validates the live certificate, and the direct Postgres check runs only in the FEGA
-pipeline. Running it inside the container instead needs wiring the operator does: the EGA_DEV
+pipeline. The container form, `E2E_SUITE=go E2E_ENV=egadev ./dev.sh start`, needs wiring the operator
+does: the EGA_DEV
 variables are commented placeholders in the compose template's environment block, and the
 `e2e-tests` service mounts no volume through which host-side key files could reach the
 container's filesystem.

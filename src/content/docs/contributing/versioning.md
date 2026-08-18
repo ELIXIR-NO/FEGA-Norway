@@ -40,7 +40,7 @@ commit message explicitly asks for something else.
 
 ## Marker syntax
 
-Add a marker anywhere in a commit message:
+Add a marker to a commit subject line:
 
 ```
 #major_componentName
@@ -69,7 +69,7 @@ targeting `main`, and fails on a typo.
 
 :::caution[Put the marker in the subject line]
 The validation reads commit **subjects** only. A marker in a commit body is neither validated nor
-picked up, so "anywhere in the commit message" is not safe advice. Keep it on the subject line.
+picked up, so it does nothing at all.
 :::
 
 :::note[`e2eTests` is not a release component]
