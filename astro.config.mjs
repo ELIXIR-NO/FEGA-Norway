@@ -3,6 +3,83 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import mermaid from 'astro-mermaid';
 
+// Diagrams render client-side, so a page grows after the browser has already
+// honoured the URL fragment: every heading below a diagram ends up roughly a
+// screen further down than where the reader was left. Re-run the jump once the
+// diagrams stop changing the layout. Silent when the page has no diagrams, when
+// they never render (nothing moved, so the original jump still holds), or once
+// the reader has started scrolling for themselves.
+const rejumpAfterDiagrams = `
+(function () {
+	if (!location.hash) return;
+
+	var jumped = false;
+	var cancelled = false;
+	var observer = null;
+	var timer = 0;
+
+	function stop() {
+		if (observer) observer.disconnect();
+		if (timer) clearTimeout(timer);
+		removeEventListener('wheel', cancel);
+		removeEventListener('touchmove', cancel);
+		removeEventListener('keydown', cancel);
+		removeEventListener('load', jump);
+	}
+
+	function cancel() {
+		cancelled = true;
+		stop();
+	}
+
+	function unrendered() {
+		return document.querySelectorAll('pre.mermaid:not([data-processed])').length;
+	}
+
+	// The browser performs its own fragment scroll at load. Jumping before that
+	// would simply be overwritten, so both conditions have to hold.
+	function ready() {
+		return document.readyState === 'complete' && unrendered() === 0;
+	}
+
+	function jump() {
+		if (jumped || cancelled || !ready()) return;
+		jumped = true;
+		stop();
+		var target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+		// scrollIntoView honours the scroll-padding-top that clears the sticky header.
+		requestAnimationFrame(function () {
+			if (!cancelled && target) target.scrollIntoView();
+		});
+	}
+
+	function watch() {
+		if (cancelled || !document.querySelector('pre.mermaid')) return;
+
+		addEventListener('load', jump);
+		if (unrendered() === 0) return jump();
+
+		observer = new MutationObserver(jump);
+		observer.observe(document.body, {
+			subtree: true,
+			attributes: true,
+			attributeFilter: ['data-processed'],
+		});
+		timer = setTimeout(stop, 5000);
+	}
+
+	addEventListener('wheel', cancel, { passive: true, once: true });
+	addEventListener('touchmove', cancel, { passive: true, once: true });
+	addEventListener('keydown', cancel, { once: true });
+
+	if (document.readyState === 'loading') {
+		addEventListener('DOMContentLoaded', watch);
+	} else {
+		watch();
+	}
+})();
+`;
+
 // site/base target GitHub Pages for a project repo, which serves under
 // /<repo>/. Both must be set or every asset and internal link 404s there
 // while still resolving locally.
@@ -87,6 +164,7 @@ export default defineConfig({
 				baseUrl: 'https://github.com/ELIXIR-NO/FEGA-Norway/edit/gh-pages/',
 			},
 			lastUpdated: true,
+			head: [{ tag: 'script', content: rejumpAfterDiagrams }],
 			customCss: ['./src/styles/theme.css'],
 			components: {
 				ThemeSelect: './src/components/ThemeSelect.astro',
