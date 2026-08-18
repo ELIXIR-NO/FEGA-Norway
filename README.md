@@ -9,15 +9,9 @@ sensitive data can be submitted, archived and released under Norwegian control.
 
 **https://elixir-no.github.io/FEGA-Norway/**
 
-Architecture, local setup, the end-to-end suites, releases and operations all live
-there. This README is deliberately short.
-
-## Running it locally
-
-```sh
-./dev.sh start     # build the images and bring the stack up
-./gradlew build    # build and test every module
-```
+Architecture, [local setup](https://elixir-no.github.io/FEGA-Norway/local/prerequisites/),
+the end-to-end suites, releases and operations all live there. This README is
+deliberately short.
 
 ## License
 
