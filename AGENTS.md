@@ -99,10 +99,17 @@ Conventions every page follows:
   card `href`s are emitted verbatim and unprefixed.
 - Asides use Starlight's `:::type[Title]` directive.
 - Only `bash`, `mermaid` and `text` code fences appear.
-- **`.mdx` only where a Starlight component is used**, which today means `index.mdx` and the
-  `local/e2e/` pages. Those need `import { Steps } from '@astrojs/starlight/components';` below
-  the frontmatter; there is no global import, so a missing line fails the build on that page
-  alone. Everything else stays `.md`. Renaming between the two does not change the slug or URL.
+- **`.mdx` only where a component is used**, which today means `index.mdx`, the `local/e2e/`
+  pages and `local/e2e-distributions.mdx`. Imports go below the frontmatter, per page: there is
+  no global import, so a missing line fails the build on that page alone. The e2e pages need
+  `import { Steps } from '@astrojs/starlight/components';`, and the distributions chooser imports
+  `Tile` and `TileGrid` from `src/components/`. Everything else stays `.md`. Renaming between the
+  two does not change the slug or URL.
+- **The distribution tiles are `<Tile>` inside `<TileGrid>`**, not hand-written markup. Their CSS
+  stays in `theme.css` under `.fega-card` / `.fega-tile`, shared with the landing page, which is
+  still plain markup because its four cards are a different shape and are not going to churn.
+  Note the deliberate `{' '}` in `Tile.astro`: `compressHTML` strips template whitespace, and
+  without it Pagefind indexes the eyebrow and title as one word.
 - **The e2e distribution pages share one shape** on purpose: lede, `<Steps>` for the procedure
   (always visible), then question-shaped `<details>` accordions for the detail. Developers do not
   read walls of text, so keep the steps runnable and put the why behind a summary. Starlight

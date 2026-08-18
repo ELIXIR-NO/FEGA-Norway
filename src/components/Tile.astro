@@ -1,0 +1,34 @@
+---
+// One distribution in the chooser on local/e2e-distributions. Styling stays in
+// src/styles/theme.css, under .fega-card and .fega-tile, because the landing
+// page uses the same .fega-card base from plain markup.
+interface Props {
+	eyebrow: string;
+	title: string;
+	href: string;
+	retired?: boolean;
+	badgeText?: string;
+	badgeHref?: string;
+}
+
+const { eyebrow, title, href, retired = false, badgeText, badgeHref } = Astro.props;
+---
+
+{/* A div rather than an anchor, because a retired tile carries a second link to
+its issue; theme.css stretches the title link over the card and explains it. */}
+<div class:list={['fega-card', 'fega-tile', { 'fega-tile--retired': retired }]}>
+	{/* The space is load-bearing: compressHTML strips template whitespace, and
+	Pagefind then indexes the two adjacent inline spans as one word, so the title
+	stops being searchable ("Mocked stacke2e-fega"). */}
+	<span class="fega-card__eyebrow">{eyebrow}</span>{' '}
+	<span class="fega-card__title fega-tile__title">
+		<a class="fega-tile__link" href={href}>{title}</a>
+	</span>
+	{/* A div where the hand-written markup used a span, because MDX wraps slotted
+	prose in a <p>, which a span cannot legally contain. Starlight's
+	adjacent-sibling margin rule still skips it: the element before is a span. */}
+	<div class="fega-card__body fega-tile__body"><slot /></div>
+	{badgeText && badgeHref && (
+		<a class="fega-tile__badge" href={badgeHref}>{badgeText}</a>
+	)}
+</div>

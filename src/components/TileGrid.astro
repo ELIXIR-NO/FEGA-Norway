@@ -1,0 +1,13 @@
+---
+// A labelled row of <Tile>s. The label is part of the grid rather than a loose
+// paragraph on the page, so the two cannot drift apart when a row moves.
+interface Props {
+	label: string;
+	sublabel?: string;
+}
+
+const { label, sublabel } = Astro.props;
+---
+
+<p class="fega-tiles__label">{label} {sublabel && <span>{sublabel}</span>}</p>
+<div class="fega-tiles"><slot /></div>

@@ -1,0 +1,42 @@
+---
+title: Running the e2e distributions
+description: "Pick one of the six end-to-end distributions: two runners across three target environments."
+---
+
+import Tile from '../../../components/Tile.astro';
+import TileGrid from '../../../components/TileGrid.astro';
+
+Two e2e runners, three target environments, six distributions. Both runners are measured against
+the same docker compose stack, so a difference in result is a difference between the suites and
+nothing else. Pick the one you mean to run.
+
+<TileGrid label="Go runner" sublabel="(the default, one binary per environment)">
+	<Tile eyebrow="Mocked stack" title="e2e-fega" href="../e2e/go-fega/">
+		Nine stages against the local compose stack. What CI runs on every push, and what
+		`./dev.sh start` gives you with no setup at all.
+	</Tile>
+	<Tile eyebrow="Live staging" title="e2e-egadev" href="../e2e/go-egadev/">
+		Six stages against `egadev.uio.no`. Runs on a host as well as in the container, and needs
+		real credentials and key paths.
+	</Tile>
+	<Tile eyebrow="Not implemented" title="e2e-gdi" href="../e2e/go-gdi/">
+		A placeholder that exits 1 on purpose, so a GDI run can never be mistaken for a pass.
+	</Tile>
+</TileGrid>
+
+<TileGrid label="JUnit runner" sublabel="(retiring, one test class per environment)">
+	<Tile eyebrow="Mocked stack" title="FEGA" href="../e2e/junit-fega/" retired
+		badgeText="Retiring · #851" badgeHref="https://github.com/ELIXIR-NO/FEGA-Norway/issues/851">
+		The same nine checks as `e2e-fega`. The only distribution you can run from an IDE, which
+		makes it the one to reach for when debugging a service.
+	</Tile>
+	<Tile eyebrow="Live staging" title="EGA_DEV" href="../e2e/junit-egadev/" retired
+		badgeText="Retiring · #851" badgeHref="https://github.com/ELIXIR-NO/FEGA-Norway/issues/851">
+		The same six checks as `e2e-egadev`, against the same live environment.
+	</Tile>
+	<Tile eyebrow="Empty" title="GDI" href="../e2e/junit-gdi/" retired
+		badgeText="Retiring · #851" badgeHref="https://github.com/ELIXIR-NO/FEGA-Norway/issues/851">
+		Seven test methods with empty bodies. It asserts nothing and always passes, which is worse
+		than the Go placeholder that fails.
+	</Tile>
+</TileGrid>
