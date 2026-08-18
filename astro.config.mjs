@@ -167,6 +167,7 @@ export default defineConfig({
 			head: [{ tag: 'script', content: rejumpAfterDiagrams }],
 			customCss: ['./src/styles/theme.css'],
 			components: {
+				Footer: './src/components/Footer.astro',
 				ThemeSelect: './src/components/ThemeSelect.astro',
 			},
 			sidebar: [
