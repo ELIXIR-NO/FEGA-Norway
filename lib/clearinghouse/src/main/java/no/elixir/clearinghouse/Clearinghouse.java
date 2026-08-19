@@ -110,6 +110,8 @@ public enum Clearinghouse {
     var jwk = JWKProvider.INSTANCE.get(jku, keyId);
     try {
       return getVisaWithPublicKey(visaToken, (RSAPublicKey) jwk.toKey());
+    } catch (SignatureException e) {
+      throw e;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       return Optional.empty();
@@ -158,7 +160,7 @@ public enum Clearinghouse {
         return Optional.of(visa);
       }
     } catch (SignatureException e) {
-      log.error("Invalid signature in visa token", e);
+      throw e;
     } catch (JsonSyntaxException e) {
       log.error("Invalid JSON syntax in visa claim", e);
     } catch (Exception e) {
@@ -190,6 +192,8 @@ public enum Clearinghouse {
       return getVisaTokensWithPublicKey(accessToken, (RSAPublicKey) jwk.toKey());
     } catch (IOException e) {
       throw new RuntimeException(e);
+    } catch (SignatureException e) {
+      throw e;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       return Collections.emptyList();
@@ -248,7 +252,7 @@ public enum Clearinghouse {
     } catch (IOException e) {
       throw new RuntimeException(e);
     } catch (SignatureException e) {
-      log.error("Invalid signature in visa token", e);
+      throw e;
     } catch (JsonSyntaxException e) {
       log.error("Invalid JSON syntax in visa claim", e);
     } catch (Exception e) {
