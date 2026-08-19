@@ -62,17 +62,14 @@ disagree, the code is right and the diagram is a bug.
 
 Some pages carry inline notes about work in flight. As of writing:
 
-- The e2e work is documented **ahead of `main`**, deliberately:
-  [the dev.sh workflow](../../local/dev-script/) and
-  [the e2e distributions](../../local/e2e-distributions/) describe the integration branch of
-  pull request [#833](https://github.com/ELIXIR-NO/FEGA-Norway/pull/833) (the Go `e2e` module
-  replacing the Java `e2eTests`), together with
-  [#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834) (startup config validation) and
-  [#836](https://github.com/ELIXIR-NO/FEGA-Norway/pull/836) (proxy token unit tests).
-  [The component map](../../start/components/) still describes `main`, where the module is the
-  Java `e2eTests` and the release tooling knows nothing of `e2e`.
+- **Startup config validation** is described on
+  [the egadev page](../../local/e2e/go-egadev/) as arriving, not as present. It lands through
+  [#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834). Until that merges, a missing or
+  malformed `E2E_TESTS_*` value surfaces when a stage reaches it rather than at startup.
 
-When those merge, drop the note at the top of the dev.sh page and update the surrounding text.
+The Go `e2e` module, the runner and the stack are on `main` as of 2026-08-19, so the pages
+describing them are no longer ahead of it. When #834 merges, drop the note at the top of
+[the dev.sh workflow](../../local/dev-script/) and the caveat on the egadev page.
 
 ## Corrections already applied
 

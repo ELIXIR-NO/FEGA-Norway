@@ -88,9 +88,8 @@ export request. No C1, finalize or inbox-cleanup test, same as `e2e-egadev`.
 <details>
 <summary>what does it read that the Go binary does not?</summary>
 
-`E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH`, which its export test uses and no Go stage does.
-[#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834) drops the unused Go config field,
-and the variable itself retires with the JUnit suite
+`E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH`, which its export test uses and no Go stage does. The Go
+config still carries the field for as long as this runner reads it, so the two retire together
 ([#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851)).
 
 </details>

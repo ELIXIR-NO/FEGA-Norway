@@ -9,12 +9,6 @@ import { Steps } from '@astrojs/starlight/components';
 mapping, release, download via a FEGA export request; no C1, finalize or inbox-cleanup stage)
 against the live `egadev.uio.no` environment, and needs real credentials and key paths.
 
-:::note[Ahead of `main`]
-The Go runner lands through [#833](https://github.com/ELIXIR-NO/FEGA-Norway/pull/833) and
-[#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834) and is not on `main` yet, where the
-JUnit runner is the only one.
-:::
-
 <Steps>
 
 1. **Build the binaries**
@@ -76,7 +70,7 @@ rather than fatal to it.
 | `E2E_TESTS_EGA_DEV_BASE_DIRECTORY` | where the 10 MiB test fixture and its `.enc` are created, and where the downloaded file is written (`<base>/out/`) |
 | `E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH` | the Crypt4GH public key the fixture is encrypted to |
 | `E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH` | the RSA key that signs the visa carried by the export request |
-| `E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH` | used by the JUnit runner's export test; no Go stage reads it. [#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834) drops the unused Go config field, and the variable retires with the JUnit suite ([#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851)) |
+| `E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH` | used by the JUnit runner's export test; no Go stage reads it. The Go config still carries the field because the JUnit runner reads it, so both retire together with that suite ([#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851)) |
 | `E2E_TESTS_CEGAAUTH_USERNAME` | CEGA HTTP basic auth, sent on both upload `PATCH` calls alongside the LS-AAI bearer. `env.sh` supplies the mock value `dummy`, so a host run must override it with a value the live proxy accepts |
 | `E2E_TESTS_CEGAAUTH_PASSWORD` | the password half of that basic auth, with the same `dummy` default and the same need to override |
 | `E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES` | how many times the download stage polls the outbox for the exported file before giving up. Defaults to `0` in the Go config, which skips the poll, so a host run must set it. `env.sh` uses 5 |
@@ -121,7 +115,7 @@ It never verifies the signature: it base64url-decodes the payload, requires non-
 itself; the live environment validates the token when the runner presents it. That is also why
 the mocked stack needs no token at all: there, the runner signs its own visa with a key the
 stack already trusts. The proxy-side rejection of forged tokens has its own logic-level unit
-tests ([#836](https://github.com/ELIXIR-NO/FEGA-Norway/pull/836)); an endpoint-level check
+tests; an endpoint-level check
 against a running proxy is tracked in
 [#854](https://github.com/ELIXIR-NO/FEGA-Norway/issues/854).
 
