@@ -21,7 +21,7 @@ WORKDIR /app
 COPY cli/lega-commander/ .
 RUN go build -o /lega-commander .
 
-FROM alpine:3.21
+FROM alpine:3.24
 # The local stack anchors on the staged rootCA.pem explicitly (pg and amqp
 # build their own pools, httpx skips verification, lega-commander runs with
 # TLS_SKIP_VERIFY), but the egadev run validates the live egadev certificate,
