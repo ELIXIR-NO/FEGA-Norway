@@ -6,7 +6,7 @@ export OPENSSL_ROOT_CERT_PASSWORD=r00t_cert_passw0rd
 export OPENSSL_SERVER_CERT_PASSWORD=server_cert_passw0rd
 export OPENSSL_CLIENT_CERT_PASSWORD=client_cert_passw0rd
 export KEYTOOL_TRUSTSTORE_PASSWORD=trustst0re_passw0rd
-export CRYPT4GH_KEY_PASSWORD=key_passw0rd # CRYPT4GH key password
+export CRYPT4GH_KEY_PASSWORD=key_passw0rd
 
 # CEGAMQ
 # ---------------------------------------------------------------------------
@@ -203,42 +203,40 @@ export HEARTBEAT_REDIS_DB=0
 # E2E Test
 # ---------------------------------------------------------------------------
 
-# Determines the runtime mode for the E2E tests.
-# If set to "container", the entire test runs inside a Docker container.
-# If set to "local", you can run the test using: `./gradlew :e2eTests:test`.
-# Mainly used to switch the host/ports and file systems to fetch the certificates.
-export E2E_TESTS_RUNTIME=container
+# Which runner the e2e-tests container builds and runs. Both suites drive the
+# same stack, so only this image changes:
+#   go   -> e2e/          the Go runner, selected per environment by E2E_ENV
+#   java -> e2eTests/     the retiring JUnit suite, kept until the Go one has
+#                         proven itself, selected by E2E_TESTS_INTEGRATION
+# Override from the shell, e.g. `E2E_SUITE=java ./dev.sh start`.
+export E2E_SUITE=${E2E_SUITE:-go}
+case "$E2E_SUITE" in
+  go)   export E2E_SUITE_DOCKERFILE=e2e/e2e-tests.Dockerfile ;;
+  java) export E2E_SUITE_DOCKERFILE=e2eTests/e2e-tests.Dockerfile ;;
+  *)
+    echo "env.sh: unknown E2E_SUITE '$E2E_SUITE' (expected go|java)" >&2
+    return 1 2>/dev/null || exit 1
+    ;;
+esac
 
-# Determines which integration should be run.
-# Either FEGA or GDI or EGA_DEV
-export E2E_TESTS_INTEGRATION=FEGA
+# Go runner: picks the binary, and so the target environment.
+# Either fega, egadev or gdi.
+export E2E_ENV=${E2E_ENV:-fega}
 
-# Helper function to choose value based on runtime
-function _runtime_() {
-  local container_value=$1
-  local local_value=$2
-
-  if [ "$E2E_TESTS_RUNTIME" = "container" ]; then
-    echo "$container_value"
-  else
-    echo "$local_value"
-  fi
-}
-
-# Use the function for environment variable assignments
-export E2E_TESTS_PROXY_HOST=$(_runtime_ "proxy" "localhost")
-export E2E_TESTS_PROXY_PORT=$(_runtime_ "8080" "10443")
-export E2E_TESTS_SDA_DOA_HOST=$(_runtime_ "doa" "localhost")
-export E2E_TESTS_SDA_DOA_PORT=$(_runtime_ "8080" "80")
-export E2E_TESTS_CEGAMQ_CONN_STR="amqps://$CEGAMQ_USERNAME:$CEGAMQ_PASSWORD@$(_runtime_ $CEGAMQ_HOST "localhost"):$CEGAMQ_PORT/$CEGAMQ_VHOST"
+# Endpoints as seen from inside the stack network. The JUnit block at the end of
+# this file overrides them when it runs from the host.
+export E2E_TESTS_PROXY_HOST=proxy
+export E2E_TESTS_PROXY_PORT=8080
+export E2E_TESTS_SDA_DOA_HOST=doa
+export E2E_TESTS_SDA_DOA_PORT=8080
+export E2E_TESTS_CEGAMQ_CONN_STR="amqps://$CEGAMQ_USERNAME:$CEGAMQ_PASSWORD@$CEGAMQ_HOST:$CEGAMQ_PORT/$CEGAMQ_VHOST"
 export E2E_TESTS_CEGAAUTH_USERNAME=$CEGAAUTH_CEGA_USERS_USER
 export E2E_TESTS_CEGAAUTH_PASSWORD=$CEGAAUTH_CEGA_USERS_PASSWORD
-export E2E_TESTS_SDA_DB_HOST=$(_runtime_ "$DB_HOST" "localhost")
+export E2E_TESTS_SDA_DB_HOST=$DB_HOST
 export E2E_TESTS_SDA_DB_PORT=$DB_PORT
 export E2E_TESTS_SDA_DB_USERNAME=$DB_POSTGRES_USER
 export E2E_TESTS_SDA_DB_PASSWORD=$DB_POSTGRES_PASSWORD
 export E2E_TESTS_SDA_DB_DATABASE_NAME=$DB_POSTGRES_DB
-export E2E_TESTS_TRUSTSTORE_PASSWORD=$KEYTOOL_TRUSTSTORE_PASSWORD
 export E2E_TESTS_PROXY_TOKEN_AUDIENCE=$PROXY_TOKEN_AUDIENCE
 export E2E_TESTS_PROXY_ADMIN_USERNAME=$PROXY_ADMIN_USER
 export E2E_TESTS_PROXY_ADMIN_PASSWORD=$PROXY_ADMIN_PASSWORD
@@ -247,7 +245,47 @@ export E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS=10
 export E2E_TESTS_TSD_PROJECT=p11
 export E2E_TESTS_LSAAI_SUBJECT=dummy@elixir-europe.org
 
-# New configs introduced for EGA DEV testing
-# export E2E_TESTS_EGA_DEV_BASE_DIRECTORY=
-# export E2E_TESTS_EGA_DEV_PUBLIC_KEY_FILENAME=
+# Where the Go runner finds the staged TLS material (rootCA.pem, client certs,
+# archive key). Exists so a binary can run on a host, where /storage/certs does
+# not; the in-binary default covers the container, so this is deliberately not
+# passed through the compose template (a host override must never leak into the
+# stack).
+export E2E_TESTS_CERTS_DIR=${E2E_TESTS_CERTS_DIR:-/storage/certs}
+
+# EGA_DEV only; set these when E2E_ENV=egadev (or, on the Java runner,
+# E2E_TESTS_INTEGRATION=EGA_DEV):
 # export E2E_TESTS_LSAAI_TOKEN=
+# export E2E_TESTS_EGA_DEV_BASE_DIRECTORY=
+# export E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH=
+# export E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH=
+
+# JUnit runner only (e2eTests/)
+# ---------------------------------------------------------------------------
+# Everything below exists solely for the retiring JUnit suite. The Go runner
+# reads none of it. Delete this whole block together with the module, see
+# ELIXIR-NO/FEGA-Norway#851.
+
+# Picks the top-level test class. Either FEGA, GDI or EGA_DEV.
+export E2E_TESTS_INTEGRATION=${E2E_TESTS_INTEGRATION:-FEGA}
+
+# CertificateUtils.createSslContext opens truststore.p12 with this, so
+# AccessionTest, MappingTest and ReleaseTest all fail on a null password when it
+# is unset. The Go runner builds its own TLS pools and never reads it.
+export E2E_TESTS_TRUSTSTORE_PASSWORD=$KEYTOOL_TRUSTSTORE_PASSWORD
+
+# TokenUtils.generateVisaToken takes a public key path as well as a private one,
+# which the Go runner does not. EGA_DEV only:
+# export E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH=
+
+# "container" runs the suite inside the stack, which is what the endpoints above
+# are set for. "local" runs it from the host via `./gradlew :e2eTests:test`, so
+# the endpoints move to the ports the stack publishes.
+export E2E_TESTS_RUNTIME=${E2E_TESTS_RUNTIME:-container}
+if [ "$E2E_TESTS_RUNTIME" = "local" ]; then
+  export E2E_TESTS_PROXY_HOST=localhost
+  export E2E_TESTS_PROXY_PORT=10443
+  export E2E_TESTS_SDA_DOA_HOST=localhost
+  export E2E_TESTS_SDA_DOA_PORT=80
+  export E2E_TESTS_SDA_DB_HOST=localhost
+  export E2E_TESTS_CEGAMQ_CONN_STR="amqps://$CEGAMQ_USERNAME:$CEGAMQ_PASSWORD@localhost:$CEGAMQ_PORT/$CEGAMQ_VHOST"
+fi

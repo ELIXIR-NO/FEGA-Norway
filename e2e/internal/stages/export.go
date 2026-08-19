@@ -1,0 +1,187 @@
+package stages
+
+import (
+	"bytes"
+	"context"
+	"crypto/ecdh"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/adapters/c4gh"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/adapters/httpx"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/check"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/common"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/constants"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/state"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/token"
+)
+
+// DownloadViaFegaExportRequest runs the EGA_DEV download: request a FEGA export,
+// poll the outbox listing, download via the proxy, decrypt and verify checksums.
+// The export payload carries the recipient X25519 key as base64 SPKI DER (see
+// buildFegaExportPayload); that encoding is not yet verified against live egadev.
+func DownloadViaFegaExportRequest(ctx context.Context, s *state.State) error {
+	visaToken, err := token.GenerateVisaToken(s.Config, s.DatasetID, s.Config.EgaDevJwtPrivKeyPath)
+	if err != nil {
+		return err
+	}
+	passportToken := s.Config.LSAAIToken
+	client := httpx.New(s.Config)
+
+	// 1) FEGA export request
+	payload, err := buildFegaExportPayload(s, visaToken)
+	if err != nil {
+		return err
+	}
+	exportURL := fmt.Sprintf("https://%s:%s/export/fega", s.Config.ProxyHost, s.Config.ProxyPort)
+	exportRes, err := client.Do(ctx, "POST", exportURL,
+		httpx.WithBody([]byte(payload), "application/json"),
+		httpx.WithBasicAuth(s.Config.ProxyAdminUsername, s.Config.ProxyAdminPassword))
+	if err != nil {
+		return err
+	}
+	if err := check.Equal(exportRes.Status, 200, "FEGA export request"); err != nil {
+		return err
+	}
+
+	// 2) poll the outbox listing until the file appears
+	status, listing, err := checkFilesWithRetry(ctx, s, client, passportToken)
+	if err != nil {
+		return err
+	}
+	if listing == nil {
+		return check.Failf("outbox listing never ran: E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES is %d",
+			s.Config.ExportRequestMaxRetries)
+	}
+	if err := check.Equal(status, 200, "outbox listing status"); err != nil {
+		return err
+	}
+	if err := check.False(len(listing.Files) == 0, "outbox listing is empty"); err != nil {
+		return err
+	}
+	if err := check.Equal(countMatching(listing, s.EncName()), 1, "exactly one outbox file matching the upload"); err != nil {
+		return err
+	}
+
+	// 3) download via the proxy and validate the file on disk
+	basedir := s.Config.EgaDevBaseDirectory
+	if basedir != "" && basedir[len(basedir)-1] != '/' {
+		basedir += "/"
+	}
+	outPath := basedir + "out/" + s.EncName()
+	downloadURL := fmt.Sprintf("https://%s:%s/stream/%s", s.Config.ProxyHost, s.Config.ProxyPort, s.EncName())
+	dlRes, err := client.Do(ctx, "GET", downloadURL, httpx.WithProxyBearer(passportToken))
+	if err != nil {
+		return err
+	}
+	if err := check.Equal(dlRes.Status, 200, "proxy download"); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(outPath, dlRes.Body, 0o644); err != nil {
+		return err
+	}
+	info, err := os.Stat(outPath)
+	if err != nil {
+		return check.Failf("downloaded file should exist: %v", err)
+	}
+	if err := check.True(info.Mode().IsRegular(), "downloaded file should be regular"); err != nil {
+		return err
+	}
+	if err := check.True(info.Size() > 0, "downloaded file should not be empty"); err != nil {
+		return err
+	}
+
+	// 4) decrypt and verify checksums
+	s.Log.Info("decrypting the downloaded file")
+	decrypted, err := c4gh.Decrypt(bytes.NewReader(dlRes.Body), s.Recipient.Private)
+	if err != nil {
+		return fmt.Errorf("decrypting downloaded file: %w", err)
+	}
+	if err := check.Equal(common.Sha256HexBytes(decrypted), s.RawSHA256, "decrypted SHA256 matches original"); err != nil {
+		return err
+	}
+	return check.Equal(common.Md5HexBytes(decrypted), s.RawMD5, "decrypted MD5 matches original")
+}
+
+// checkFilesWithRetry polls GET /files?inbox=false until the exported file
+// appears, the request fails, or the retries are exhausted. The outbox is never
+// emptied between runs, so a non-empty listing on its own says nothing: only a
+// listing carrying s.EncName() ends the poll. The last listing is returned even
+// when exhausted, so the caller's assertions fail against what was really
+// there. listing is nil only if no attempt was made at all.
+func checkFilesWithRetry(ctx context.Context, s *state.State, client *httpx.Client, accessToken string) (int, *fileListing, error) {
+	listURL := fmt.Sprintf("https://%s:%s/files?inbox=false", s.Config.ProxyHost, s.Config.ProxyPort)
+	wanted := s.EncName()
+	maxRetries := s.Config.ExportRequestMaxRetries
+	intervalSec := int(s.Config.ExportRequestIntervalInSeconds)
+	s.Log.Info("waiting before the initial outbox listing call", "seconds", intervalSec)
+	common.WaitForProcessing(intervalSec * 1000)
+
+	var (
+		lastStatus  int
+		lastListing *fileListing
+	)
+	for i := 1; i <= maxRetries; i++ {
+		// Cap each listing attempt so a wedged proxy fails the poll instead of
+		// hanging the run until the CI job timeout.
+		attemptCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		res, err := client.Do(attemptCtx, "GET", listURL, httpx.WithProxyBearer(accessToken))
+		cancel()
+		if err != nil {
+			return 0, nil, err
+		}
+		if res.Status != 200 {
+			return res.Status, &fileListing{}, nil
+		}
+		var listing fileListing
+		if err := json.Unmarshal(res.Body, &listing); err != nil {
+			return 0, nil, fmt.Errorf("parsing outbox listing: %w", err)
+		}
+		lastStatus, lastListing = res.Status, &listing
+		if countMatching(&listing, wanted) > 0 {
+			s.Log.Info("exported file found in the outbox", "file", wanted, "attempt", i)
+			return res.Status, &listing, nil
+		}
+		s.Log.Info("exported file not in the outbox yet",
+			"file", wanted, "listed", len(listing.Files), "attempt", i, "max", maxRetries)
+		if i < maxRetries {
+			common.WaitForProcessing(intervalSec * 1000)
+		}
+	}
+	s.Log.Warn("exported file never appeared in the outbox", "file", wanted, "attempts", maxRetries)
+	return lastStatus, lastListing, nil
+}
+
+// countMatching counts the listed files named fileName.
+func countMatching(listing *fileListing, fileName string) int {
+	n := 0
+	for _, f := range listing.Files {
+		if f.FileName == fileName {
+			n++
+		}
+	}
+	return n
+}
+
+// buildFegaExportPayload builds the /export/fega body, encoding the recipient
+// X25519 public key as base64-encoded SPKI DER.
+func buildFegaExportPayload(s *state.State, visaToken string) (string, error) {
+	pub, err := ecdh.X25519().NewPublicKey(s.Recipient.Public[:])
+	if err != nil {
+		return "", err
+	}
+	spki, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		return "", err
+	}
+	b64 := base64.StdEncoding.EncodeToString(spki)
+	return fmt.Sprintf(constants.ExportReqBodyFEGA, s.DatasetID, visaToken, b64, "DATASET_ID"), nil
+}

@@ -50,7 +50,13 @@ openssl rsa -pubout \
 # key, JWT public key, and other secrets
 openssl rsa -pubout -in jwt.priv.pem -out jwt.pub.pem
 printf "%s" "${CRYPT4GH_KEY_PASSWORD}" >ega.sec.pass
-crypt4gh generate -n ega -p ${CRYPT4GH_KEY_PASSWORD}
+crypt4gh generate -n ega -p "${CRYPT4GH_KEY_PASSWORD}"
+# Fail loudly if key generation produced no/invalid key, instead of letting a
+# broken ega.sec silently propagate to the SDA services (ingest/verify/...).
+if [ ! -s ega.sec.pem ] || ! grep -q "BEGIN CRYPT4GH ENCRYPTED PRIVATE KEY" ega.sec.pem; then
+  echo "ERROR: crypt4gh did not produce a valid ega.sec.pem private key" >&2
+  exit 1
+fi
 
 # Copy root CA certificate and its private key
 cp "$(mkcert -CAROOT)/rootCA.pem" rootCA.pem

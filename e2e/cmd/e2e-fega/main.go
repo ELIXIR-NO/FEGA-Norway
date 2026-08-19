@@ -1,0 +1,39 @@
+// Command e2e-fega runs the FEGA pipeline against the self-contained,
+// fully-mocked docker-compose stack (the GitHub CI environment). Selected by
+// E2E_ENV=fega at the container entrypoint; container-only, it depends on the
+// certs and services the stack stages.
+package main
+
+import (
+	"context"
+	"os"
+
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/config"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/pipeline"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/report"
+	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/state"
+)
+
+func main() { os.Exit(run()) }
+
+func run() (code int) {
+	log := report.New(os.Stdout)
+	cfg := config.Load(config.IntegrationFEGA)
+
+	st, err := state.SetupLocal(cfg, log)
+	if err != nil {
+		log.Error("setup failed", "err", err)
+		return 1
+	}
+	defer func() {
+		if err := st.Cleanup(); err != nil {
+			log.Error("cleanup failed", "err", err)
+			code = 1
+		}
+	}()
+
+	if err := pipeline.RunLocal(context.Background(), st); err != nil {
+		return 1
+	}
+	return 0
+}

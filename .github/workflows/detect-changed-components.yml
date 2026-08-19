@@ -23,6 +23,11 @@ jobs:
           filters: |
             lega-commander:
               - 'cli/lega-commander/**'
+            # Both e2e runners are tracked while they coexist. `e2e` owns the
+            # stack and the Go suite; `e2eTests` is the retiring JUnit runner
+            # and its entry goes away with the directory.
+            e2e:
+              - 'e2e/**'
             e2eTests:
               - 'e2eTests/**'
             clearinghouse:
@@ -45,6 +50,7 @@ jobs:
         run: |
           components=("FEGA-Norway")
           [[ "${{ steps.changes.outputs.lega-commander }}" == "true" ]] && components+=("lega-commander")
+          [[ "${{ steps.changes.outputs.e2e }}" == "true" ]] && components+=("e2e")
           [[ "${{ steps.changes.outputs.e2eTests }}" == "true" ]] && components+=("e2eTests")
           [[ "${{ steps.changes.outputs.clearinghouse }}" == "true" ]] && components+=("clearinghouse")
           [[ "${{ steps.changes.outputs.crypt4gh }}" == "true" ]] && components+=("crypt4gh")

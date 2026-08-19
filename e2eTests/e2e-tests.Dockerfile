@@ -1,3 +1,9 @@
+# The retiring JUnit e2e runner, kept alongside the Go one in ../e2e until that
+# suite has proven itself. Selected by E2E_SUITE=java; see ../e2e/env.sh.
+#
+# Build context is the FEGA-Norway root (compose `context: ..`), so paths below
+# are repo-relative.
+
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
@@ -15,12 +21,12 @@ COPY services/tsd-api-mock/build.gradle.kts services/tsd-api-mock/
 COPY services/cega-mock/build.gradle.kts services/cega-mock/
 COPY services/mq-interceptor/build.gradle.kts services/mq-interceptor/
 COPY e2eTests/build.gradle.kts e2eTests/
-RUN mkdir -p cli/lega-commander
+RUN mkdir -p cli/lega-commander e2e
 
 # Layer 3: resolve dependencies (cached until build.gradle.kts changes)
 RUN ./gradlew :e2eTests:dependencies --no-daemon 2>&1 || true
 
-# Layer 4: source code (changes frequently — only what this module needs)
+# Layer 4: source code (changes frequently, only what this module needs)
 COPY lib/crypt4gh/src/ lib/crypt4gh/src/
 COPY e2eTests/src/ e2eTests/src/
 
@@ -42,7 +48,7 @@ WORKDIR /fega-norway
 
 COPY --from=builder /app/e2eTests/build/libs/e2eTests.jar /fega-norway/e2eTests.jar
 COPY --from=lega-cmd-builder /lega-commander /usr/local/bin/lega-commander
-COPY e2eTests/entrypoint.sh /fega-norway/entrypoint.sh
+COPY e2eTests/java-runner-entrypoint.sh /fega-norway/entrypoint.sh
 
 RUN chmod +x /fega-norway/entrypoint.sh
 

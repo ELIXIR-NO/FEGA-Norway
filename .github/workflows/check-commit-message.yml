@@ -6,7 +6,11 @@ on:
 
 env:
   BUMPS: "major minor patch"
-  COMPONENTS: "lega-commander e2eTests clearinghouse crypt4gh tsd-file-api-client cega-mock localega-tsd-proxy mq-interceptor tsd-api-mock FEGA-Norway"
+  # Every releasable component. A `#<bump>_<component>` marker naming anything
+  # outside this list fails the check, so a component added to
+  # detect-changed-components.yml must be added here too or its bump markers
+  # become unusable.
+  COMPONENTS: "lega-commander e2e e2eTests clearinghouse crypt4gh tsd-file-api-client cega-mock localega-tsd-proxy mq-interceptor tsd-api-mock FEGA-Norway"
 
 jobs:
   check-commit-message:
