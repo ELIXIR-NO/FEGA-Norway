@@ -22,7 +22,7 @@ java {
 }
 
 dependencies {
-    implementation("org.apache.commons:commons-collections4:4.5.0")
+    implementation("org.apache.commons:commons-collections4:4.6.0")
     implementation("org.apache.commons:commons-lang3:3.20.0")
     implementation("com.google.code.gson:gson:2.14.0")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
@@ -32,11 +32,11 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:5.4.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:6.1.1")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.1")
-    testImplementation("org.bouncycastle:bcprov-jdk15to18:1.84")
-    testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.84")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:6.1.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
+    testImplementation("org.bouncycastle:bcprov-jdk15to18:1.85.2")
+    testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.85.2")
     testImplementation("com.squareup.okhttp3:mockwebserver:5.4.0")
 }
 
