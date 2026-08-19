@@ -31,7 +31,7 @@ Published to Maven Central, consumed by the services here and usable on their ow
 
 | Component | Language | What it does |
 | --- | --- | --- |
-| `lega-commander` | Go | The command-line tool submitters use to encrypt, upload, list and download files. |
+| `lega-commander` | Go | The command-line tool submitters use to upload, list and download files. It checks a file is already Crypt4GH rather than encrypting it. |
 
 ## Test suite
 
