@@ -1,6 +1,7 @@
 name: Release Pre Check
 on:
   merge_group:
+  push:
   pull_request:
     branches:
       - main
@@ -35,12 +36,8 @@ jobs:
 
       - name: Build and publish to local staging for JReleaser
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
-        env:
-          SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: |
-          ./gradlew lib:${{matrix.component}}:clean lib:${{matrix.component}}:build lib:${{matrix.component}}:publishMavenJavaPublicationToLocalStagingRepository \
-            -Pversion=1.0.0-DRYRUN
+          ./gradlew lib:${{matrix.component}}:clean lib:${{matrix.component}}:build -Pversion=1.0.0-DRYRUN
 
       - name: Run JReleaser
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh'}}
