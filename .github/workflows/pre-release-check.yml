@@ -47,7 +47,7 @@ jobs:
           JRELEASER_MAVENCENTRAL_USERNAME: dummy
           JRELEASER_MAVENCENTRAL_TOKEN: dummy
         with:
-          arguments: deploy --dry-run -c lib/${{matrix.component}}/jreleaser.yml
+          arguments: deploy --dry-run --skip-signing -c lib/${{matrix.component}}/jreleaser.yml
 
       - name: Print Logs
         if: ${{ always() && (matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh')}}
