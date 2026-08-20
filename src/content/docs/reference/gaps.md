@@ -58,19 +58,6 @@ Mermaid so they can be version-controlled, themed and diffed rather than dependi
 outside the project's control. Each page links its original sketch. If a diagram and the code
 disagree, the code is right and the diagram is a bug.
 
-## Pending changes not yet reflected
-
-Some pages carry inline notes about work in flight. As of writing:
-
-- **Startup config validation** is described on
-  [the egadev page](../../local/e2e/go-egadev/) as arriving, not as present. It lands through
-  [#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834). Until that merges, a missing or
-  malformed `E2E_TESTS_*` value surfaces when a stage reaches it rather than at startup.
-
-The Go `e2e` module, the runner and the stack are on `main` as of 2026-08-19, so the pages
-describing them are no longer ahead of it. When #834 merges, drop the note at the top of
-[the dev.sh workflow](../../local/dev-script/) and the caveat on the egadev page.
-
 ## Corrections already applied
 
 These differ deliberately from the old wiki, having been checked against the code on `main`:

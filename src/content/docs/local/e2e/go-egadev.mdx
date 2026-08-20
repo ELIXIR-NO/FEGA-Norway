@@ -124,11 +124,11 @@ against a running proxy is tracked in
 <details>
 <summary>what should I watch out for?</summary>
 
-Today a misconfigured run fails deep inside a stage; startup validation arrives with
-[#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834), which checks the config right after
-loading, aggregates every missing variable into a single error naming them all, range-checks
-ports to 1-65535, and requires positive export polling knobs. And one caveat from the source
-itself: the export request encodes the recipient key as base64 SPKI DER, an encoding the code
-marks as not yet verified against live egadev.
+A misconfigured run fails at startup rather than deep inside a stage. The config is checked right
+after loading, every missing variable is aggregated into a single error naming them all, ports are
+range-checked to 1-65535, and the export polling knobs have to be positive.
+
+What is left to watch for comes from the source itself: the export request encodes the recipient key
+as base64 SPKI DER, and the code marks that encoding as not yet verified against live egadev.
 
 </details>

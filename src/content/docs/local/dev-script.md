@@ -10,13 +10,6 @@ directory by name. Invoked from anywhere else it fails immediately.
 
 Run it with no arguments for an interactive menu, or pass a subcommand directly.
 
-:::note[One piece is still in review]
-The `e2e/` module, the Go runner and the stack described here are on `main`. The startup config
-validation is not: it lands through
-[#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834), so on `main` a missing or malformed
-`E2E_TESTS_*` value still surfaces when a stage uses it rather than at startup.
-:::
-
 ## Starting and stopping
 
 ```bash
