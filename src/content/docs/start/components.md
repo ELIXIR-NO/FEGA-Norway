@@ -42,7 +42,7 @@ Published to Maven Central, consumed by the services here and usable on their ow
 
 :::note[Two runners, for now]
 Both are on `main` and both are tracked as release components. `E2E_SUITE` picks which one runs,
-defaulting to `e2e`. The JUnit module is being removed in
+`go` or `java`, and defaults to `go`. The JUnit module is being removed in
 [#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851); until then a change under
 `e2eTests/` still cuts a release for it.
 :::
