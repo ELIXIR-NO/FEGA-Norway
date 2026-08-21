@@ -10,16 +10,6 @@ directory by name. Invoked from anywhere else it fails immediately.
 
 Run it with no arguments for an interactive menu, or pass a subcommand directly.
 
-:::note[This page documents the integration branch, ahead of main]
-The e2e work described on this site, the `e2e/` module and stack, the Go runner and its
-configuration, is landing through pull requests
-[#833](https://github.com/ELIXIR-NO/FEGA-Norway/pull/833) (the Go runner and the module move),
-[#834](https://github.com/ELIXIR-NO/FEGA-Norway/pull/834) (startup config validation) and
-[#836](https://github.com/ELIXIR-NO/FEGA-Norway/pull/836) (proxy token unit tests). On `main`
-the module still lives at `e2eTests/` with only the JUnit runner. The site documents the
-integration state as current; the PRs carry the deltas back to `main`.
-:::
-
 ## Starting and stopping
 
 ```bash

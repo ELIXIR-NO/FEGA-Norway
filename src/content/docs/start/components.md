@@ -31,20 +31,20 @@ Published to Maven Central, consumed by the services here and usable on their ow
 
 | Component | Language | What it does |
 | --- | --- | --- |
-| `lega-commander` | Go | The command-line tool submitters use to encrypt, upload, list and download files. |
+| `lega-commander` | Go | The command-line tool submitters use to upload, list and download files. It checks a file is already Crypt4GH rather than encrypting it. |
 
 ## Test suite
 
 | Component | Language | What it does |
 | --- | --- | --- |
-| `e2eTests` | Java (JUnit) | Drives the whole pipeline against a running stack and asserts each stage. |
+| `e2e` | Go | Drives the whole pipeline against a running stack and asserts each stage. Picks its target environment with `E2E_ENV`. |
+| `e2eTests` | Java (JUnit) | The retiring JUnit runner, kept while both coexist. One test class per environment. |
 
-:::caution[Changing in PR #833]
-The Java `e2eTests` module is being replaced by a Go module named `e2e`, which selects its
-target environment through an `E2E_ENV` variable rather than a JUnit class. Until
-[#833](https://github.com/ELIXIR-NO/FEGA-Norway/pull/833) merges, `e2eTests` is what is on
-`main` and what the release tooling knows about. After it merges, `e2e` is deliberately **not**
-a released component.
+:::note[Two runners, for now]
+Both are on `main` and both are tracked as release components. `E2E_SUITE` picks which one runs,
+`go` or `java`, and defaults to `go`. The JUnit module is being removed in
+[#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851); until then a change under
+`e2eTests/` still cuts a release for it.
 :::
 
 ## The repository itself
