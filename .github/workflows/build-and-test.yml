@@ -22,6 +22,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sf -X POST -H 'Content-type: application/json' \
+            --data "$(jq -n \
+              --arg component "test" \
+              --arg version "1.0.0" \
+              '{text: ("🔴 TEST — Publish and Release failed: `" + $component + "` (version `" + $version + "`)")}')" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
+
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
