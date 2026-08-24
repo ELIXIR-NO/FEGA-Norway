@@ -23,7 +23,6 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Notify Slack on failure
-        if: failure()
         run: |
           curl -sf -X POST -H 'Content-type: application/json' \
             --data "$(jq -n \
