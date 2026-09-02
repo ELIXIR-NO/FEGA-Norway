@@ -70,21 +70,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish Jar Files crypt4gh
-        if: ${{ matrix.component == 'crypt4gh'}}
-        run: |
-          ./gradlew :lib:${{matrix.component}}:publishLibraryPublicationToGithubRegistry -Pversion=${{ steps.new-tag.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish Jar Files clearinghouse
-        if: ${{ matrix.component == 'clearinghouse' }}
-        run: |
-          ./gradlew :lib:${{matrix.component}}:publishMavenJavaPublicationToGithubRegistryRepository -Pversion=${{ steps.new-tag.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and publish to local staging for JReleaser
+      - name: Build, test, and stage for JReleaser
         if: ${{ matrix.component == 'crypt4gh' || matrix.component == 'clearinghouse'}}
         env:
           SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
@@ -206,3 +192,14 @@ jobs:
           tag_name: "${{matrix.component}}-${{ steps.new-tag.outputs.version }}"
           prerelease: false
           body_path: ${{ env.changelog_path }}/CHANGELOG.md
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sf -X POST -H 'Content-type: application/json' \
+            --data "$(jq -n \
+              --arg component "${{ matrix.component }}" \
+              --arg version "${{ steps.new-tag.outputs.version }}" \
+              --arg url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              '{text: ("🔴 *Publish and Release failed*: `" + $component + "` (attempted version `" + $version + "`) — <" + $url + "|view run>")}')" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
