@@ -27,8 +27,8 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
     testCompileOnly("org.projectlombok:lombok:1.18.46")
     testAnnotationProcessor("org.projectlombok:lombok:1.18.46")
-    implementation("org.bouncycastle:bcprov-jdk18on:1.85.2")
-    implementation("org.bouncycastle:bcpkix-jdk18on:1.85.2")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.85")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.85")
 }
 
 // The stack itself lives in ../e2e and is driven by ../dev.sh; this module only
