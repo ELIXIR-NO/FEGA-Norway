@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("org.springframework.boot") version "4.1.0"
+    id("org.springframework.boot") version "4.1.1"
     id("io.spring.dependency-management") version "1.1.7"
     id("formatting-conventions")
 }
@@ -18,9 +18,9 @@ dependencies {
     implementation(project(":lib:clearinghouse"))
     implementation(project(":lib:tsd-file-api-client"))
     implementation("org.apache.httpcomponents:httpclient:4.5.14")
-    implementation("com.squareup.okhttp3:okhttp:5.4.0")
+    implementation("com.squareup.okhttp3:okhttp:5.5.0")
     implementation("org.apache.commons:commons-lang3:3.20.0")
-    implementation("org.apache.commons:commons-collections4:4.5.0")
+    implementation("org.apache.commons:commons-collections4:4.6.0")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-cache")
@@ -35,9 +35,9 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
-    implementation("com.networknt:json-schema-validator:3.0.5")
-    implementation("org.graalvm.js:js:25.0.3")
-    testImplementation("com.squareup.okhttp3:mockwebserver:5.4.0")
+    implementation("com.networknt:json-schema-validator:3.0.7")
+    implementation("org.graalvm.js:js:25.2.4")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.5.0")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
