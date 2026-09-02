@@ -1,4 +1,4 @@
-name: Build and test
+name: Unit and e2e tests
 
 on:
   push:
@@ -10,6 +10,10 @@ on:
         options: [go, java]
         default: go
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -20,7 +24,8 @@ jobs:
       E2E_SUITE: ${{ inputs.e2e_suite || 'go' }}
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout code
+        uses: actions/checkout@v7
 
       - name: Set up JDK
         uses: actions/setup-java@v5
@@ -48,10 +53,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build with Gradle
+      - name: Assemble
         run: ./gradlew assemble
 
-      - name: Run tests
+      - name: Run unit tests of all components
         run: ./gradlew :lib:crypt4gh:test :lib:clearinghouse:test :lib:tsd-file-api-client:test :services:tsd-api-mock:test :services:mq-interceptor:test :services:localega-tsd-proxy:test :services:cega-mock:test :cli:lega-commander:test :e2e:test
 
 
