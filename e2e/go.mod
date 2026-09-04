@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/neicnordic/crypt4gh v1.15.0
-	github.com/rabbitmq/amqp091-go v1.13.0
+	github.com/rabbitmq/amqp091-go v1.14.0
 )
 
 require (
