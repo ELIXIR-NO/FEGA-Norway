@@ -36,7 +36,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
     implementation("com.networknt:json-schema-validator:3.0.7")
-    implementation("org.graalvm.js:js:25.2.4")
+    implementation("org.graalvm.js:js:25.3.4.1")
     testImplementation("com.squareup.okhttp3:mockwebserver:5.5.0")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.amqp:spring-rabbit-test")

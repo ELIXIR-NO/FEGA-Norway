@@ -15,7 +15,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.1.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
     testRuntimeOnly("org.junit.platform:junit-platform-console-standalone:6.1.3")
-    testImplementation("com.rabbitmq:amqp-client:5.34.0")
+    testImplementation("com.rabbitmq:amqp-client:5.35.0")
     testImplementation("com.konghq:unirest-java:3.14.5")
     testImplementation("org.postgresql:postgresql:42.7.13")
     testImplementation("io.jsonwebtoken:jjwt-api:0.13.0")
@@ -25,10 +25,10 @@ dependencies {
     testImplementation(project(":lib:crypt4gh"))
     testImplementation("org.slf4j:slf4j-api:2.0.18")
     testImplementation("org.skyscreamer:jsonassert:1.5.3")
-    testCompileOnly("org.projectlombok:lombok:1.18.46")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.46")
-    implementation("org.bouncycastle:bcprov-jdk18on:1.85")
-    implementation("org.bouncycastle:bcpkix-jdk18on:1.85")
+    testCompileOnly("org.projectlombok:lombok:1.18.48")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.48")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.85.2")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.85.2")
 }
 
 // The stack itself lives in ../e2e and is driven by ../dev.sh; this module only

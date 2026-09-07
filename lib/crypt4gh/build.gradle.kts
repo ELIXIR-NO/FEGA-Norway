@@ -8,7 +8,7 @@ plugins {
     id("maven-publish")
     id("signing")
     id("com.gradleup.shadow") version "9.6.1"
-    id("org.jreleaser") version "1.25.0"
+    id("org.jreleaser") version "1.26.0"
 }
 
 group = "no.elixir"
