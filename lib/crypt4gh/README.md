@@ -73,4 +73,3 @@ Crypt4GH encryption/decryption tool
 Read more about the format at
 http://samtools.github.io/hts-specs/crypt4gh.pdf
 ```
-<!-- Temporary change to test the check_build JAR step -->
