@@ -17,7 +17,7 @@ If this fails with `gpg: agent_genkey failed: No pinentry`, add `--pinentry-mode
 :::
 
 Use these values in the interactive prompts, and choose a strong password to protect the private
-key:
+key (for instance with [this password generator](https://bitwarden.com/password-generator/#password-generator)):
 
 ```
 Real name :  Federated EGA Norway
