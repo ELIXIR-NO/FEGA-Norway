@@ -9,9 +9,66 @@ jobs:
   detect:
     uses: ./.github/workflows/detect-changed-components.yml
 
-  check_publish:
+  check_build:
+    if: ${{ github.event_name == 'pull_request' }}
     needs: detect
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        component: ${{ fromJson(needs.detect.outputs.changed-components).component }}
+
+    steps:
+      - uses: actions/checkout@v7
+    # Build JARs
+      - name: Setup Java
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' }}
+        uses: actions/setup-java@v6
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Build JAR Files
+        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client'}}
+
+        run: |
+          ./gradlew lib:${{matrix.component}}:clean lib:${{matrix.component}}:build 
+      
+
+      # Build Docker images
+      - name: Build docker images
+        if: ${{ matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        uses: docker/build-push-action@v7.3.0
+        with:
+          context: ./services/${{ matrix.component }}
+          # Ignore push
+          push: false
+          provenance: false
+          sbom: false
+          no-cache: 'true'
+
+      - name: Build docker images
+        if: ${{ matrix.component == 'localega-tsd-proxy'  || matrix.component == 'tsd-api-mock'}}
+        uses: docker/build-push-action@v7.3.0
+        with:
+          file: ./services/${{ matrix.component }}/Dockerfile
+          context: .
+          # Ignore push
+          push: false
+          no-cache: 'true'
+          provenance: false
+          sbom: false
+  check_publish:
+    # Temporarily disabled until the publishing job is implemented
+    if: ${{ false }}
+    needs: detect
+    runs-on: ubuntu-latest
+    #Build images for validation
+
+    #Tag with PR number
+
+    #Push to GHCR
     permissions:
         contents: read
         packages: write
