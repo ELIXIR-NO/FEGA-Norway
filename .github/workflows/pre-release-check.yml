@@ -59,16 +59,50 @@ jobs:
           no-cache: 'true'
           provenance: false
           sbom: false
-  check_publish:
-    # Temporarily disabled until the publishing job is implemented
-    if: ${{ false }}
-    needs: detect
+
+  resolve_pr:
+    name: Resolve merge group PR
+    if: ${{ github.event_name == 'merge_group' }}
     runs-on: ubuntu-latest
-    #Build images for validation
 
-    #Tag with PR number
+    permissions:
+      contents: read
+      pull-requests: read
 
-    #Push to GHCR
+    outputs:
+      pr_number: ${{ steps.resolve.outputs.pr_number }}
+
+    steps:
+      - name: Resolve PR number
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          MERGE_GROUP_SHA: ${{ github.sha }}
+        run: |
+          prs=$(gh api \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/${REPOSITORY}/commits/${MERGE_GROUP_SHA}/pulls")
+
+          pr_count=$(echo "$prs" | jq 'length')
+
+          if [ "$pr_count" -ne 1 ]; then
+            echo "::error::Expected exactly one PR for the merge group, but found $pr_count."
+            exit 1
+          fi
+
+          pr_number=$(echo "$prs" | jq -r '.[0].number')
+
+          echo "Resolved PR number: $pr_number"
+          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+
+  check_publish:
+    if: ${{ github.event_name == 'merge_group' }}
+    needs:
+      - detect
+      - resolve_pr
+    runs-on: ubuntu-latest
     permissions:
         contents: read
         packages: write
@@ -85,7 +119,7 @@ jobs:
           java-version: "21"
           distribution: "temurin"
 
-      - name: Publish Jar Files tsd-file-api-client
+      - name: Check publishing JAR file for tsd-file-api-client
         if: ${{matrix.component == 'tsd-file-api-client' }}
         run: |
           ./gradlew :lib:${{matrix.component}}:publish --dry-run
@@ -138,13 +172,13 @@ jobs:
         with:
           context: ./services/${{ matrix.component }}
           # Ignore push on merge_group events
-          push: ${{ github.event_name == 'pull_request' }}
+          push: true
           provenance: false
           sbom: false
           no-cache: 'true'
-          # Use the PR number for pull requests and the workflow run number for merge groups
+          # Use the PR number to tag the images
           tags: |
-            ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ github.event_name == 'pull_request' && github.event.number || github.run_number }}
+            ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ needs.resolve_pr.outputs.pr_number }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.clone_url }}
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -156,14 +190,13 @@ jobs:
         with:
           file: ./services/${{ matrix.component }}/Dockerfile
           context: .
-          # Ignore push on merge_group events
-          push: ${{ github.event_name == 'pull_request' }}
+          push: true
           no-cache: 'true'
           provenance: false
           sbom: false
-          # Use the PR number for pull requests and the workflow run number for merge groups
+          # Use the PR number to tag the images
           tags: |
-            ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ github.event_name == 'pull_request' && github.event.number || github.run_number }}
+            ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ needs.resolve_pr.outputs.pr_number }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.clone_url }}
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
