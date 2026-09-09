@@ -1,7 +1,6 @@
-name: Release Pre Check
+name: Release Pre Publish Check
 on:
   merge_group:
-  pull_request:
     branches:
       - main
 
@@ -9,60 +8,9 @@ jobs:
   detect:
     uses: ./.github/workflows/detect-changed-components.yml
 
-  check_build:
-    if: ${{ github.event_name == 'pull_request' }}
-    needs: detect
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      matrix:
-        component: ${{ fromJson(needs.detect.outputs.changed-components).component }}
-
-    steps:
-      - uses: actions/checkout@v7
-    # Build JARs
-      - name: Setup Java
-        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' }}
-        uses: actions/setup-java@v6
-        with:
-          java-version: "21"
-          distribution: "temurin"
-
-      - name: Build JAR Files
-        if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client'}}
-
-        run: |
-          ./gradlew lib:${{matrix.component}}:clean lib:${{matrix.component}}:build 
-      
-
-      # Build Docker images
-      - name: Build docker images
-        if: ${{ matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
-        uses: docker/build-push-action@v7.3.0
-        with:
-          context: ./services/${{ matrix.component }}
-          # Ignore push
-          push: false
-          provenance: false
-          sbom: false
-          no-cache: 'true'
-
-      - name: Build docker images
-        if: ${{ matrix.component == 'localega-tsd-proxy'  || matrix.component == 'tsd-api-mock'}}
-        uses: docker/build-push-action@v7.3.0
-        with:
-          file: ./services/${{ matrix.component }}/Dockerfile
-          context: .
-          # Ignore push
-          push: false
-          no-cache: 'true'
-          provenance: false
-          sbom: false
 
   resolve_pr:
     name: Resolve merge group PR
-    if: ${{ github.event_name == 'merge_group' }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -98,7 +46,6 @@ jobs:
           echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
 
   check_publish:
-    if: ${{ github.event_name == 'merge_group' }}
     needs:
       - detect
       - resolve_pr

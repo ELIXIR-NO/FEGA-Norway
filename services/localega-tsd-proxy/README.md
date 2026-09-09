@@ -184,3 +184,5 @@ When adding new features:
 3. Use AOP for cross-cutting concerns
 4. Update configuration as needed
 5. Document changes in code
+
+<!-- Temporary change to test the pre-release build workflow -->
