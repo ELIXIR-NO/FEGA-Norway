@@ -2,7 +2,7 @@
 # `context: ..`), so paths below are repo-relative: the build needs both the
 # e2e module and cli/lega-commander, which live outside this directory.
 
-FROM golang:1.26-alpine AS go-builder
+FROM golang:1.27-alpine AS go-builder
 WORKDIR /app
 
 # Layer 1: module graph only, cached until go.mod/go.sum change.
@@ -16,12 +16,12 @@ RUN go build -o /out/ ./cmd/...
 
 # lega-commander CLI: UploadViaLegaCmd shells out to it at the pinned path
 # /usr/local/bin/lega-commander.
-FROM golang:1.26-alpine AS lega-cmd-builder
+FROM golang:1.27-alpine AS lega-cmd-builder
 WORKDIR /app
 COPY cli/lega-commander/ .
 RUN go build -o /lega-commander .
 
-FROM alpine:3.21
+FROM alpine:3.24
 # The local stack anchors on the staged rootCA.pem explicitly (pg and amqp
 # build their own pools, httpx skips verification, lega-commander runs with
 # TLS_SKIP_VERIFY), but the egadev run validates the live egadev certificate,
