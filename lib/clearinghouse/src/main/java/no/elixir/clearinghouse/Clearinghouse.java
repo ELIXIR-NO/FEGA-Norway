@@ -53,7 +53,8 @@ public enum Clearinghouse {
    *
    * @param accessToken Access JWT token.
    * @param openIDConfigurationURL ".well-known/openid-configuration" full URL.
-   * @return List of GA4GH Visas.
+   * @return List of GA4GH Visas, empty when the passport carries none.
+   * @throws SignatureException if the token signature does not verify against the key.
    */
   public Collection<Visa> getVisas(String accessToken, String openIDConfigurationURL) {
     return getVisaTokens(accessToken, openIDConfigurationURL).stream()
@@ -70,7 +71,8 @@ public enum Clearinghouse {
    *
    * @param accessToken Access JWT token.
    * @param pemPublicKey PEM RSA public key.
-   * @return List of GA4GH Visas.
+   * @return List of GA4GH Visas, empty when the passport carries none.
+   * @throws SignatureException if the token signature does not verify against the key.
    */
   public Collection<Visa> getVisasWithPEMPublicKey(String accessToken, String pemPublicKey) {
     return getVisaTokensWithPEMPublicKey(accessToken, pemPublicKey).stream()
@@ -87,7 +89,8 @@ public enum Clearinghouse {
    *
    * @param accessToken Access JWT token.
    * @param publicKey RSA public key.
-   * @return List of GA4GH Visas.
+   * @return List of GA4GH Visas, empty when the passport carries none.
+   * @throws SignatureException if the token signature does not verify against the key.
    */
   public Collection<Visa> getVisasWithPublicKey(String accessToken, RSAPublicKey publicKey) {
     return getVisaTokensWithPublicKey(accessToken, publicKey).stream()
@@ -102,7 +105,8 @@ public enum Clearinghouse {
    * JKU.
    *
    * @param visaToken Visa JWT token.
-   * @return Optional <code>Visa</code> POJO: present if token validated successfully.
+   * @return Optional <code>Visa</code> POJO: empty when the token carries no visa claim.
+   * @throws SignatureException if the token signature does not verify against the key.
    */
   public Optional<Visa> getVisa(String visaToken) {
     var jku = getHeaderItemValue(visaToken, JKU);
@@ -110,6 +114,10 @@ public enum Clearinghouse {
     var jwk = JWKProvider.INSTANCE.get(jku, keyId);
     try {
       return getVisaWithPublicKey(visaToken, (RSAPublicKey) jwk.toKey());
+    } catch (SignatureException e) {
+      // Named ahead of the generic catch purely to escape it. Already logged one frame down,
+      // so rethrowing bare rather than logging again.
+      throw e;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       return Optional.empty();
@@ -122,7 +130,8 @@ public enum Clearinghouse {
    *
    * @param visaToken Visa JWT token.
    * @param pemPublicKey PEM RSA public key.
-   * @return Optional <code>Visa</code> POJO: present if token validated successfully.
+   * @return Optional <code>Visa</code> POJO: empty when the token carries no visa claim.
+   * @throws SignatureException if the token signature does not verify against the key.
    */
   public Optional<Visa> getVisaWithPEMPublicKey(String visaToken, String pemPublicKey) {
     try {
@@ -139,7 +148,8 @@ public enum Clearinghouse {
    *
    * @param visaToken Visa JWT token.
    * @param publicKey RSA public key.
-   * @return Optional <code>Visa</code> POJO: present if token validated successfully.
+   * @return Optional <code>Visa</code> POJO: empty when the token carries no visa claim.
+   * @throws SignatureException if the token signature does not verify against the key.
    */
   public Optional<Visa> getVisaWithPublicKey(String visaToken, RSAPublicKey publicKey) {
     try {
@@ -158,7 +168,10 @@ public enum Clearinghouse {
         return Optional.of(visa);
       }
     } catch (SignatureException e) {
+      // Logged as well as rethrown: a token signed by a key we do not trust is worth a record
+      // even though the caller is now the one that decides what to do about it.
       log.error("Invalid signature in visa token", e);
+      throw e;
     } catch (JsonSyntaxException e) {
       log.error("Invalid JSON syntax in visa claim", e);
     } catch (Exception e) {
@@ -173,7 +186,8 @@ public enum Clearinghouse {
    *
    * @param accessToken Access JWT token.
    * @param openIDConfigurationURL ".well-known/openid-configuration" full URL.
-   * @return List of visa JWT tokens.
+   * @return List of visa JWT tokens, empty when the passport carries none.
+   * @throws SignatureException if the token signature does not verify against the key.
    */
   public Collection<String> getVisaTokens(String accessToken, String openIDConfigurationURL) {
     Request request = new Request.Builder().url(openIDConfigurationURL).get().build();
@@ -190,6 +204,10 @@ public enum Clearinghouse {
       return getVisaTokensWithPublicKey(accessToken, (RSAPublicKey) jwk.toKey());
     } catch (IOException e) {
       throw new RuntimeException(e);
+    } catch (SignatureException e) {
+      // Named ahead of the generic catch purely to escape it. Already logged one frame down,
+      // so rethrowing bare rather than logging again.
+      throw e;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       return Collections.emptyList();
@@ -202,7 +220,8 @@ public enum Clearinghouse {
    *
    * @param accessToken Access JWT token.
    * @param pemPublicKey PEM RSA public key.
-   * @return List of visa JWT tokens.
+   * @return List of visa JWT tokens, empty when the passport carries none.
+   * @throws SignatureException if the token signature does not verify against the key.
    */
   public Collection<String> getVisaTokensWithPEMPublicKey(String accessToken, String pemPublicKey) {
     try {
@@ -219,7 +238,8 @@ public enum Clearinghouse {
    *
    * @param accessToken Access JWT token.
    * @param publicKey RSA public key.
-   * @return List of visa JWT tokens.
+   * @return List of visa JWT tokens, empty when the passport carries none.
+   * @throws SignatureException if the token signature does not verify against the key.
    */
   public Collection<String> getVisaTokensWithPublicKey(String accessToken, RSAPublicKey publicKey) {
     try {
@@ -248,7 +268,10 @@ public enum Clearinghouse {
     } catch (IOException e) {
       throw new RuntimeException(e);
     } catch (SignatureException e) {
-      log.error("Invalid signature in visa token", e);
+      // Logged as well as rethrown: a token signed by a key we do not trust is worth a record
+      // even though the caller is now the one that decides what to do about it.
+      log.error("Invalid signature in access token", e);
+      throw e;
     } catch (JsonSyntaxException e) {
       log.error("Invalid JSON syntax in visa claim", e);
     } catch (Exception e) {
