@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/big"
 	"os"
 	"path/filepath"
 	"time"
@@ -85,8 +84,9 @@ func Md5HexBytes(b []byte) string {
 func RandomDigits(n int) string {
 	out := make([]byte, n)
 	for i := range out {
-		d, _ := rand.Int(rand.Reader, big.NewInt(10))
-		out[i] = byte('0' + d.Int64())
+		var b [1]byte
+		_, _ = rand.Read(b[:])
+		out[i] = byte('0' + int(b[0])%10)
 	}
 	return string(out)
 }
