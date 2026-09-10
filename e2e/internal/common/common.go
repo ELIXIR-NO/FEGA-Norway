@@ -84,7 +84,9 @@ func Md5HexBytes(b []byte) string {
 func RandomDigits(n int) string {
 	out := make([]byte, n)
 	for i := range out {
-		out[i] = byte('0' + rand.IntN(10))
+		var b [1]byte
+		_, _ = rand.Read(b[:])
+		out[i] = byte('0' + int(b[0])%10)
 	}
 	return string(out)
 }
