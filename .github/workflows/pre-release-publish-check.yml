@@ -121,7 +121,6 @@ jobs:
         uses: docker/build-push-action@v7.3.0
         with:
           context: ./services/${{ matrix.component }}
-          # Ignore push on merge_group events
           push: true
           provenance: false
           sbom: false
