@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -265,7 +264,7 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 		if response.StatusCode != 200 {
 			return errors.New(response.Status)
 		}
-		body, err := ioutil.ReadAll(response.Body)
+		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return err
 		}
@@ -395,7 +394,7 @@ func extractClaims(response *http.Response) (string, jwt.MapClaims, error) {
 	if response.StatusCode != 200 {
 		return "", nil, errors.New(response.Status)
 	}
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return "", nil, err
 	}
@@ -521,7 +520,7 @@ func (s *defaultStreamer) uploadFileWithoutProxy(file *os.File, stat os.FileInfo
 		if !(response.StatusCode == 200 || response.StatusCode == 201) {
 			return errors.New(response.Status)
 		}
-		body, err := ioutil.ReadAll(response.Body)
+		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return err
 		}
@@ -577,7 +576,7 @@ func (s *defaultStreamer) uploadFileWithoutProxy(file *os.File, stat os.FileInfo
 	}
 	defer notifyResp.Body.Close()
 	if notifyResp.StatusCode != http.StatusOK {
-		respBody, _ := ioutil.ReadAll(notifyResp.Body)
+		respBody, _ := io.ReadAll(notifyResp.Body)
 		return fmt.Errorf(
 			"upload succeeded but pipeline notification failed (%d): %s",
 			notifyResp.StatusCode, string(respBody))
