@@ -42,7 +42,7 @@ jobs:
         with:
          # file: ${{ (matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor') && 'Dockerfile' || format('./services/{0}/Dockerfile', matrix.component) }}
           file: ./services/${{ matrix.component }}/Dockerfile
-          context: ${{ (matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor') && format('./services/{0}', matrix.component) || '.' }}
+          #context: ${{ (matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor') && format('./services/{0}', matrix.component) || '.' }}
           # context: ./services/${{ matrix.component }}
           push: false
           provenance: false
