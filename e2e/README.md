@@ -90,14 +90,22 @@ root with `-f e2e/e2e-tests.Dockerfile`.
 
 `E2E_ENV` picks which binary the entrypoint runs and has no default, so the one
 image covers `fega`, `egadev` and `gdi` and refuses to start without it. An
-`egadev` run also wants the `E2E_TESTS_*` variables from `env.sh`, and since
-the EGA_DEV pipeline reads its keys from absolute paths, the key files have to
-be mounted where those variables point:
+`egadev` run reads the rest from `env.sh`, but three of those variables describe
+the filesystem and have to be rewritten for the container.
+`E2E_TESTS_EGA_DEV_BASE_DIRECTORY` is where the raw fixture and the `out/`
+download get written, so it needs a writable in-container path; the image
+WORKDIR `/fega-norway` is one. The two key paths are resolved exactly as given,
+so they have to name files inside a mount rather than anything from the host.
 
 ```sh
-docker run --rm --env-file <your E2E_TESTS_* file> \
-  -v <keys dir>:<the E2E_TESTS_EGA_DEV_* path> \
-  -e E2E_ENV=egadev ghcr.io/elixir-no/fega-norway:e2e-<version>
+docker run --rm \
+  --env-file <your E2E_TESTS_* file> \
+  -v <keys dir>:/keys:ro \
+  -e E2E_ENV=egadev \
+  -e E2E_TESTS_EGA_DEV_BASE_DIRECTORY=/fega-norway \
+  -e E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH=/keys/archive.pub.pem \
+  -e E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH=/keys/jwt.priv.pem \
+  ghcr.io/elixir-no/fega-norway:e2e-<version>
 ```
 
 ## Running `e2e-egadev` on a host

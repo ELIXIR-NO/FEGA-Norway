@@ -26,8 +26,13 @@ jobs:
             # Both e2e runners are tracked while they coexist. `e2e` owns the
             # stack and the Go suite; `e2eTests` is the retiring JUnit runner
             # and its entry goes away with the directory.
+            #
+            # The e2e image compiles `cli/lega-commander` into itself, so a
+            # CLI-only change yields a different image and has to cut a new
+            # `e2e-<version>` for whatever pins that tag.
             e2e:
               - 'e2e/**'
+              - 'cli/lega-commander/**'
             e2eTests:
               - 'e2eTests/**'
             clearinghouse:
