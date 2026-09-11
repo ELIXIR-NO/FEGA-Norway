@@ -98,7 +98,7 @@ jobs:
           cat lib/${{matrix.component}}/out/jreleaser/output.properties || echo "No output properties found"
 
       - name: Set Repository Name
-        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' || matrix.component == 'e2e' }}
         id: repo_name
         run: |
           REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
@@ -107,7 +107,7 @@ jobs:
       
 
       - name: Log in to the Github Container registry
-        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' || matrix.component == 'e2e' }}
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -115,7 +115,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Retag and Push Docker Image
-        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' || matrix.component == 'e2e' }}
         run: |
           docker pull ghcr.io/${{ env.repo_name }}:${{matrix.component}}-${{ github.event.number }}
           docker tag ghcr.io/${{ env.repo_name }}:${{matrix.component}}-${{ github.event.number }} ghcr.io/${{ env.repo_name }}:${{matrix.component}}-${{ steps.new-tag.outputs.version }}

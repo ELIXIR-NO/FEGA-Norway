@@ -74,6 +74,32 @@ Or via Gradle (the `base`-plugin convention used by the other Go modules):
 ./gradlew :e2e:test
 ```
 
+## The published image
+
+The runner ships as a released image,
+`ghcr.io/elixir-no/fega-norway:e2e-<version>`. A pull request touching `e2e/`
+builds `e2e-tests.Dockerfile` and pushes the result as `e2e-<PR number>`;
+merging retags that same image to the version the release job computes. No
+rebuild happens in between, so the version tag names exactly the image the
+pull request built.
+
+Build context is the repository root rather than this directory, because the
+image needs `cli/lega-commander` as well as `e2e/`, which is the same reason
+the compose service says `context: ..`; a hand build therefore runs from the
+root with `-f e2e/e2e-tests.Dockerfile`.
+
+`E2E_ENV` picks which binary the entrypoint runs and has no default, so the one
+image covers `fega`, `egadev` and `gdi` and refuses to start without it. An
+`egadev` run also wants the `E2E_TESTS_*` variables from `env.sh`, and since
+the EGA_DEV pipeline reads its keys from absolute paths, the key files have to
+be mounted where those variables point:
+
+```sh
+docker run --rm --env-file <your E2E_TESTS_* file> \
+  -v <keys dir>:<the E2E_TESTS_EGA_DEV_* path> \
+  -e E2E_ENV=egadev ghcr.io/elixir-no/fega-norway:e2e-<version>
+```
+
 ## Running `e2e-egadev` on a host
 
 `e2e-fega` only makes sense inside the stack, but `e2e-egadev` targets a live
