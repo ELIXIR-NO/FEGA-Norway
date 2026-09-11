@@ -79,15 +79,14 @@ Or via Gradle (the `base`-plugin convention used by the other Go modules):
 The runner ships as a released image,
 `ghcr.io/elixir-no/fega-norway:e2e-<version>`. A pull request touching `e2e/`
 or `cli/lega-commander/` (the image compiles the CLI into itself) builds
-`e2e-tests.Dockerfile` and pushes the result as `e2e-<PR number>`; merging
-retags that same image to the version the release job computes. No rebuild
-happens in between, so the version tag names exactly the image the pull
-request built.
+`e2e/Dockerfile` and pushes the result as `e2e-<PR number>`; merging retags
+that same image to the version the release job computes. No rebuild happens in
+between, so the version tag names exactly the image the pull request built.
 
 Build context is the repository root rather than this directory, because the
 image needs `cli/lega-commander` as well as `e2e/`, which is the same reason
 the compose service says `context: ..`; a hand build therefore runs from the
-root with `-f e2e/e2e-tests.Dockerfile`.
+root with `-f e2e/Dockerfile`.
 
 `E2E_ENV` picks which binary the entrypoint runs and has no default, so the one
 image covers `fega`, `egadev` and `gdi` and refuses to start without it. An

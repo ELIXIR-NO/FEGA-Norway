@@ -211,7 +211,7 @@ export HEARTBEAT_REDIS_DB=0
 # Override from the shell, e.g. `E2E_SUITE=java ./dev.sh start`.
 export E2E_SUITE=${E2E_SUITE:-go}
 case "$E2E_SUITE" in
-  go)   export E2E_SUITE_DOCKERFILE=e2e/e2e-tests.Dockerfile ;;
+  go)   export E2E_SUITE_DOCKERFILE=e2e/Dockerfile ;;
   java) export E2E_SUITE_DOCKERFILE=e2eTests/e2e-tests.Dockerfile ;;
   *)
     echo "env.sh: unknown E2E_SUITE '$E2E_SUITE' (expected go|java)" >&2

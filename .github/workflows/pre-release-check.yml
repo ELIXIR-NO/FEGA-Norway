@@ -93,30 +93,23 @@ jobs:
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: Build and push
-        if: ${{ matrix.component == 'localega-tsd-proxy'  || matrix.component == 'tsd-api-mock'}}
-        uses: docker/build-push-action@v7.3.0
-        with:
-          file: ./services/${{ matrix.component }}/Dockerfile
-          context: .
-          # Ignore push on merge_group events
-          push: ${{ github.event_name == 'pull_request' }}
-          no-cache: 'true'
-          provenance: false
-          sbom: false
-          # Use the PR number for pull requests and the workflow run number for merge groups
-          tags: |
-            ghcr.io/${{ env.repo_name }}:${{ matrix.component }}-${{ github.event_name == 'pull_request' && github.event.number || github.run_number }}
-          labels: |
-            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
-            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-            org.opencontainers.image.revision=${{ github.sha }}
+      # Root-context builds only: the components whose Dockerfile needs more
+      # of the repository than its own directory. Anything absent from the map
+      # is built by the block above, from its own context.
+      - name: Set dockerfile path
+        run: |
+          declare -A dockerfile_paths=(
+            [localega-tsd-proxy]="services/localega-tsd-proxy/Dockerfile"
+            [tsd-api-mock]="services/tsd-api-mock/Dockerfile"
+            [e2e]="e2e/Dockerfile"
+          )
+          echo "dockerfile_path=${dockerfile_paths[${{ matrix.component }}]}" >> $GITHUB_ENV
 
       - name: Build and push
-        if: ${{ matrix.component == 'e2e' }}
+        if: ${{ matrix.component == 'localega-tsd-proxy'  || matrix.component == 'tsd-api-mock' || matrix.component == 'e2e' }}
         uses: docker/build-push-action@v7.3.0
         with:
-          file: ./e2e/e2e-tests.Dockerfile
+          file: ./${{ env.dockerfile_path }}
           context: .
           # Ignore push on merge_group events
           push: ${{ github.event_name == 'pull_request' }}
