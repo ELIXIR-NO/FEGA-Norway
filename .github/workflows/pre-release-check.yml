@@ -93,23 +93,11 @@ jobs:
             org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
             org.opencontainers.image.revision=${{ github.sha }}
 
-      # Root-context builds only: the components whose Dockerfile needs more
-      # of the repository than its own directory. Anything absent from the map
-      # is built by the block above, from its own context.
-      - name: Set dockerfile path
-        run: |
-          declare -A dockerfile_paths=(
-            [localega-tsd-proxy]="services/localega-tsd-proxy/Dockerfile"
-            [tsd-api-mock]="services/tsd-api-mock/Dockerfile"
-            [e2e]="e2e/Dockerfile"
-          )
-          echo "dockerfile_path=${dockerfile_paths[${{ matrix.component }}]}" >> $GITHUB_ENV
-
       - name: Build and push
         if: ${{ matrix.component == 'localega-tsd-proxy'  || matrix.component == 'tsd-api-mock' || matrix.component == 'e2e' }}
         uses: docker/build-push-action@v7.3.0
         with:
-          file: ./${{ env.dockerfile_path }}
+          file: ./${{ matrix.component == 'e2e' && 'e2e/Dockerfile' || format('services/{0}/Dockerfile', matrix.component) }}
           context: .
           # Ignore push on merge_group events
           push: ${{ github.event_name == 'pull_request' }}
