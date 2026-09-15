@@ -1,6 +1,7 @@
 package no.elixir.fega.ltp.services;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -62,14 +63,26 @@ public class ExportRequestService {
       throw new IllegalArgumentException("Access token cannot be null or empty");
     }
 
-    Claims claims = tokenService.parseVerified(gdiExportRequestDto.getAccessToken());
+    final Claims claims;
+    try {
+      claims = tokenService.parseVerified(gdiExportRequestDto.getAccessToken());
+    } catch (JwtException e) {
+      throw forbidden(e);
+    }
+
     String subject = claims.getSubject();
     if (!StringUtils.hasText(subject)) {
       throw new IllegalArgumentException("Access token missing subject");
     }
     String sanitizedSubject = subject.replaceAll("[\r\n]", "_");
-    List<Visa> controlledAccessGrantsVisas =
-        tokenService.getControlledAccessGrantsVisas(gdiExportRequestDto.getAccessToken());
+
+    final List<Visa> controlledAccessGrantsVisas;
+    try {
+      controlledAccessGrantsVisas =
+          tokenService.getControlledAccessGrantsVisas(gdiExportRequestDto.getAccessToken());
+    } catch (JwtException e) {
+      throw forbidden(e);
+    }
 
     log.info(
         "Elixir user {} authenticated and provided {} valid GA4GH Visa(s)",
@@ -121,6 +134,13 @@ public class ExportRequestService {
         Masker.maskEmail(sanitizedSubject),
         gdiExportRequestDto.getId(),
         gdiExportRequestDto.getType());
+  }
+
+  // A token we cannot verify is the caller's problem rather than a server fault. Without this
+  // the controller's catch-all at ExportRequestController:48 answers 500. See #863.
+  private GenericException forbidden(JwtException e) {
+    log.warn("Token verification failed for export request", e);
+    return new GenericException(HttpStatus.FORBIDDEN, "Token verification failed");
   }
 
   public void exportRequestFEGA(FegaExportRequestDto fegaExportRequestDto) throws AmqpException {
