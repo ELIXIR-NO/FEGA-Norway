@@ -4,7 +4,7 @@
 # Build context is the FEGA-Norway root (compose `context: ..`), so paths below
 # are repo-relative.
 
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:25-jdk-alpine AS builder
 WORKDIR /app
 
 # Layer 1: build infrastructure (rarely changes)
@@ -32,7 +32,7 @@ COPY e2eTests/src/ e2eTests/src/
 
 RUN ./gradlew :e2eTests:jar --no-daemon
 
-FROM golang:1.26-alpine AS lega-cmd-builder
+FROM golang:1.27-alpine AS lega-cmd-builder
 
 WORKDIR /app
 
@@ -40,7 +40,7 @@ COPY cli/lega-commander/ .
 
 RUN go build -o /lega-commander .
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 RUN apk add --no-cache bash
 
