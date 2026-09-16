@@ -23,10 +23,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY: ${{ github.repository }}
-          MERGE_GROUP_SHA: ${{ github.sha }}
         run: |
             echo "Resolving PR number for merge group with head_branch"
-            head_branch=$(gh run view "$RUN_ID" \
+            head_branch=$(gh run view "${{ github.run_id }}" \
             --repo "$REPOSITORY" \
             --json headBranch \
             --jq '.headBranch')
