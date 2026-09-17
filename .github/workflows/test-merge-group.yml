@@ -21,7 +21,7 @@ jobs:
       - name: Resolve PR number
         id: resolve
         env:
-          HEAD_BRANCH: ${{ github.head_ref }}
+          HEAD_BRANCH: ${{ github.ref_name }}
         run: |
           echo "Resolving PR number for merge group with head_branch"
           head_branch="$HEAD_BRANCH"
