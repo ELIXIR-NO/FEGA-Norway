@@ -20,9 +20,11 @@ jobs:
     steps:
       - name: Resolve PR number
         id: resolve
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
         run: |
           echo "Resolving PR number for merge group with head_branch"
-          head_branch="${{ github.head_ref }}"
+          head_branch="$HEAD_BRANCH"
           echo "Merge group head branch: $head_branch"
           pr_number=$(echo "$head_branch" \
             | sed -nE 's|.*/pr-([0-9]+)-.*|\1|p')
