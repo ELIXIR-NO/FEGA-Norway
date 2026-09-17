@@ -23,29 +23,21 @@ jobs:
       - name: Resolve PR number
         id: resolve
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-          MERGE_GROUP_SHA: ${{ github.sha }}
+            HEAD_BRANCH: ${{ github.ref_name }}
         run: |
-          prs=$(gh api \
-            --header "Accept: application/vnd.github+json" \
-            --header "X-GitHub-Api-Version: 2022-11-28" \
-            "/repos/${REPOSITORY}/commits/${MERGE_GROUP_SHA}/pulls")
+              echo "Resolving PR number for merge group with head_branch"
+              head_branch="$HEAD_BRANCH"
+              echo "Merge group head branch: $head_branch"
+              pr_number=$(echo "$head_branch" \
+                | sed -nE 's|.*/pr-([0-9]+)-.*|\1|p')
+              echo "PR number: $pr_number"
+              if [ -z "$pr_number" ]; then
+                echo "::error::The PR number could not be resolved from merge group branch: $head_branch"
+                exit 1
+              fi
 
-          pr_count=$(echo "$prs" | jq 'length')
-
-          if [ "$pr_count" -ne 1 ]; then
-            echo "::error::Expected exactly one PR for the merge group, but found $pr_count."
-            exit 1
-          fi
-
-          pr_number=$(echo "$prs" | jq -r '.[0].number')
-          if [ -z "$pr_number" ] || [ "$pr_number" = "null" ]; then
-            echo "::error::The PR number could not be resolved for this merge group."
-            exit 1
-          fi
-          echo "Resolved PR number: $pr_number"
-          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+              echo "Resolved PR number: $pr_number"
+              echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
           
 
   check_publish:
