@@ -20,26 +20,20 @@ jobs:
     steps:
       - name: Resolve PR number
         id: resolve
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
         run: |
-            echo "Resolving PR number for merge group with head_branch"
-            head_branch=$(gh run view "${{ github.run_id }}" \
-            --repo "$REPOSITORY" \
-            --json headBranch \
-            --jq '.headBranch')
-            echo "Merge group head branch: $head_branch"
-            pr_number=$(echo "$head_branch" \
-              | sed -nE 's|.*/pr-([0-9]+)-.*|\1|p')
-            echo "PR number: $pr_number"
-            if [ -z "$pr_number" ]; then
-              echo "::error::The PR number could not be resolved from merge group branch: $head_branch"
-              exit 1
-            fi
-
-            echo "Resolved PR number: $pr_number"
-            echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "Resolving PR number for merge group with head_branch"
+          head_branch="${{ github.head_ref }}"
+          echo "Merge group head branch: $head_branch"
+          pr_number=$(echo "$head_branch" \
+            | sed -nE 's|.*/pr-([0-9]+)-.*|\1|p')
+          echo "PR number: $pr_number"
+          if [ -z "$pr_number" ]; then
+            echo "::error::The PR number could not be resolved from merge group branch: $head_branch"
+            exit 1
+          fi
+          
+          echo "Resolved PR number: $pr_number"
+          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
 
   print_pr:
     name: Print PR number
