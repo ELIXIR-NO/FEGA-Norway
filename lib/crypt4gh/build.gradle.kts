@@ -8,7 +8,7 @@ plugins {
     id("maven-publish")
     id("signing")
     id("com.gradleup.shadow") version "9.6.1"
-    id("org.jreleaser") version "1.25.0"
+    id("org.jreleaser") version "1.26.0"
 }
 
 group = "no.elixir"
@@ -25,8 +25,8 @@ repositories {
 }
 
 dependencies {
-    implementation("org.slf4j:slf4j-api:2.0.18")
-    implementation("org.slf4j:slf4j-simple:2.0.18")
+    implementation("org.slf4j:slf4j-api:2.0.19")
+    implementation("org.slf4j:slf4j-simple:2.0.19")
     implementation("org.apache.commons:commons-lang3:3.20.0")
     implementation("commons-codec:commons-codec:1.22.1")
     implementation("commons-cli:commons-cli:1.11.0")
