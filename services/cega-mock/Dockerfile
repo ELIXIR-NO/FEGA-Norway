@@ -2,12 +2,12 @@ FROM golang:1.27-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod ./
+COPY services/cega-mock/go.mod ./
 
 RUN go mod tidy
 RUN go mod download
 
-COPY main.go .
+COPY services/cega-mock/main.go .
 
 RUN go build -o /app/cega-mock
 
