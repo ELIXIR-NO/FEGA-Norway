@@ -3,7 +3,6 @@ package files
 import (
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega-commander/requests"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -19,13 +18,13 @@ func (mockClient) DoRequest(method, url string, _ io.Reader, _, params map[strin
 		if p := params["page"]; p == "1" {
 			var body io.ReadCloser
 			if params["inbox"] == "" || params["inbox"] == "true" {
-				body = ioutil.NopCloser(strings.NewReader(`{"files":[{"fileName":"test.enc","size":100,"modifiedDate":"2010"}]}`))
+				body = io.NopCloser(strings.NewReader(`{"files":[{"fileName":"test.enc","size":100,"modifiedDate":"2010"}]}`))
 			} else {
-				body = ioutil.NopCloser(strings.NewReader(`{"files":[{"fileName":"test2.enc","size":100,"modifiedDate":"2010"}]}`))
+				body = io.NopCloser(strings.NewReader(`{"files":[{"fileName":"test2.enc","size":100,"modifiedDate":"2010"}]}`))
 			}
 			return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
 		} else {
-			body := ioutil.NopCloser(strings.NewReader(`{"files":[]}`))
+			body := io.NopCloser(strings.NewReader(`{"files":[]}`))
 			return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
 		}
 	}
@@ -41,7 +40,7 @@ func (mockClient) DoRequest(method, url string, _ io.Reader, _, params map[strin
 		return &http.Response{StatusCode: http.StatusInternalServerError}, nil
 	}
 	if method == http.MethodPatch && strings.Contains(url, "/stream/") {
-		body := ioutil.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
+		body := io.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
 		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
 	}
 	return nil, nil
