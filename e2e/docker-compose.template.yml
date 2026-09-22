@@ -131,7 +131,9 @@ services:
     container_name: interceptor
     hostname: interceptor
     image: mq-interceptor:latest
-    build: ../services/mq-interceptor
+    build:
+      context: ..
+      dockerfile: services/mq-interceptor/Dockerfile
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -525,7 +527,9 @@ services:
     container_name: cegaauth
     hostname: cegaauth
     image: cega-mock:latest
-    build: ../services/cega-mock
+    build:
+      context: ..
+      dockerfile: services/cega-mock/Dockerfile
     command:
       [
         "/app/cega-mock",
