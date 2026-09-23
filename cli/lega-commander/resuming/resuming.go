@@ -3,7 +3,7 @@ package resuming
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega-commander/conf"
@@ -56,7 +56,7 @@ func (rm defaultResumablesManager) ListResumables() (*[]Resumable, error) {
 	if response.StatusCode != 200 {
 		return nil, errors.New(response.Status)
 	}
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
