@@ -113,7 +113,7 @@ services:
       - ACCEPT_DIRECT_VISA_TOKEN=<<PROXY_ACCEPT_DIRECT_VISA_TOKEN>>
     volumes:
       - proxy-certs:/etc/ega/
-      #- custom_path:/app/static/ # Serves from a directory
+      - ./fixtures/proxy-web:/app/static:ro
     command: # See services/localega-tsd-proxy/Dockerfile
       - "java"
       - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
