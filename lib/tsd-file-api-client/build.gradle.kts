@@ -1,6 +1,6 @@
 plugins {
     id("java-library")
-    id("io.freefair.lombok") version "9.5.0"
+    id("io.freefair.lombok") version "9.7.0"
     id("formatting-conventions")
     id("maven-publish")
 }
@@ -25,7 +25,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
     api("com.squareup.okhttp3:okhttp:5.5.0")
-    implementation("org.slf4j:slf4j-jdk14:2.0.19")
+    implementation("org.slf4j:slf4j-jdk14:2.0.20")
 
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
