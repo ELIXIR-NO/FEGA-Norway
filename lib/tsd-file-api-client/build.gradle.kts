@@ -1,6 +1,6 @@
 plugins {
     id("java-library")
-    id("io.freefair.lombok") version "9.7.0"
+    id("io.freefair.lombok") version "9.8.0"
     id("formatting-conventions")
     id("maven-publish")
 }
@@ -16,7 +16,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.48")
     annotationProcessor("org.projectlombok:lombok:1.18.48")
 
-    implementation("org.apache.commons:commons-lang3:3.20.0")
+    implementation("org.apache.commons:commons-lang3:3.21.0")
     implementation("commons-io:commons-io:2.22.0")
     implementation("com.google.code.gson:gson:2.14.0")
 

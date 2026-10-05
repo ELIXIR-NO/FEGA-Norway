@@ -3,7 +3,7 @@ import java.util.Base64
 plugins {
     id("java")
     id("extra-java-module-info")
-    id("io.freefair.lombok") version "9.7.0"
+    id("io.freefair.lombok") version "9.8.0"
     id("formatting-conventions")
     id("maven-publish")
     id("signing")
@@ -27,7 +27,7 @@ repositories {
 dependencies {
     implementation("org.slf4j:slf4j-api:2.0.20")
     implementation("org.slf4j:slf4j-simple:2.0.20")
-    implementation("org.apache.commons:commons-lang3:3.20.0")
+    implementation("org.apache.commons:commons-lang3:3.21.0")
     implementation("commons-codec:commons-codec:1.22.1")
     implementation("commons-cli:commons-cli:1.11.0")
     implementation("commons-io:commons-io:2.22.0")
