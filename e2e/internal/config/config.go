@@ -33,8 +33,8 @@ type Config struct {
 	ProxyHost string
 	ProxyPort string
 
-	SdaDbUsername     string
-	SdaDbPassword     string
+	SdaDbInUsername   string
+	SdaDbInPassword   string
 	SdaDbHost         string
 	SdaDbPort         string
 	SdaDbDatabaseName string
@@ -88,10 +88,12 @@ func Load(integration Integration) *Config {
 		ProxyHost: os.Getenv("E2E_TESTS_PROXY_HOST"),
 		ProxyPort: os.Getenv("E2E_TESTS_PROXY_PORT"),
 
-		SdaDbHost:         os.Getenv("E2E_TESTS_SDA_DB_HOST"),
-		SdaDbPort:         os.Getenv("E2E_TESTS_SDA_DB_PORT"),
-		SdaDbUsername:     os.Getenv("E2E_TESTS_SDA_DB_USERNAME"),
-		SdaDbPassword:     os.Getenv("E2E_TESTS_SDA_DB_PASSWORD"),
+		SdaDbHost: os.Getenv("E2E_TESTS_SDA_DB_HOST"),
+		SdaDbPort: os.Getenv("E2E_TESTS_SDA_DB_PORT"),
+
+		SdaDbInUsername: os.Getenv("E2E_TESTS_SDA_DB_IN_USERNAME"),
+		SdaDbInPassword: os.Getenv("E2E_TESTS_SDA_DB_IN_PASSWORD"),
+
 		SdaDbDatabaseName: os.Getenv("E2E_TESTS_SDA_DB_DATABASE_NAME"),
 
 		SdaDoaHost: os.Getenv("E2E_TESTS_SDA_DOA_HOST"),
@@ -176,8 +178,8 @@ func (c *Config) Validate() error {
 		// (download), and mints its own visa against the proxy audience.
 		req("E2E_TESTS_SDA_DB_HOST", c.SdaDbHost)
 		port("E2E_TESTS_SDA_DB_PORT", c.SdaDbPort)
-		req("E2E_TESTS_SDA_DB_USERNAME", c.SdaDbUsername)
-		req("E2E_TESTS_SDA_DB_PASSWORD", c.SdaDbPassword)
+		req("E2E_TESTS_SDA_DB_IN_USERNAME", c.SdaDbInUsername)
+		req("E2E_TESTS_SDA_DB_IN_PASSWORD", c.SdaDbInPassword)
 		req("E2E_TESTS_SDA_DB_DATABASE_NAME", c.SdaDbDatabaseName)
 		req("E2E_TESTS_SDA_DOA_HOST", c.SdaDoaHost)
 		port("E2E_TESTS_SDA_DOA_PORT", c.SdaDoaPort)
