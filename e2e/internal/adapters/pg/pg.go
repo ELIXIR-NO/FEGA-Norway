@@ -31,7 +31,7 @@ func VerifyFinalized(ctx context.Context, cfg *config.Config, inboxPath string) 
 
 	connConfig, err := pgx.ParseConfig(fmt.Sprintf(
 		"host=%s port=%s dbname=%s user=%s password=%s application_name=LocalEGA sslmode=disable",
-		cfg.SdaDbHost, cfg.SdaDbPort, cfg.SdaDbDatabaseName, cfg.SdaDbUsername, cfg.SdaDbPassword))
+		cfg.SdaDbHost, cfg.SdaDbPort, cfg.SdaDbDatabaseName, cfg.SdaDbInUsername, cfg.SdaDbInPassword))
 	if err != nil {
 		return "", "", fmt.Errorf("parsing pg config: %w", err)
 	}

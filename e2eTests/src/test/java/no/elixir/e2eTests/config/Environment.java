@@ -57,8 +57,8 @@ public class Environment {
     this.proxyPort = env.get("E2E_TESTS_PROXY_PORT");
     this.sdaDbHost = env.get("E2E_TESTS_SDA_DB_HOST");
     this.sdaDbPort = env.get("E2E_TESTS_SDA_DB_PORT");
-    this.sdaDbUsername = env.get("E2E_TESTS_SDA_DB_USERNAME");
-    this.sdaDbPassword = env.get("E2E_TESTS_SDA_DB_PASSWORD");
+    this.sdaDbUsername = env.get("E2E_TESTS_SDA_DB_IN_USERNAME");
+    this.sdaDbPassword = env.get("E2E_TESTS_SDA_DB_IN_PASSWORD");
     this.sdaDbDatabaseName = env.get("E2E_TESTS_SDA_DB_DATABASE_NAME");
     this.sdaDoaHost = env.get("E2E_TESTS_SDA_DOA_HOST");
     this.sdaDoaPort = env.get("E2E_TESTS_SDA_DOA_PORT");
