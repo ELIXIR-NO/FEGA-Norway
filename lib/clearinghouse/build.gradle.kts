@@ -4,7 +4,7 @@ plugins {
     id("java")
     id("maven-publish")
     id("signing")
-    id("io.freefair.lombok") version "9.7.0"
+    id("io.freefair.lombok") version "9.8.0"
     id("formatting-conventions")
 }
 
@@ -23,7 +23,7 @@ java {
 
 dependencies {
     implementation("org.apache.commons:commons-collections4:4.6.0")
-    implementation("org.apache.commons:commons-lang3:3.20.0")
+    implementation("org.apache.commons:commons-lang3:3.21.0")
     implementation("com.google.code.gson:gson:2.14.0")
     implementation("com.github.ben-manes.caffeine:caffeine:3.3.0")
 
