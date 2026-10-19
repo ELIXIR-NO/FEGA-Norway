@@ -4,7 +4,7 @@ plugins {
     id("java")
     id("maven-publish")
     id("signing")
-    id("io.freefair.lombok") version "9.7.0"
+    id("io.freefair.lombok") version "9.8.2"
     id("formatting-conventions")
 }
 
@@ -23,9 +23,9 @@ java {
 
 dependencies {
     implementation("org.apache.commons:commons-collections4:4.6.0")
-    implementation("org.apache.commons:commons-lang3:3.20.0")
+    implementation("org.apache.commons:commons-lang3:3.21.0")
     implementation("com.google.code.gson:gson:2.14.0")
-    implementation("com.github.ben-manes.caffeine:caffeine:3.3.0")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.3.1")
 
     implementation("org.slf4j:slf4j-jdk14:2.0.20")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")

@@ -17,7 +17,7 @@ tasks.test {
 
 dependencies {
     runtimeOnly("com.h2database:h2")
-    implementation("org.apache.commons:commons-lang3:3.20.0")
+    implementation("org.apache.commons:commons-lang3:3.21.0")
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -30,5 +30,5 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.hibernate.validator:hibernate-validator:9.1.4.Final")
+    testImplementation("org.hibernate.validator:hibernate-validator:9.1.5.Final")
 }
