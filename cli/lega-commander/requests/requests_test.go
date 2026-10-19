@@ -87,10 +87,11 @@ func TestCheckResponse(t *testing.T) {
 	}{
 		{name: "ok", statusCode: http.StatusOK},
 		{name: "wrong EGA password", statusCode: http.StatusForbidden, body: "EGA authentication failed", wantErr: ErrEGAAuthentication},
-		{name: "rejected ELIXIR AAI token", statusCode: http.StatusForbidden, wantErr: ErrElixirAAIAuthentication},
+		{name: "rejected without a reason", statusCode: http.StatusForbidden, wantErr: ErrRejectedWithoutReason},
 		{name: "unknown EGA username", statusCode: http.StatusForbidden, body: cegaUnknownUser, wantMsg: "request rejected by the proxy (403 Forbidden): " + cegaUnknownUser},
 		{name: "credentials not sent", statusCode: http.StatusUnauthorized, wantMsg: "request rejected by the proxy (401 Unauthorized)"},
 		{name: "server error", statusCode: http.StatusInternalServerError, body: "boom\n", wantMsg: "500 Internal Server Error: boom"},
+		{name: "long error page", statusCode: http.StatusBadGateway, body: strings.Repeat("x", 5000), wantMsg: "502 Bad Gateway: " + strings.Repeat("x", maxBodyBytes)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

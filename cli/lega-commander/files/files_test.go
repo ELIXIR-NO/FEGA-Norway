@@ -147,10 +147,10 @@ func (c forbiddenClient) DoRequest(_, _ string, _ io.Reader, _, _ map[string]str
 }
 
 func TestListFilesWrongEGACredentials(t *testing.T) {
-	_ = os.Setenv("CENTRAL_EGA_USERNAME", "user")
-	_ = os.Setenv("CENTRAL_EGA_PASSWORD", "wrong")
-	_ = os.Setenv("LOCAL_EGA_INSTANCE_URL", "http://localhost/")
-	_ = os.Setenv("ELIXIR_AAI_TOKEN", "token")
+	t.Setenv("CENTRAL_EGA_USERNAME", "user")
+	t.Setenv("CENTRAL_EGA_PASSWORD", "wrong")
+	t.Setenv("LOCAL_EGA_INSTANCE_URL", "http://localhost/")
+	t.Setenv("ELIXIR_AAI_TOKEN", "token")
 	var client requests.Client = forbiddenClient{body: "EGA authentication failed"}
 	fileManager, err := NewFileManager(&client)
 	if err != nil {
@@ -163,10 +163,10 @@ func TestListFilesWrongEGACredentials(t *testing.T) {
 }
 
 func TestListFilesFolderNotFound(t *testing.T) {
-	_ = os.Setenv("CENTRAL_EGA_USERNAME", "user")
-	_ = os.Setenv("CENTRAL_EGA_PASSWORD", "pass")
-	_ = os.Setenv("LOCAL_EGA_INSTANCE_URL", "http://localhost/")
-	_ = os.Setenv("ELIXIR_AAI_TOKEN", "token")
+	t.Setenv("CENTRAL_EGA_USERNAME", "user")
+	t.Setenv("CENTRAL_EGA_PASSWORD", "pass")
+	t.Setenv("LOCAL_EGA_INSTANCE_URL", "http://localhost/")
+	t.Setenv("ELIXIR_AAI_TOKEN", "token")
 	var client requests.Client = forbiddenClient{body: `Cannot invoke "TSDFiles.getFiles()" because "tsdFiles" is null`}
 	fileManager, err := NewFileManager(&client)
 	if err != nil {

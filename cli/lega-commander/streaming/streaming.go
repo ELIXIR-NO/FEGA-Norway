@@ -201,9 +201,8 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 		)
 		switch {
 		// The proxy would refuse the upload for the same reason, so fail now with the real one.
-		// Other refusals stay tolerated: a missing inbox can reach us as a 403 too.
-		case errors.Is(err, requests.ErrEGAAuthentication),
-			errors.Is(err, requests.ErrElixirAAIAuthentication):
+		// Other refusals stay tolerated: a missing inbox can reach us as a 403 too, even one with no body.
+		case errors.Is(err, requests.ErrEGAAuthentication):
 			return err
 		case err != nil:
 			fmt.Println("Could not read previous uploaded files, this is ok if it's your first upload")
