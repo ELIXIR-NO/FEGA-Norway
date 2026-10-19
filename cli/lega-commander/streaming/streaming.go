@@ -199,9 +199,15 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 			50000,
 			true,
 		)
-		if err != nil {
+		switch {
+		// The proxy would refuse the upload for the same reason, so fail now with the real one.
+		// Other refusals stay tolerated: a missing inbox can reach us as a 403 too.
+		case errors.Is(err, requests.ErrEGAAuthentication),
+			errors.Is(err, requests.ErrElixirAAIAuthentication):
+			return err
+		case err != nil:
 			fmt.Println("Could not read previous uploaded files, this is ok if it's your first upload")
-		} else {
+		default:
 			for _, uploadedFile := range *filesList {
 				if fileName == filepath.Base(uploadedFile.FileName) {
 					return fmt.Errorf(
@@ -261,8 +267,8 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 		if err != nil {
 			return err
 		}
-		if response.StatusCode != 200 {
-			return errors.New(response.Status)
+		if err := requests.CheckResponse(response); err != nil {
+			return err
 		}
 		body, err := io.ReadAll(response.Body)
 		if err != nil {
@@ -300,8 +306,8 @@ func (s defaultStreamer) uploadFile(file *os.File, stat os.FileInfo, uploadID *s
 	if err != nil {
 		return err
 	}
-	if response.StatusCode != 200 {
-		return errors.New(response.Status)
+	if err := requests.CheckResponse(response); err != nil {
+		return err
 	}
 	err = response.Body.Close()
 	if err != nil {
@@ -373,8 +379,8 @@ func (s defaultStreamer) Download(fileName string) error {
 	if err != nil {
 		return err
 	}
-	if response.StatusCode != 200 {
-		return errors.New(response.Status)
+	if err := requests.CheckResponse(response); err != nil {
+		return err
 	}
 	barReader := bar.NewProxyReader(response.Body)
 	defer barReader.Close()
@@ -575,11 +581,8 @@ func (s *defaultStreamer) uploadFileWithoutProxy(file *os.File, stat os.FileInfo
 		return fmt.Errorf("upload succeeded but pipeline notification failed: %w", err)
 	}
 	defer notifyResp.Body.Close()
-	if notifyResp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(notifyResp.Body)
-		return fmt.Errorf(
-			"upload succeeded but pipeline notification failed (%d): %s",
-			notifyResp.StatusCode, string(respBody))
+	if err := requests.CheckResponse(notifyResp); err != nil {
+		return fmt.Errorf("upload succeeded but pipeline notification failed: %w", err)
 	}
 
 	return nil

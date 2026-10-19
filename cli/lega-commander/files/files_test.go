@@ -1,6 +1,7 @@
 package files
 
 import (
+	"errors"
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega-commander/requests"
 	"io"
 	"net/http"
@@ -129,5 +130,51 @@ func TestDeleteInboxFile500(t *testing.T) {
 	err = fileManager.DeleteFile("12")
 	if err == nil {
 		t.Error(err)
+	}
+}
+
+// forbiddenClient answers every request with 403 Forbidden and body.
+type forbiddenClient struct {
+	body string
+}
+
+func (c forbiddenClient) DoRequest(_, _ string, _ io.Reader, _, _ map[string]string, _, _ string) (*http.Response, error) {
+	return &http.Response{
+		StatusCode: http.StatusForbidden,
+		Status:     "403 Forbidden",
+		Body:       io.NopCloser(strings.NewReader(c.body)),
+	}, nil
+}
+
+func TestListFilesWrongEGACredentials(t *testing.T) {
+	_ = os.Setenv("CENTRAL_EGA_USERNAME", "user")
+	_ = os.Setenv("CENTRAL_EGA_PASSWORD", "wrong")
+	_ = os.Setenv("LOCAL_EGA_INSTANCE_URL", "http://localhost/")
+	_ = os.Setenv("ELIXIR_AAI_TOKEN", "token")
+	var client requests.Client = forbiddenClient{body: "EGA authentication failed"}
+	fileManager, err := NewFileManager(&client)
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = fileManager.ListFiles(true, 0, 50000, false)
+	if !errors.Is(err, requests.ErrEGAAuthentication) {
+		t.Errorf("ListFiles() = %v, want %v", err, requests.ErrEGAAuthentication)
+	}
+}
+
+func TestListFilesFolderNotFound(t *testing.T) {
+	_ = os.Setenv("CENTRAL_EGA_USERNAME", "user")
+	_ = os.Setenv("CENTRAL_EGA_PASSWORD", "pass")
+	_ = os.Setenv("LOCAL_EGA_INSTANCE_URL", "http://localhost/")
+	_ = os.Setenv("ELIXIR_AAI_TOKEN", "token")
+	var client requests.Client = forbiddenClient{body: `Cannot invoke "TSDFiles.getFiles()" because "tsdFiles" is null`}
+	fileManager, err := NewFileManager(&client)
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = fileManager.ListFiles(true, 0, 50000, false)
+	var notFound *FolderNotFoundError
+	if !errors.As(err, &notFound) {
+		t.Errorf("ListFiles() = %v, want *FolderNotFoundError", err)
 	}
 }
