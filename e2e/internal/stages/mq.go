@@ -25,6 +25,14 @@ func Ingest(_ context.Context, s *state.State) error {
 	return amqp.Publish(s.Config, s.CorrelationID, []byte(msg))
 }
 
+// ReIngest publishes the ingestion message to CEGA and reuses the existing CorrelationID
+func ReIngest(_ context.Context, s *state.State) error {
+	s.Log.Info("re-publishing ingestion message to CentralEGA")
+	msg := fmt.Sprintf(constants.IngestMessage, s.Config.CegaAuthUsername, s.EncName())
+	s.Log.JSON("ingest message", []byte(msg))
+	return amqp.Publish(s.Config, s.CorrelationID, []byte(msg))
+}
+
 // Accession generates the file accession id and publishes the accession
 // message.
 func Accession(_ context.Context, s *state.State) error {

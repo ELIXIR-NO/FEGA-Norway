@@ -41,6 +41,13 @@ const IngestMessage = `{
               }
 `
 
+const CancelMessage = `{
+                "type": "cancel",
+                "user": "%s",
+                "filepath": "/files/%s"
+              }
+`
+
 // AccessionMessage is the accession event body. Format args: user, encFileName,
 // accessionID, sha256, md5.
 const AccessionMessage = `{
