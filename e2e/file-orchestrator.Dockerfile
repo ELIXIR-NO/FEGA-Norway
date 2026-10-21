@@ -1,5 +1,5 @@
 # Use a lightweight base image with necessary tools
-FROM eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin:25-jdk-alpine
 
 ARG MKCERT_VERSION="v1.4.4"
 ARG CRYPT4GH_VERSION="v1.14.0"
