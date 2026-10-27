@@ -161,11 +161,14 @@ Publishing targets differ per artifact, which is easy to get wrong:
 | Docker images | GitHub Container Registry |
 | `lega-commander` | Go binaries on the GitHub Release |
 
-Before merge, `pre-release-check` runs on pull requests to catch a release that would break.
+Before merge, two checks catch a release that would break. `pre-release-build-check` runs on
+every pull request to `main` and builds the changed components without pushing anything;
+`pre-release-publish-check` runs when the pull request enters the merge queue and rehearses the
+publish itself.
 
-:::caution[It is not a pure dry run]
+:::caution[The publish check is not a pure dry run]
 JAR publishing and the Go build are dry-run/snapshot, but **Docker images are genuinely built and
-pushed** to the container registry, tagged with the PR number. `publish-and-release` later retags
-that same image. So opening a PR does publish container images, which surprises people auditing
-the registry.
+pushed** to the container registry, tagged with the PR number. `publish-and-release` later pulls
+that same image and retags it with the release version. So queueing a PR for merge publishes
+container images, which surprises people auditing the registry; opening one does not.
 :::

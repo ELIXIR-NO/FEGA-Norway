@@ -69,7 +69,7 @@ These differ deliberately from the old wiki, having been checked against the cod
 | `e2eTests` bump marker | A valid component | Not in the CI list; the marker fails |
 | `FEGA-Norway` releases | Only on path change | Every merged PR, unconditionally |
 | `tsd-file-api-client` | Maven Central | GitHub Packages |
-| `pre-release-check` | Pure dry run | Genuinely pushes PR-tagged Docker images |
+| `pre-release-check` | Pure dry run | Genuinely pushes PR-tagged Docker images. That job now lives in `pre-release-publish-check`, which runs from the merge queue |
 | Why `dev.sh` needs the repository root | It resolves paths relative to its own location | It resolves them relative to the working directory, which is why the root is required |
 
 ## Corrections to this site's own pages
@@ -91,6 +91,8 @@ wiki table above because these were our errors, not inherited ones.
 | Local stack: the runner | The `e2e-tests` container mounts the TSD inbox read-only, so the suite can assert that the mapper removed the uploaded file | Neither suite read that mount: both check the removal through the proxy's `GET /files?inbox=true` listing (`e2e/internal/stages/inbox.go`). The mount was dropped in [#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851) |
 | Versioning | `e2e` is "deliberately not a release component", and the path rule covers eight components | `e2e` has been a release component since 2026-08-06, in both `check-commit-message.yml` and `detect-changed-components.yml`, with its own `e2e-<version>` tags; a change under `cli/lega-commander/` releases it too. The path rule covers nine components besides `FEGA-Norway` |
 | Workflows, dev script | `build-and-test.yml` runs the end-to-end suite | The file was renamed `unit-and-e2e-test.yml` on 2026-09-02, with its content unchanged |
+| Workflows, versioning | `pre-release-check.yml` dry-runs the build and publish on every PR, so opening a PR publishes container images | It was split in two on 2026-09-15. `pre-release-build-check.yml` runs on PRs to `main` and pushes nothing; `pre-release-publish-check.yml` runs from the merge queue (`merge_group`) and is the one that pushes images tagged with the PR number. An image is published when a PR is queued for merge, not when it opens |
+| Workflows | `spotless-check.yml` runs on pushes and PRs | Only on PRs targeting `main` that touch `lib/**`, `services/**` or `buildSrc/**`; its push trigger was removed on 2026-02-16 |
 
 ## No way to boot the stack without running the suite
 
