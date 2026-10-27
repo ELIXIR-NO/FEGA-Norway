@@ -56,6 +56,11 @@ updates:
       timezone: "Europe/Oslo"
     commit-message:
       prefix: "[Docker-Java]"
+    # A new Java major needs a toolchain migration first: the Gradle builds pin
+    # Java 21 and the published libs target it.
+    ignore:
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 1
 
   # Go
