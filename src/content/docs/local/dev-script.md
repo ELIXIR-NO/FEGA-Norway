@@ -35,7 +35,7 @@ docker logs -f e2e-tests
 docker inspect --format='{{.State.ExitCode}}' e2e-tests
 ```
 
-CI does exactly this. `build-and-test.yml` runs `./dev.sh start`, then a separate step polls
+CI does exactly this. `unit-and-e2e-test.yml` runs `./dev.sh start`, then a separate step polls
 `{{.State.Running}}` until the container stops, dumps `docker logs e2e-tests`, and fails the job
 on a non-zero `{{.State.ExitCode}}`. Locally you have to do it yourself.
 :::

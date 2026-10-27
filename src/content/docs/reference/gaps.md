@@ -86,6 +86,8 @@ wiki table above because these were our errors, not inherited ones.
 | Go: EGA_DEV | Step 1 of the procedure was `E2E_SUITE=go E2E_ENV=egadev ./dev.sh start` | That is the container form, which needs wiring the operator does, and the step said so immediately after giving it. Anyone following the steps in order ran a dead end. The procedure now starts at the host run, and the container command moved into the accordion that answers it |
 | Known gaps | "All nine diagrams have been audited" | There are ten mermaid blocks across nine pages: `architecture/export-download` carries two, and the second was uncounted |
 | Local stack: the runner | The `e2e-tests` container mounts the TSD inbox read-only, so the suite can assert that the mapper removed the uploaded file | Neither suite read that mount: both check the removal through the proxy's `GET /files?inbox=true` listing (`e2e/internal/stages/inbox.go`). The mount was dropped in [#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851) |
+| Versioning | `e2e` is "deliberately not a release component", and the path rule covers eight components | `e2e` has been a release component since 2026-08-06, in both `check-commit-message.yml` and `detect-changed-components.yml`, with its own `e2e-<version>` tags; a change under `cli/lega-commander/` releases it too. The path rule covers nine components besides `FEGA-Norway` |
+| Workflows, dev script | `build-and-test.yml` runs the end-to-end suite | The file was renamed `unit-and-e2e-test.yml` on 2026-09-02, with its content unchanged |
 
 ## No way to boot the stack without running the suite
 

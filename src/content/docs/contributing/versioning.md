@@ -33,7 +33,7 @@ under that component's path actually changed.
 
 One exception: **`FEGA-Norway` itself is in the release matrix unconditionally**, so it gets a
 release on every merged pull request regardless of which paths changed. The path rule covers the
-other eight components.
+other nine components.
 
 **Rule two: patch by default.** When a component changes, its patch version increments unless a
 commit message explicitly asks for something else.
@@ -61,7 +61,7 @@ same branch still gets its default patch bump unless separately marked.
 
 A marker naming something that is not a real component fails CI. The recognised names are:
 
-`lega-commander` · `clearinghouse` · `crypt4gh` · `tsd-file-api-client` · `cega-mock` ·
+`lega-commander` · `e2e` · `clearinghouse` · `crypt4gh` · `tsd-file-api-client` · `cega-mock` ·
 `localega-tsd-proxy` · `mq-interceptor` · `tsd-api-mock` · `FEGA-Norway`
 
 The `check-commit-message` workflow validates every marker against this list on pull requests
@@ -72,10 +72,11 @@ The validation reads commit **subjects** only. A marker in a commit body is neit
 picked up, so it does nothing at all.
 :::
 
-:::note[`e2eTests` is not a release component]
-Despite being a directory in the repo, `e2eTests` is absent from the component list and from the
-changed-paths filter, so `#minor_e2eTests` **fails CI**. Its Go replacement, `e2e`, is
-deliberately not a release component either.
+:::note[`e2e` releases on CLI changes too]
+The `e2e` component covers `cli/lega-commander/` as well as `e2e/`, because the runner image
+compiles the CLI into itself: a change to the CLI alone yields a different image, so it cuts a new
+`e2e-<version>` alongside the `lega-commander` release. The retired JUnit runner, `e2eTests`, is
+no longer a component; its old `e2eTests-*` tags remain, and `#patch_e2eTests` fails CI.
 :::
 
 ## Multiple components

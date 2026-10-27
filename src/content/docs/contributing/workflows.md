@@ -9,7 +9,6 @@ you need the detail.
 | Workflow | What it does | Trigger |
 | --- | --- | --- |
 | `action-linter.yml` | Lints YAML, JSON and GitHub Actions files with a schema validator and Actionlint | PRs touching `*.yaml`, `*.yml` or `*.json` |
-| `build-and-test.yml` | Builds with Gradle, runs unit tests, then brings up the full stack and runs the end-to-end suite | Any push |
 | `check-commit-message.yml` | Validates version-bump markers against the known component list, failing on typos | PRs targeting `main` |
 | `codeql.yml` | CodeQL security analysis of the Java and Go code | Pushes to `main` |
 | `detect-changed-components.yml` | Works out which components changed and emits a matrix for other workflows | Called via `workflow_call` |
@@ -18,12 +17,13 @@ you need the detail.
 | `remove-old-images.yml` | Deletes old and untagged Docker images from the container registry | Cron, Mondays 02:10 UTC, or manual dispatch |
 | `scan-images.yml` | Trivy vulnerability scans on updated images, uploading results to GitHub Security | Merged PRs to `main` touching `services/localega-tsd-proxy/**` or `services/mq-interceptor/**` |
 | `spotless-check.yml` | Verifies formatting via Gradle Spotless | Pushes and PRs affecting `lib/**`, `services/**` or `buildSrc/**` |
+| `unit-and-e2e-test.yml` | Builds with Gradle, runs unit tests, then brings up the full stack and runs the end-to-end suite | Any push |
 
 ## The ones that will block your PR
 
 Three of these gate a merge, and they are worth knowing by name:
 
-- **`build-and-test`** is the heavyweight. It does not just compile: it boots the entire
+- **`unit-and-e2e-test`** is the heavyweight. It does not just compile: it boots the entire
   docker-compose stack and runs the end-to-end pipeline, failing on the test container's exit
   code. When it fails, read the container logs in the job output rather than the Gradle output.
 - **`check-commit-message`** fails on a mistyped component name in a bump marker. See
