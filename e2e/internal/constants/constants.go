@@ -41,6 +41,7 @@ const IngestMessage = `{
               }
 `
 
+// CancelMessage is the cancel event body. Format args: user, encFileName.
 const CancelMessage = `{
                 "type": "cancel",
                 "user": "%s",
