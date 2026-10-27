@@ -15,14 +15,16 @@ before you start.
 
 ### Create a token
 
-You need a Personal Access Token with the **Packages → Delete** scope.
+Your existing permissions already include it:
+- delete:packages — delete package versions (for deleting images). 
+- public_repo — access public repository resources (for deleting tags).
 
 ### Find the version ID
 
 ```bash
 curl -s -H "Authorization: Bearer YOUR_PAT" \
   -H "Accept: application/vnd.github+json" \
-  https://api.github.com/orgs/ELIXIR-NO/packages/container/fega-norway/versions \
+  "https://api.github.com/orgs/ELIXIR-NO/packages/container/fega-norway/versions?per_page=100" \
   | jq '.[] | select(.metadata.container.tags[]? == "COMPONENT_NAME-VERSION")'
 ```
 
