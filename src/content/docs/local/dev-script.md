@@ -157,9 +157,7 @@ flaky network it is the first thing to fail.
 
 The script checks the listing, the downloads and the resulting file count separately, and a
 failure names the host it could not reach, so `docker logs file-orchestrator` points straight at
-the network. (The `e2eTests/` copy on `main` still fails quietly: `curl` is unchecked there, the
-`cp` that follows dies on an unmatched glob, and the chain stops with nothing pointing at the
-network.)
+the network.
 
 ```text
 ERROR: could not list the SDA schemas from https://api.github.com/repos/neicnordic/sensitive-data-archive/contents/sda/schemas/federated
@@ -208,22 +206,15 @@ rather than running strictly one after another:
 
 ### Phase 5: the runner
 
-`E2E_SUITE` (default `go`) picks which runner image the `e2e-tests` container builds; everything
-below that container is shared, so both suites are measured against exactly the same stack. The
-Go runner's entrypoint selects one binary from `E2E_ENV` (default `fega`) and executes it; the
-binary reads the staged certificates directly off the volume, so there is no truststore import
-step. What each environment targets and needs is covered in
+The `e2e-tests` container runs the Go suite. Its entrypoint selects one binary from `E2E_ENV`
+(default `fega`) and executes it; the binary reads the staged certificates directly off the
+volume, so there is no truststore import step. What each environment targets and needs is covered in
 [the e2e distributions](../e2e-distributions/).
 
-The retiring JUnit runner (`E2E_SUITE=java ./dev.sh start`) instead imports the generated
-`/storage/certs/rootCA.pem` into the JDK truststore with `keytool` and selects a test class from
-`E2E_TESTS_INTEGRATION` (`FEGA`, the default, `GDI` or `EGA_DEV`). Its removal, and the
-`E2E_SUITE` switch with it, is tracked in
-[#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851).
-
-The container mounts the TSD inbox read-only, so the suite can assert that the mapper removed the
-uploaded file. When the suite finishes the container exits, and its exit code is the result. See
-the caution at the top of this section for how to read it.
+The suite checks that the mapper removed the uploaded file through the proxy's inbox listing, not
+the filesystem, so the container mounts only the shared `storage` volume. When the suite finishes
+the container exits, and its exit code is the result. See the caution at the top of this section
+for how to read it.
 
 ## Rebuilding one thing
 

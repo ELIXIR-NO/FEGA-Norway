@@ -42,10 +42,6 @@ When a page makes a claim, check it against code, in this order of authority:
 1. **`FEGA-Norway/e2e/`**: the end-to-end suite drives the real pipeline and asserts each stage.
    `internal/pipeline/pipeline.go` holds the authoritative stage order;
    `internal/stages/*.go` shows what each stage actually does.
-
-   Caveat: `e2e/` exists only on the unmerged `feat/e2e-go-rewrite` branch (PR #833). On `main`
-   the equivalent is the Java `e2eTests/`. Check which branch is out before citing a path, and
-   read the other with `git show origin/main:<path>`.
 2. **`sensitive-data-archive/sda/cmd/<service>/`**: the archive pipeline services.
 3. **`sensitive-data-archive/sda-doa/`**: the Java Data-Out API (export and download).
 4. **`FEGA-Norway/services/localega-tsd-proxy/`**: authentication, upload streaming, export requests.

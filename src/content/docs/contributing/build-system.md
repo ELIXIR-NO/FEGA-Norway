@@ -18,7 +18,7 @@ locally installed `gradle`, so everyone builds with the same version.
 ./gradlew :services:localega-tsd-proxy:build -x test
 
 # a single test
-./gradlew :e2eTests:test --tests <fully.qualified.ClassName>
+./gradlew :services:localega-tsd-proxy:test --tests <fully.qualified.ClassName>
 ```
 
 ## How it is wired

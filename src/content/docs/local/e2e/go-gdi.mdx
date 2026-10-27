@@ -13,10 +13,8 @@ pass.
 1. **Select the distribution**
 
    ```bash
-   E2E_SUITE=go E2E_ENV=gdi ./dev.sh start
+   E2E_ENV=gdi ./dev.sh start
    ```
-
-   `E2E_SUITE=go` is the default and can be omitted.
 
 2. **Expect failure**
 
@@ -34,20 +32,10 @@ hiding it.
 </details>
 
 <details>
-<summary>how is this different from the JUnit GDI distribution?</summary>
+<summary>how is the distribution selected?</summary>
 
-The retiring JUnit GDI class reports seven passing tests with empty bodies, a false green; this
-binary exits non-zero precisely so it cannot produce one. Neither runner has GDI coverage; only
-this one says so.
-
-</details>
-
-<details>
-<summary>why is there more than one selector?</summary>
-
-`E2E_SUITE` picks the runner (`go` or `java`) and `E2E_ENV` picks which Go binary runs, so the
-pair selects one of the six distributions. The retiring JUnit runner uses its own
-`E2E_TESTS_INTEGRATION` selector instead and ignores `E2E_ENV`. Neither runner selects an
-environment at runtime: choosing the environment is choosing the program.
+`E2E_ENV` picks which binary the runner's entrypoint executes, and each binary fixes its own
+pipeline. Nothing selects an environment at runtime: choosing the environment is choosing the
+program.
 
 </details>

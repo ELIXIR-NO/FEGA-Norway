@@ -203,17 +203,14 @@ export default defineConfig({
 				// Its own section rather than a group nested under "Run it locally": a
 				// nested group renders with the same weight as a top-level one, so it read
 				// as a peer of the sections around it while sitting a level deeper than
-				// anything else in the sidebar. Chooser first, then runner, then target.
+				// anything else in the sidebar. Chooser first, then one page per target.
 				{
-					label: 'The e2e suites',
+					label: 'The e2e suite',
 					items: [
 						{ label: 'Pick a distribution', slug: 'local/e2e-distributions' },
 						{ label: 'Go: fega', slug: 'local/e2e/go-fega' },
 						{ label: 'Go: egadev', slug: 'local/e2e/go-egadev' },
 						{ label: 'Go: gdi', slug: 'local/e2e/go-gdi' },
-						{ label: 'JUnit: FEGA', slug: 'local/e2e/junit-fega' },
-						{ label: 'JUnit: EGA_DEV', slug: 'local/e2e/junit-egadev' },
-						{ label: 'JUnit: GDI', slug: 'local/e2e/junit-gdi' },
 					],
 				},
 				{
