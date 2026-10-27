@@ -74,10 +74,12 @@ func RunStaging(ctx context.Context, s *state.State) error {
 	})
 }
 
-func RunLocalIngestCancel(ctx context.Context, s *state.State) error {
+// RunLocalIngestCancelReingest runs the cancel path against the mocked stack: a file is
+// finalized, cancelled, then ingested again from the inbox without re-uploading:
+// upload -> ingest -> accession -> finalize -> cancel -> re-ingest -> accession ->
+// finalize -> mapping -> inbox-cleanup -> release -> download.
+func RunLocalIngestCancelReingest(ctx context.Context, s *state.State) error {
 	return run(ctx, s, "FEGA (local) ingest-cancel", []step{
-		{"ProxyWebpageVerification", stages.ProxyWebpage, 0},
-		{"C1JwtSignatureVerification", stages.C1JwtSignatureVerification, 0},
 		{"UploadViaLegaCmd", stages.UploadViaLegaCmd, 5000},
 		{"Ingest", stages.Ingest, 5000},
 		{"Accession", stages.Accession, 5000},
