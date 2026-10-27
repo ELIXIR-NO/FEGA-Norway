@@ -52,7 +52,7 @@ func run() (code int) {
 		}
 	}()
 
-	if err := pipeline.RunLocalIngestCancel(context.Background(), cancelState); err != nil {
+	if err := pipeline.RunLocalIngestCancelReingest(context.Background(), cancelState); err != nil {
 		return 1
 	}
 	return 0
