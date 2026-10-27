@@ -42,8 +42,6 @@ type Config struct {
 	SdaDoaHost string
 	SdaDoaPort string
 
-	TruststorePassword string
-
 	// Integration is set by the binary, not read from the environment.
 	Integration Integration
 
@@ -68,7 +66,6 @@ type Config struct {
 	// EGA-Dev (staging) specific.
 	EgaDevBaseDirectory  string
 	EgaDevPubKeyPath     string
-	EgaDevJwtPubKeyPath  string
 	EgaDevJwtPrivKeyPath string
 }
 
@@ -97,7 +94,6 @@ func Load(integration Integration) *Config {
 		SdaDoaHost: os.Getenv("E2E_TESTS_SDA_DOA_HOST"),
 		SdaDoaPort: os.Getenv("E2E_TESTS_SDA_DOA_PORT"),
 
-		TruststorePassword: os.Getenv("E2E_TESTS_TRUSTSTORE_PASSWORD"),
 		ProxyTokenAudience: os.Getenv("E2E_TESTS_PROXY_TOKEN_AUDIENCE"),
 		ProxyAdminUsername: os.Getenv("E2E_TESTS_PROXY_ADMIN_USERNAME"),
 		ProxyAdminPassword: os.Getenv("E2E_TESTS_PROXY_ADMIN_PASSWORD"),
@@ -112,7 +108,6 @@ func Load(integration Integration) *Config {
 		LSAAISubject: os.Getenv("E2E_TESTS_LSAAI_SUBJECT"),
 
 		EgaDevBaseDirectory:  os.Getenv("E2E_TESTS_EGA_DEV_BASE_DIRECTORY"),
-		EgaDevJwtPubKeyPath:  os.Getenv("E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH"),
 		EgaDevJwtPrivKeyPath: os.Getenv("E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH"),
 		EgaDevPubKeyPath:     os.Getenv("E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH"),
 	}
