@@ -4,30 +4,36 @@ The FEGA-Norway end-to-end test suite. It drives the full pipeline (upload,
 ingest, accession, finalize, mapping, release, download) against either the
 mocked local stack or the live egadev environment.
 
-This directory also owns the **stack** both suites run against:
+This directory also owns the **stack** the suite runs against:
 `docker-compose.template.yml`, `confs/`, `scripts/` and `env.sh`.
 
-## Two runners, one stack
+## Running it locally
 
-The retiring JUnit suite in [`../e2eTests`](../e2eTests) is kept alongside this
-one until the Go suite has proven itself in practice. Only the runner container
-differs; every service under test is shared, so a disagreement between the two
-is a test-suite difference and never an environment difference.
-
-`E2E_SUITE` picks the runner:
+The host needs Docker with the Compose v2 plugin, and your user has to be able
+to run `docker` without sudo; `./dev.sh start` checks both before it builds
+anything. Every image, this runner included, is built inside Docker, so the
+stack needs no Go or Java on the host. From the repository root:
 
 ```sh
-./dev.sh start                  # go (default)
-E2E_SUITE=java ./dev.sh start   # the JUnit suite
+./dev.sh start                                           # render the compose file, build and start everything
+docker logs -f e2e-tests                                 # follow the run
+docker inspect --format='{{.State.ExitCode}}' e2e-tests  # the verdict: 0 is a pass
+./dev.sh stop                                            # tear it all down, volumes included
 ```
 
-In CI, pushes always run the Go suite. Run the JUnit one on demand from the
-Actions tab: **Build and test** -> Run workflow -> `e2e_suite: java`.
+`./dev.sh start` returns as soon as the containers are up, long before the
+suite finishes, which is why the exit code is the result and the start command
+is not. To run the suite again on a stack that is already up,
+`./dev.sh reexecute_tests_in_container` rebuilds and restarts only the runner.
+The boot order, rebuilding a single service and troubleshooting are covered on
+the [docs site](https://elixir-no.github.io/FEGA-Norway/).
 
-Switching suites needs a **fresh stack** (`./dev.sh stop` first). Both suites
-ingest the same fixture and assert on archive and inbox state, so re-running one
-over the other's leftovers fails for reasons that have nothing to do with either
-suite.
+`e2e-fega` runs only inside the stack, by design. Its endpoints are in-network
+host names, it reads the staged certificates off the shared `storage` volume,
+and it shells out to `lega-commander` at the fixed path the image installs it
+to. Debugging goes through the container as well: rebuild the service under
+test with its `./dev.sh rebuild_and_deploy_*` command, rerun the suite with
+`./dev.sh reexecute_tests_in_container` and read `docker logs e2e-tests`.
 
 ## Layout
 
@@ -112,12 +118,17 @@ docker run --rm \
 
 `e2e-fega` only makes sense inside the stack, but `e2e-egadev` targets a live
 environment and can run straight from a shell: set the `E2E_TESTS_*` variables
-(endpoints, the LS-AAI token and the `E2E_TESTS_EGA_DEV_*` key paths, see
-`env.sh`) and run the binary. The EGA_DEV pipeline reads its keys from the
-absolute `E2E_TESTS_EGA_DEV_*` paths and verifies the broker TLS against the
-system roots, so no staged cert material is required. Where staged certs are
-read (the FEGA pipeline), their directory comes from `E2E_TESTS_CERTS_DIR`,
-defaulting to the in-container `/storage/certs`.
+(endpoints, the CEGA credentials, the proxy admin credentials, the LS-AAI
+token and the `E2E_TESTS_EGA_DEV_*` key paths, see `env.sh`) and run the
+binary. Set `E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES` and
+`E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS` as well, to the 5 and 10 that
+`env.sh` uses. The binary refuses to start without a positive value for each,
+and it names every missing or invalid variable in a single error. The EGA_DEV
+pipeline reads its keys from the absolute `E2E_TESTS_EGA_DEV_*` paths and
+verifies the broker TLS against the system roots, so no staged cert material
+is required. Where staged certs are read (the FEGA pipeline), their directory
+comes from `E2E_TESTS_CERTS_DIR`, defaulting to the in-container
+`/storage/certs`.
 
 ## Choosing the integration: FEGA, EGA_DEV or GDI
 
@@ -139,12 +150,11 @@ stages run and what they run against.
 contained. `egadev` targets a live environment, so it needs real credentials
 and skips the stages that depend on stack-internal access. `gdi` is a
 placeholder: it prints that the pipeline is not implemented and exits non-zero,
-so a scheduled run can never report a false pass. Implementing it is tracked in
-`../../docs/e2e-go-rewrite/2026-06-19-proposal.md`.
+so a scheduled run can never report a false pass.
 
 ## Scope (Phase 1)
 
 Phase 1 preserves the proven suite behavior unchanged: stage order, the fixed
 inter-stage waits, and every assertion. Deferred to Phase 2 (tracked in
-`../../docs/e2e-go-rewrite/2026-06-19-proposal.md`): replacing fixed sleeps with
-bounded polling and the single-shot finalize DB read.
+[#866](https://github.com/ELIXIR-NO/FEGA-Norway/issues/866)): replacing fixed
+sleeps with bounded polling and the single-shot finalize DB read.

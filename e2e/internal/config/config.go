@@ -42,8 +42,6 @@ type Config struct {
 	SdaDoaHost string
 	SdaDoaPort string
 
-	TruststorePassword string
-
 	// Integration is set by the binary, not read from the environment.
 	Integration Integration
 
@@ -60,15 +58,12 @@ type Config struct {
 
 	// LSAAIToken: access token used for upload. If empty, a dummy visa is minted.
 	LSAAIToken string
-	// TsdProject is a template variable for the ingest/accession messages.
-	TsdProject string
 	// LSAAISubject is derived from LSAAIToken at staging setup time (mutable).
 	LSAAISubject string
 
 	// EGA-Dev (staging) specific.
 	EgaDevBaseDirectory  string
 	EgaDevPubKeyPath     string
-	EgaDevJwtPubKeyPath  string
 	EgaDevJwtPrivKeyPath string
 }
 
@@ -97,7 +92,6 @@ func Load(integration Integration) *Config {
 		SdaDoaHost: os.Getenv("E2E_TESTS_SDA_DOA_HOST"),
 		SdaDoaPort: os.Getenv("E2E_TESTS_SDA_DOA_PORT"),
 
-		TruststorePassword: os.Getenv("E2E_TESTS_TRUSTSTORE_PASSWORD"),
 		ProxyTokenAudience: os.Getenv("E2E_TESTS_PROXY_TOKEN_AUDIENCE"),
 		ProxyAdminUsername: os.Getenv("E2E_TESTS_PROXY_ADMIN_USERNAME"),
 		ProxyAdminPassword: os.Getenv("E2E_TESTS_PROXY_ADMIN_PASSWORD"),
@@ -106,13 +100,11 @@ func Load(integration Integration) *Config {
 		ExportRequestIntervalInSeconds: atoi64Or(os.Getenv("E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS"), 0),
 
 		LSAAIToken: os.Getenv("E2E_TESTS_LSAAI_TOKEN"),
-		TsdProject: os.Getenv("E2E_TESTS_TSD_PROJECT"),
 		// LSAAISubject is normally derived from the token during staging setup,
 		// which overwrites whatever is read here.
 		LSAAISubject: os.Getenv("E2E_TESTS_LSAAI_SUBJECT"),
 
 		EgaDevBaseDirectory:  os.Getenv("E2E_TESTS_EGA_DEV_BASE_DIRECTORY"),
-		EgaDevJwtPubKeyPath:  os.Getenv("E2E_TESTS_EGA_DEV_JWT_PUB_KEYPATH"),
 		EgaDevJwtPrivKeyPath: os.Getenv("E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH"),
 		EgaDevPubKeyPath:     os.Getenv("E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH"),
 	}
