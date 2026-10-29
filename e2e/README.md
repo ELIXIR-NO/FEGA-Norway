@@ -118,16 +118,17 @@ docker run --rm \
 
 `e2e-fega` only makes sense inside the stack, but `e2e-egadev` targets a live
 environment and can run straight from a shell: set the `E2E_TESTS_*` variables
-(endpoints, the CEGA credentials, the LS-AAI token and the
-`E2E_TESTS_EGA_DEV_*` key paths, see `env.sh`) and run the binary. Set
-`E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES` and
+(endpoints, the CEGA credentials, the proxy admin credentials, the LS-AAI
+token and the `E2E_TESTS_EGA_DEV_*` key paths, see `env.sh`) and run the
+binary. Set `E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES` and
 `E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS` as well, to the 5 and 10 that
-`env.sh` uses. Both default to 0 in the binary, and with no retries the download
-stage never lists the outbox and fails. The EGA_DEV pipeline reads its keys from the
-absolute `E2E_TESTS_EGA_DEV_*` paths and verifies the broker TLS against the
-system roots, so no staged cert material is required. Where staged certs are
-read (the FEGA pipeline), their directory comes from `E2E_TESTS_CERTS_DIR`,
-defaulting to the in-container `/storage/certs`.
+`env.sh` uses. The binary refuses to start without a positive value for each,
+and it names every missing or invalid variable in a single error. The EGA_DEV
+pipeline reads its keys from the absolute `E2E_TESTS_EGA_DEV_*` paths and
+verifies the broker TLS against the system roots, so no staged cert material
+is required. Where staged certs are read (the FEGA pipeline), their directory
+comes from `E2E_TESTS_CERTS_DIR`, defaulting to the in-container
+`/storage/certs`.
 
 ## Choosing the integration: FEGA, EGA_DEV or GDI
 

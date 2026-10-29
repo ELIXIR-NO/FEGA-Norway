@@ -228,11 +228,11 @@ export E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS=10
 export E2E_TESTS_TSD_PROJECT=p11
 export E2E_TESTS_LSAAI_SUBJECT=dummy@elixir-europe.org
 
-# Where the Go runner finds the staged TLS material (rootCA.pem, client certs,
-# archive key). Exists so a binary can run on a host, where /storage/certs does
-# not; the in-binary default covers the container, so this is deliberately not
-# passed through the compose template (a host override must never leak into the
-# stack).
+# Where the runner reads the staged TLS material (rootCA.pem, client certs,
+# archive key). The binary defaults to /storage/certs, the shared volume's mount
+# in the stack; set this for a run outside the compose stack. It is deliberately
+# not passed through the compose template, so such an override never leaks into
+# the stack.
 export E2E_TESTS_CERTS_DIR=${E2E_TESTS_CERTS_DIR:-/storage/certs}
 
 # EGA_DEV only; set these when E2E_ENV=egadev:
