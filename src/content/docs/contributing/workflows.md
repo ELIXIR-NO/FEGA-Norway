@@ -12,7 +12,7 @@ you need the detail.
 | `check-commit-message.yml` | Validates version-bump markers against the known component list, failing on typos | PRs targeting `main` |
 | `codeql.yml` | CodeQL security analysis of the Java and Go code | Pushes to `main` |
 | `detect-changed-components.yml` | Works out which components changed and emits a matrix for other workflows | Called via `workflow_call` |
-| `pre-release-build-check.yml` | Builds the changed components' JARs and Docker images without pushing anything, to prove the release will build | PRs targeting `main` |
+| `pre-release-build-check.yml` | Builds the JARs of the changed libraries and the Docker images of the changed services and the e2e runner, without pushing anything, to prove the release will build. `lega-commander` is first built by the publish check | PRs targeting `main` |
 | `pre-release-publish-check.yml` | Rehearses the publish: dry-run JAR publishing, a snapshot `lega-commander` build, a real push of the changed Docker images tagged with the PR number, and changelog generation | A PR entering the merge queue for `main` (`merge_group`) |
 | `publish-and-release.yml` | Publishes changed components, creates GitHub Releases, tags them and generates changelogs | Merged PRs to `main` |
 | `remove-old-images.yml` | Deletes old and untagged Docker images from the container registry | Cron, Mondays 02:10 UTC, or manual dispatch |
@@ -39,6 +39,7 @@ merges, which pulls the image the publish check pushed and retags it with the re
 
 `detect-changed-components` is shared machinery rather than something you trigger. All three
 call it to build their component matrix, and each also names the components it knows how to
-build or publish, which is why a component must be registered consistently in all four places.
+build or publish. With `detect-changed-components` itself and the `COMPONENTS` list in
+`check-commit-message.yml`, that makes five places a component must be registered consistently.
 Registering a component in one and not the others produces a confusing failure at release time
 rather than a clear error.

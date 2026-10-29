@@ -162,9 +162,9 @@ Publishing targets differ per artifact, which is easy to get wrong:
 | `lega-commander` | Go binaries on the GitHub Release |
 
 Before merge, two checks catch a release that would break. `pre-release-build-check` runs on
-every pull request to `main` and builds the changed components without pushing anything;
-`pre-release-publish-check` runs when the pull request enters the merge queue and rehearses the
-publish itself.
+every pull request to `main` and builds the changed libraries and images without pushing
+anything (`lega-commander` waits for the publish check); `pre-release-publish-check` runs when
+the pull request enters the merge queue and rehearses the publish itself.
 
 :::caution[The publish check is not a pure dry run]
 JAR publishing and the Go build are dry-run/snapshot, but **Docker images are genuinely built and
