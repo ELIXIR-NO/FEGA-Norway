@@ -100,4 +100,8 @@ updates:
       timezone: "Europe/Oslo"
     commit-message:
       prefix: "[Docker-Go]"
+    # file-orchestrator stays on the Java major the Gradle builds use; see Docker Java.
+    ignore:
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 1
