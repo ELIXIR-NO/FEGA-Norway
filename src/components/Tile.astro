@@ -6,17 +6,12 @@ interface Props {
 	eyebrow: string;
 	title: string;
 	href: string;
-	retired?: boolean;
-	badgeText?: string;
-	badgeHref?: string;
 }
 
-const { eyebrow, title, href, retired = false, badgeText, badgeHref } = Astro.props;
+const { eyebrow, title, href } = Astro.props;
 ---
 
-{/* A div rather than an anchor, because a retired tile carries a second link to
-its issue; theme.css stretches the title link over the card and explains it. */}
-<div class:list={['fega-card', 'fega-tile', { 'fega-tile--retired': retired }]}>
+<div class="fega-card fega-tile">
 	{/* The space is load-bearing: compressHTML strips template whitespace, and
 	Pagefind then indexes the two adjacent inline spans as one word, so the title
 	stops being searchable ("Mocked stacke2e-fega"). */}
@@ -28,7 +23,4 @@ its issue; theme.css stretches the title link over the card and explains it. */}
 	prose in a <p>, which a span cannot legally contain. Starlight's
 	adjacent-sibling margin rule still skips it: the element before is a span. */}
 	<div class="fega-card__body fega-tile__body"><slot /></div>
-	{badgeText && badgeHref && (
-		<a class="fega-tile__badge" href={badgeHref}>{badgeText}</a>
-	)}
 </div>

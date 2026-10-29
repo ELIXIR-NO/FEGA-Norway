@@ -14,10 +14,10 @@ against the self-contained compose stack: what CI runs on every push.
 1. **Select the distribution and start the stack**
 
    ```bash
-   E2E_SUITE=go E2E_ENV=fega ./dev.sh start
+   E2E_ENV=fega ./dev.sh start
    ```
 
-   Both values are the defaults, so plain `./dev.sh start` does the same. No other setup:
+   `fega` is the default, so plain `./dev.sh start` does the same. No other setup:
    `env.sh` supplies a working default for every `E2E_TESTS_*` variable.
 
 2. **Follow the run**
@@ -37,10 +37,7 @@ against the self-contained compose stack: what CI runs on every push.
 
 </Steps>
 
-:::note[Switching between the two suites]
-`E2E_SUITE` is read when `dev.sh` sources `env.sh` and re-renders the compose file, so changing
-it and running `./dev.sh start` again rebuilds and recreates the `e2e-tests` service.
-
+:::note[Earlier runs do not interfere]
 An earlier run's leftovers do not interfere. Every run namespaces itself: a UUID-named fixture,
 an accession id of `EGAF5` plus ten random digits, a dataset id of `EGAD` plus eleven. Every
 assertion matches on those, so a stale file in the inbox or outbox is invisible to the next run
@@ -53,20 +50,35 @@ rather than fatal to it.
 Nothing. `env.sh` defaults every `E2E_TESTS_*` variable, and the file-orchestrator stages all
 crypto material into the certs directory before the runner is allowed to start: the mkcert root
 CA that anchors the broker and database TLS connections, the RSA pair for JWT signing, and the
-Crypt4GH archive key. The runner reads that volume directly, so unlike the JUnit suite it has no
-`keytool` import step. The names it needs (`jwt.priv.pem`, `ega.pub.pem`, `rootCA.pem`) resolve
+Crypt4GH archive key. The runner reads that volume directly, so there is no truststore
+import step. The names it needs (`jwt.priv.pem`, `ega.pub.pem`, `rootCA.pem`) resolve
 as bare filenames under the certs directory, which `E2E_TESTS_CERTS_DIR` locates and defaults to
 the in-container `/storage/certs`.
 
 </details>
 
 <details>
-<summary>why is there more than one selector?</summary>
+<summary>can I run it from a host or an IDE?</summary>
 
-`E2E_SUITE` picks the runner (`go` or `java`) and `E2E_ENV` picks which Go binary runs, so the
-pair selects one of the six distributions. The retiring JUnit runner uses its own
-`E2E_TESTS_INTEGRATION` selector instead and ignores `E2E_ENV`. Neither runner selects an
-environment at runtime: choosing the environment is choosing the program.
+No. It runs only inside the stack, by design. Its endpoints are the in-network service names
+(`proxy`, `doa`, `db`, `cegamq`) that only the compose network resolves, it reads the staged
+certificates off the shared `storage` volume, and the upload stage shells out to `lega-commander`
+at `/usr/local/bin/lega-commander`, which is where the image installs it. The JUnit runner's host
+mode went with that suite in [#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851).
+
+Debugging goes through the container as well. To iterate on one service, rebuild it with its
+`./dev.sh rebuild_and_deploy_*` command, run the suite again with
+`./dev.sh reexecute_tests_in_container`, and read the stage that failed in
+`docker logs e2e-tests`.
+
+</details>
+
+<details>
+<summary>how is the distribution selected?</summary>
+
+`E2E_ENV` picks which binary the runner's entrypoint executes, and each binary fixes its own
+pipeline. Nothing selects an environment at runtime: choosing the environment is choosing the
+program.
 
 </details>
 

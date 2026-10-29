@@ -15,23 +15,14 @@ as empty sections:
 - **Branch naming.** How to name new branches.
 - **Secrets.** Where the keys live and how to rotate them, beyond the
   [GPG signing key](../../operations/signing-keys/) which is documented.
-- **End-to-end tests.** How to run them outside an IDE, and what to do when they will not run.
-  The wiki noted that the only real material lives in comments on a merged pull request,
-  [#333](https://github.com/ELIXIR-NO/FEGA-Norway/pull/333).
 - **Support.** The wiki's Support section was empty. There is no documented support contact
   other than `fega-norway-support@elixir.no`, which appears only in the signing-key context.
 
 ## No end-to-end coverage of GDI
 
-Both runners ship a GDI distribution and neither one tests anything. The Go binary `e2e-gdi`
-prints `the GDI pipeline is not implemented` and exits 1. The JUnit `GDIIntegrationTest` is seven
-`@Order`-ed methods with empty bodies, so it reports seven passing tests without connecting to
-anything.
-
-The difference matters more than the gap: one distribution announces that it is empty, the other
-reports a false green. Both are described on
-[the e2e distributions page](../../local/e2e-distributions/); the JUnit class retires with the
-rest of that module in [#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851).
+The GDI distribution tests nothing. The binary `e2e-gdi` prints `the GDI pipeline is not
+implemented` and exits 1, so a GDI run announces that it is empty instead of reporting a pass; see
+[the e2e distributions page](../../local/e2e-distributions/).
 
 ## Verification status of the diagrams
 
@@ -89,15 +80,17 @@ wiki table above because these were our errors, not inherited ones.
 | Page | Was said | Actual |
 | --- | --- | --- |
 | e2e distributions | `lega-commander` runs with `TLS_SKIP_VERIFY` | The variable is `LEGA_COMMANDER_TLS_SKIP_VERIFY=true` (`e2e/internal/stages/upload.go`) |
-| e2e distributions | The egadev host run needs the LS-AAI token, four key paths and the endpoints | It also needs `E2E_TESTS_CEGAAUTH_USERNAME` and `E2E_TESTS_CEGAAUTH_PASSWORD`. `UploadThroughProxy` sends CEGA HTTP basic auth on both upload `PATCH` calls, and `env.sh` defaults both to the mock value `dummy`, so the run inherits a credential the live environment will not accept rather than failing on a missing one |
-| JUnit: FEGA, running it from your IDE | The host run needs only the stack up and two environment variables | It also needs `lega-commander` installed at the hardcoded absolute path `/usr/local/bin/lega-commander`, and the stack's root CA imported into a truststore the host JVM reads. Following the page as published gave four passes and five failures. Both prerequisites are things the container image does at build and start time, which is why they were invisible |
-| JUnit: FEGA, `E2E_TESTS_RUNTIME=local` | Redirects the proxy and DOA to `localhost` | Redirects **four** endpoints: it also moves `E2E_TESTS_SDA_DB_HOST` and rewrites `E2E_TESTS_CEGAMQ_CONN_STR`. Those two carry the `FinalizeTest` database assertion and every broker publish |
-| JUnit: FEGA, running it from your IDE | `./dev.sh start` "already launches the suite in a container" | It launches the **Go** suite, since `E2E_SUITE` defaults to `go`. The sentence named the wrong runner |
-| Go: EGA_DEV, host run | The host run needs the LS-AAI token, the key paths, the endpoints and the CEGA credentials | It also needs `E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES` and `E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS`. Both default to `0` in the Go config, and the working values live in `env.sh`, which only a container run sources. A retry count of 0 skips the outbox poll, so the download stage fails without ever listing. The JUnit runner reaches the same gap earlier, throwing `NumberFormatException` at startup because it parses both without a default |
-| e2e distributions | Switching suites needs a fresh stack, because "both suites ingest the same fixture and assert on archive and inbox state, so one suite's leftovers fail the other" | The rationale was wrong, and both suites were checked. Each run namespaces itself: the fixture is named from a UUID (`CreateRandomFile` in Go, `UUID.randomUUID()` in `CommonUtils`), the accession id is `EGAF5` plus ten random digits and the dataset id `EGAD` plus eleven, generated the same way on both sides. Every assertion matches on those values rather than counting, so leftovers from an earlier run are invisible to the next one, not fatal to it |
+| e2e distributions | The egadev host run needs the LS-AAI token, four key paths and the endpoints | It also needs `E2E_TESTS_CEGAAUTH_USERNAME` and `E2E_TESTS_CEGAAUTH_PASSWORD`. `UploadThroughProxy` sends CEGA HTTP basic auth on both upload `PATCH` calls, so both need values the live environment accepts |
+| Go: EGA_DEV, host run | The host run needs the LS-AAI token, the key paths, the endpoints and the CEGA credentials | It also needs `E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES` and `E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS`. The working values live in `env.sh`, which only a container run sources; unset, both fall back to `0`, which startup validation rejects |
+| Go: EGA_DEV, host run | An unset CEGA credential sends the mock `dummy`, and an export-request value of 0 skips the outbox poll | Both stop the run at startup instead. `Config.Validate()` requires a non-empty CEGA username and password and a value of at least 1 for each export-request variable, and a host run does not source `env.sh`, so nothing supplies `dummy`. The page contradicted its own note that a misconfigured run fails at startup |
+| Go: EGA_DEV, host run | The run needs the LS-AAI token, the key paths, the endpoints, the CEGA credentials and the export-request values | It also needs `E2E_TESTS_PROXY_ADMIN_USERNAME` and `E2E_TESTS_PROXY_ADMIN_PASSWORD`, the basic auth on the export request; `Config.Validate()` requires both for egadev |
+| Component map | `lega-commander` is the tool submitters use to encrypt files | It checks that a file is already Crypt4GH and never encrypts. Corrected on 2026-08-19; the wiki made the same claim, listed in the table above |
 | Versioning | A bump marker goes "anywhere in a commit message" | Subject lines only. The workflow validates commit **subjects**, so a marker in a body is neither validated nor picked up and the release silently does not happen. The page said both things, 27 lines apart |
 | Go: EGA_DEV | Step 1 of the procedure was `E2E_SUITE=go E2E_ENV=egadev ./dev.sh start` | That is the container form, which needs wiring the operator does, and the step said so immediately after giving it. Anyone following the steps in order ran a dead end. The procedure now starts at the host run, and the container command moved into the accordion that answers it |
 | Known gaps | "All nine diagrams have been audited" | There are ten mermaid blocks across nine pages: `architecture/export-download` carries two, and the second was uncounted |
+| Local stack: the runner | The `e2e-tests` container mounts the TSD inbox read-only, so the suite can assert that the mapper removed the uploaded file | Neither suite read that mount: both check the removal through the proxy's `GET /files?inbox=true` listing (`e2e/internal/stages/inbox.go`). The mount was dropped in [#851](https://github.com/ELIXIR-NO/FEGA-Norway/issues/851) |
+| Versioning | `e2e` is "deliberately not a release component", and the path rule covers eight components | `e2e` has been a release component since 2026-08-06, in both `check-commit-message.yml` and `detect-changed-components.yml`, with its own `e2e-<version>` tags; a change under `cli/lega-commander/` releases it too. The path rule covers nine components besides `FEGA-Norway` |
+| Workflows, dev script | `build-and-test.yml` runs the end-to-end suite | The file was renamed `unit-and-e2e-test.yml` on 2026-09-02, with its content unchanged |
 
 ## No way to boot the stack without running the suite
 
@@ -105,8 +98,6 @@ wiki table above because these were our errors, not inherited ones.
 declares no profiles, so the `e2e-tests` service always runs. There is no documented way to bring
 up only the services under test.
 
-This matters for the IDE workflow on
-[the JUnit FEGA distribution](../../local/e2e/junit-fega/#running-it-from-your-ide): a debugging
-session is necessarily a second suite run alongside the container one. The runs do not collide,
-per the namespacing above, but the container run still consumes time and log space on every
-`./dev.sh start`. A compose profile would fix it.
+This matters whenever you want the stack for something other than a suite run, such as driving
+the proxy with `lega-commander` by hand: every `./dev.sh start` runs the full suite as well, which
+costs time and log space, and a compose profile would fix it.
