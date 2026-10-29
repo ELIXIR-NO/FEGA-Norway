@@ -2,7 +2,6 @@ package streaming
 
 import (
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -77,13 +76,13 @@ func (mockClient) DoRequest(
 	// TSD token exchange (used by -b mode, no Proxy-Authorization header)
 	if strings.Contains(url, "/auth/lifesc/token") && method == http.MethodPost {
 		mockJWT := "eyJhbGciOiJub25lIn0.eyJ1c2VyIjoidGVzdHVzZXIifQ."
-		body := ioutil.NopCloser(strings.NewReader(`{"token":"` + mockJWT + `"}`))
+		body := io.NopCloser(strings.NewReader(`{"token":"` + mockJWT + `"}`))
 		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
 	}
 
 	// TSD direct file upload (used by -b mode, uses Authorization not Proxy-Authorization)
 	if strings.Contains(url, "/files/") && method == http.MethodPatch {
-		body := ioutil.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
+		body := io.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
 		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
 	}
 
@@ -91,7 +90,7 @@ func (mockClient) DoRequest(
 	if !strings.HasPrefix(headers["Proxy-Authorization"], "Bearer ") {
 		return &http.Response{
 			StatusCode: http.StatusUnauthorized,
-			Body:       ioutil.NopCloser(strings.NewReader("")),
+			Body:       io.NopCloser(strings.NewReader("")),
 		}, nil
 	}
 
@@ -99,7 +98,7 @@ func (mockClient) DoRequest(
 	if strings.Contains(url, "/notify") && method == http.MethodPost {
 		return &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(strings.NewReader("")),
+			Body:       io.NopCloser(strings.NewReader("")),
 		}, nil
 	}
 
@@ -107,16 +106,16 @@ func (mockClient) DoRequest(
 	if strings.HasSuffix(url, "/files") {
 		page := params["page"]
 		if page != "" && page != "0" {
-			empty := ioutil.NopCloser(strings.NewReader(`{"files":[]}`))
+			empty := io.NopCloser(strings.NewReader(`{"files":[]}`))
 			return &http.Response{StatusCode: http.StatusOK, Body: empty}, nil
 		}
 		var body io.ReadCloser
 		if params["inbox"] == "" || params["inbox"] == "true" {
-			body = ioutil.NopCloser(
+			body = io.NopCloser(
 				strings.NewReader(`{"files":[{"fileName":"test.enc","size":100,"modifiedDate":"2010"}]}`),
 			)
 		} else {
-			body = ioutil.NopCloser(
+			body = io.NopCloser(
 				strings.NewReader(`{"files":[{"fileName":"test2.enc","size":100,"modifiedDate":"2010"}]}`),
 			)
 		}
@@ -129,11 +128,11 @@ func (mockClient) DoRequest(
 			// Simulate a file download
 			return &http.Response{
 				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(strings.NewReader("test")),
+				Body:       io.NopCloser(strings.NewReader("test")),
 			}, nil
 		}
 		if method == http.MethodPatch {
-			body := ioutil.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
+			body := io.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
 			return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
 		}
 	}

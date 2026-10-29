@@ -58,7 +58,7 @@ jobs:
 
       - name: Setup Java
         if: ${{ matrix.component == 'clearinghouse' || matrix.component == 'crypt4gh' || matrix.component == 'tsd-file-api-client' }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: "21"
           distribution: "temurin"
@@ -70,21 +70,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish Jar Files crypt4gh
-        if: ${{ matrix.component == 'crypt4gh'}}
-        run: |
-          ./gradlew :lib:${{matrix.component}}:publishLibraryPublicationToGithubRegistry -Pversion=${{ steps.new-tag.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish Jar Files clearinghouse
-        if: ${{ matrix.component == 'clearinghouse' }}
-        run: |
-          ./gradlew :lib:${{matrix.component}}:publishMavenJavaPublicationToGithubRegistryRepository -Pversion=${{ steps.new-tag.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and publish to local staging for JReleaser
+      - name: Build, test, and stage for JReleaser
         if: ${{ matrix.component == 'crypt4gh' || matrix.component == 'clearinghouse'}}
         env:
           SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
@@ -112,7 +98,7 @@ jobs:
           cat lib/${{matrix.component}}/out/jreleaser/output.properties || echo "No output properties found"
 
       - name: Set Repository Name
-        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' || matrix.component == 'e2e' }}
         id: repo_name
         run: |
           REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
@@ -121,7 +107,7 @@ jobs:
       
 
       - name: Log in to the Github Container registry
-        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' || matrix.component == 'e2e' }}
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -129,7 +115,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Retag and Push Docker Image
-        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' }}
+        if: ${{ matrix.component == 'localega-tsd-proxy' || matrix.component == 'tsd-api-mock' || matrix.component == 'cega-mock' || matrix.component == 'mq-interceptor' || matrix.component == 'e2e' }}
         run: |
           docker pull ghcr.io/${{ env.repo_name }}:${{matrix.component}}-${{ github.event.number }}
           docker tag ghcr.io/${{ env.repo_name }}:${{matrix.component}}-${{ github.event.number }} ghcr.io/${{ env.repo_name }}:${{matrix.component}}-${{ steps.new-tag.outputs.version }}
@@ -206,3 +192,14 @@ jobs:
           tag_name: "${{matrix.component}}-${{ steps.new-tag.outputs.version }}"
           prerelease: false
           body_path: ${{ env.changelog_path }}/CHANGELOG.md
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sf -X POST -H 'Content-type: application/json' \
+            --data "$(jq -n \
+              --arg component "${{ matrix.component }}" \
+              --arg version "${{ steps.new-tag.outputs.version }}" \
+              --arg url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              '{text: ("🔴 *Publish and Release failed*: `" + $component + "` (attempted version `" + $version + "`) — <" + $url + "|view run>")}')" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"

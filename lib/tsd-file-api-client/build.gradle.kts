@@ -1,6 +1,6 @@
 plugins {
     id("java-library")
-    id("io.freefair.lombok") version "9.5.0"
+    id("io.freefair.lombok") version "9.7.0"
     id("formatting-conventions")
     id("maven-publish")
 }
@@ -12,9 +12,9 @@ repositories {
 }
 
 dependencies {
-    implementation("org.projectlombok:lombok:1.18.46")
-    compileOnly("org.projectlombok:lombok:1.18.46")
-    annotationProcessor("org.projectlombok:lombok:1.18.46")
+    implementation("org.projectlombok:lombok:1.18.48")
+    compileOnly("org.projectlombok:lombok:1.18.48")
+    annotationProcessor("org.projectlombok:lombok:1.18.48")
 
     implementation("org.apache.commons:commons-lang3:3.20.0")
     implementation("commons-io:commons-io:2.22.0")
@@ -24,10 +24,10 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-impl:0.13.0")
     implementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
-    api("com.squareup.okhttp3:okhttp:5.4.0")
-    implementation("org.slf4j:slf4j-jdk14:2.0.18")
+    api("com.squareup.okhttp3:okhttp:5.5.0")
+    implementation("org.slf4j:slf4j-jdk14:2.0.20")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:6.1.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

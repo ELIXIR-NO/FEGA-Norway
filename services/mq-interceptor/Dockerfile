@@ -1,10 +1,10 @@
-FROM golang:1.26 AS builder
+FROM golang:1.27 AS builder
 
 ENV CGO_ENABLED=0
 ENV GOPROXY=direct
 
 WORKDIR /app
-COPY . .
+COPY services/mq-interceptor/ .
 
 RUN go build -o mq-interceptor ./main.go
 RUN echo "nobody:x:65534:65534:nobody:/:" > /app/passwd

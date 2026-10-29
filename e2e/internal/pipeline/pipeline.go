@@ -43,10 +43,11 @@ func run(ctx context.Context, s *state.State, name string, steps []step) error {
 }
 
 // RunLocal runs the FEGA pipeline against the mocked stack:
-// C1 -> upload -> ingest -> accession -> finalize -> mapping -> inbox-cleanup ->
+// ProxyWebpage -> C1 -> upload -> ingest -> accession -> finalize -> mapping -> inbox-cleanup ->
 // release -> download.
 func RunLocal(ctx context.Context, s *state.State) error {
 	return run(ctx, s, "FEGA (local)", []step{
+		{"ProxyWebpageVerification", stages.ProxyWebpage, 0},
 		{"C1JwtSignatureVerification", stages.C1JwtSignatureVerification, 0},
 		{"UploadViaLegaCmd", stages.UploadViaLegaCmd, 5000},
 		{"Ingest", stages.Ingest, 5000},
@@ -70,5 +71,26 @@ func RunStaging(ctx context.Context, s *state.State) error {
 		{"Mapping", stages.Mapping, 1000},
 		{"Release", stages.Release, 1000},
 		{"DownloadViaFegaExportRequest", stages.DownloadViaFegaExportRequest, 0},
+	})
+}
+
+// RunLocalIngestCancelReingest runs the cancel path against the mocked stack: a file is
+// finalized, cancelled, then ingested again from the inbox without re-uploading:
+// upload -> ingest -> accession -> finalize -> cancel -> re-ingest -> accession ->
+// finalize -> mapping -> inbox-cleanup -> release -> download.
+func RunLocalIngestCancelReingest(ctx context.Context, s *state.State) error {
+	return run(ctx, s, "FEGA (local) ingest-cancel", []step{
+		{"UploadViaLegaCmd", stages.UploadViaLegaCmd, 5000},
+		{"Ingest", stages.Ingest, 5000},
+		{"Accession", stages.Accession, 5000},
+		{"Finalize", stages.Finalize, 0},
+		{"Cancel", stages.Cancel, 5000},
+		{"ReIngest", stages.ReIngest, 5000},
+		{"Accession", stages.Accession, 5000},
+		{"Finalize", stages.Finalize, 0},
+		{"Mapping", stages.Mapping, 1000},
+		{"InboxCleanup", stages.InboxCleanup, 0},
+		{"Release", stages.Release, 1000},
+		{"Download", stages.Download, 0},
 	})
 }

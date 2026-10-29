@@ -39,5 +39,21 @@ func run() (code int) {
 	if err := pipeline.RunLocal(context.Background(), st); err != nil {
 		return 1
 	}
+
+	cancelState, err := state.SetupLocal(cfg, log)
+	if err != nil {
+		log.Error("setup failed", "err", err)
+		return 1
+	}
+	defer func() {
+		if err := cancelState.Cleanup(); err != nil {
+			log.Error("cleanup failed", "err", err)
+			code = 1
+		}
+	}()
+
+	if err := pipeline.RunLocalIngestCancelReingest(context.Background(), cancelState); err != nil {
+		return 1
+	}
 	return 0
 }

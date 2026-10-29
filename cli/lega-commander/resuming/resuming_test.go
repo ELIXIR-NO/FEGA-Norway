@@ -3,7 +3,6 @@ package resuming
 import (
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega-commander/requests"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -16,7 +15,7 @@ type mockClient struct {
 func (mockClient) DoRequest(method, url string, _ io.Reader, _, params map[string]string, _, _ string) (*http.Response, error) {
 	if strings.HasSuffix(url, "/resumables") {
 		if method == http.MethodGet {
-			body := ioutil.NopCloser(strings.NewReader(`{"resumables": [{"id": "1", "fileName": "test.enc", "nextOffset": 100, "maxChunk": 10}]}`))
+			body := io.NopCloser(strings.NewReader(`{"resumables": [{"id": "1", "fileName": "test.enc", "nextOffset": 100, "maxChunk": 10}]}`))
 			response := http.Response{StatusCode: 200, Body: body}
 			return &response, nil
 		} else if method == http.MethodDelete {

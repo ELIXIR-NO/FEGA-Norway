@@ -3,12 +3,12 @@ import java.util.Base64
 plugins {
     id("java")
     id("extra-java-module-info")
-    id("io.freefair.lombok") version "9.5.0"
+    id("io.freefair.lombok") version "9.7.0"
     id("formatting-conventions")
     id("maven-publish")
     id("signing")
-    id("com.gradleup.shadow") version "9.4.3"
-    id("org.jreleaser") version "1.24.0"
+    id("com.gradleup.shadow") version "9.6.1"
+    id("org.jreleaser") version "1.26.0"
 }
 
 group = "no.elixir"
@@ -25,14 +25,14 @@ repositories {
 }
 
 dependencies {
-    implementation("org.slf4j:slf4j-api:2.0.18")
-    implementation("org.slf4j:slf4j-simple:2.0.18")
+    implementation("org.slf4j:slf4j-api:2.0.20")
+    implementation("org.slf4j:slf4j-simple:2.0.20")
     implementation("org.apache.commons:commons-lang3:3.20.0")
-    implementation("commons-codec:commons-codec:1.22.0")
+    implementation("commons-codec:commons-codec:1.22.1")
     implementation("commons-cli:commons-cli:1.11.0")
     implementation("commons-io:commons-io:2.22.0")
     implementation("com.rfksystems:blake2b:2.0.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.1.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

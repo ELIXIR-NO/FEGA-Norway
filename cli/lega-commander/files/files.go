@@ -3,7 +3,7 @@ package files
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -88,7 +88,7 @@ func (fm defaultFileManager) ListFiles(
 		}
 
 		if resp.StatusCode == http.StatusForbidden {
-			body, _ := ioutil.ReadAll(resp.Body)
+			body, _ := io.ReadAll(resp.Body)
 			_ = resp.Body.Close()
 			if strings.Contains(string(body), `"tsdFiles" is null`) {
 				return nil, &FolderNotFoundError{}
@@ -99,7 +99,7 @@ func (fm defaultFileManager) ListFiles(
 			return nil, errors.New(resp.Status)
 		}
 
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		_ = resp.Body.Close()
 
 		pageFiles := make([]File, 0)

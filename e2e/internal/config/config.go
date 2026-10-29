@@ -10,7 +10,7 @@ package config
 import (
 	"fmt"
 	"os"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -195,7 +195,7 @@ func (c *Config) Validate() error {
 	}
 
 	if len(problems) > 0 {
-		sort.Strings(problems)
+		slices.Sort(problems)
 		return fmt.Errorf("invalid %s config: %s", c.Integration, strings.Join(problems, ", "))
 	}
 	return nil

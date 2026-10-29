@@ -2,7 +2,7 @@ package requests
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -60,7 +60,7 @@ func TestDoRequest(t *testing.T) {
 	}
 	body := get.Body
 	defer body.Close()
-	bytes, err := ioutil.ReadAll(body)
+	bytes, err := io.ReadAll(body)
 	if err != nil {
 		t.Error(err)
 	}
