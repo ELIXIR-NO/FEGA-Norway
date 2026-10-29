@@ -137,7 +137,7 @@ public class ExportRequestService {
   }
 
   // A token we cannot verify is the caller's problem rather than a server fault. Without this
-  // the controller's catch-all at ExportRequestController:48 answers 500. See #863.
+  // the controller's catch (Exception) fallback answers 500. See #863.
   private GenericException forbidden(JwtException e) {
     log.warn("Token verification failed for export request", e);
     return new GenericException(HttpStatus.FORBIDDEN, "Token verification failed");
