@@ -58,8 +58,6 @@ type Config struct {
 
 	// LSAAIToken: access token used for upload. If empty, a dummy visa is minted.
 	LSAAIToken string
-	// TsdProject is a template variable for the ingest/accession messages.
-	TsdProject string
 	// LSAAISubject is derived from LSAAIToken at staging setup time (mutable).
 	LSAAISubject string
 
@@ -102,7 +100,6 @@ func Load(integration Integration) *Config {
 		ExportRequestIntervalInSeconds: atoi64Or(os.Getenv("E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS"), 0),
 
 		LSAAIToken: os.Getenv("E2E_TESTS_LSAAI_TOKEN"),
-		TsdProject: os.Getenv("E2E_TESTS_TSD_PROJECT"),
 		// LSAAISubject is normally derived from the token during staging setup,
 		// which overwrites whatever is read here.
 		LSAAISubject: os.Getenv("E2E_TESTS_LSAAI_SUBJECT"),
