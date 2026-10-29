@@ -207,9 +207,9 @@ rather than running strictly one after another:
 ### Phase 5: the runner
 
 The `e2e-tests` container runs the Go suite. Its entrypoint selects one binary from `E2E_ENV`
-(default `fega`) and executes it; the binary reads the staged certificates directly off the
-volume, so there is no truststore import step. What each environment targets and needs is covered in
-[the e2e distributions](../e2e-distributions/).
+(which `env.sh` defaults to `fega`) and executes it; the binary reads the staged certificates
+directly off the volume, so there is no truststore import step. What each environment targets
+and needs is covered in [the e2e distributions](../e2e-distributions/).
 
 The suite checks that the mapper removed the uploaded file through the proxy's inbox listing, not
 the filesystem, so the container mounts only the shared `storage` volume. When the suite finishes

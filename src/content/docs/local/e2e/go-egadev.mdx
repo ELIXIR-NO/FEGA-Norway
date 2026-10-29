@@ -27,21 +27,23 @@ against the live `egadev.uio.no` environment, and needs real credentials and key
    export E2E_TESTS_PROXY_HOST=<host> E2E_TESTS_PROXY_PORT=<port>
    export E2E_TESTS_CEGAMQ_CONN_STR=<amqps-url>
    export E2E_TESTS_CEGAAUTH_USERNAME=<user> E2E_TESTS_CEGAAUTH_PASSWORD=<password>
+   export E2E_TESTS_PROXY_ADMIN_USERNAME=<user> E2E_TESTS_PROXY_ADMIN_PASSWORD=<password>
    export E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES=5
    export E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS=10
    ```
 
    The `env.sh` defaults point into the compose stack (the proxy at `proxy`, the CEGA broker
    at `cegamq:5673`), so a host run sets the real egadev endpoints itself; `env.sh`
-   deliberately does not carry them. The CEGA credentials need real values too: both upload
-   `PATCH` calls send them as HTTP basic auth, and `env.sh` defaults them to the mock stack's
-   `dummy`, so an unset host run sends a credential egadev never issued rather than failing on
-   a missing one.
+   deliberately does not carry them. The CEGA credentials need real values too, since both
+   upload `PATCH` calls send them as HTTP basic auth, and so does the proxy admin login, which
+   authenticates the export request. Leave any of the four unset and the binary refuses to
+   start. If you source `env.sh` first, override what it sets for them: those values belong to
+   the mock stack.
 
    The two export-request values drive the outbox poll in the download stage. `env.sh` sets
-   them to 5 and 10, but only a container run sources that file: the Go config falls back to
-   `0` for both, and a retry count of 0 skips the poll entirely, so the stage reports
-   `outbox listing never ran` instead of the result of a listing.
+   them to 5 and 10, but only a container run sources that file. Unset, both fall back to `0`
+   in the Go config, and startup validation rejects anything below 1, so the run stops before
+   its first stage with both variables named.
 
 3. **Run it**
 
@@ -67,14 +69,16 @@ rather than fatal to it.
 | `E2E_TESTS_EGA_DEV_BASE_DIRECTORY` | where the 10 MiB test fixture and its `.enc` are created, and where the downloaded file is written (`<base>/out/`) |
 | `E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH` | the Crypt4GH public key the fixture is encrypted to |
 | `E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH` | the RSA key that signs the visa carried by the export request |
-| `E2E_TESTS_CEGAAUTH_USERNAME` | CEGA HTTP basic auth, sent on both upload `PATCH` calls alongside the LS-AAI bearer. `env.sh` supplies the mock value `dummy`, so a host run must override it with a value the live proxy accepts |
-| `E2E_TESTS_CEGAAUTH_PASSWORD` | the password half of that basic auth, with the same `dummy` default and the same need to override |
-| `E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES` | how many times the download stage polls the outbox for the exported file before giving up. Defaults to `0` in the Go config, which skips the poll, so a host run must set it. `env.sh` uses 5 |
-| `E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS` | seconds between those polls, and the initial wait before the first one. Same `0` default and the same need to set it. `env.sh` uses 10 |
+| `E2E_TESTS_CEGAAUTH_USERNAME` | CEGA HTTP basic auth, sent on both upload `PATCH` calls alongside the LS-AAI bearer. Required; `env.sh` carries the mock value `dummy`, which the live proxy will not accept |
+| `E2E_TESTS_CEGAAUTH_PASSWORD` | the password half of that basic auth, required the same way |
+| `E2E_TESTS_PROXY_ADMIN_USERNAME` | the proxy admin login, sent as HTTP basic auth on the export request. Required; `env.sh` carries the local stack's value, not egadev's |
+| `E2E_TESTS_PROXY_ADMIN_PASSWORD` | the password half of that login, required the same way |
+| `E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES` | how many times the download stage polls the outbox for the exported file before giving up. Must be at least 1: unset, it falls back to `0` and the run stops at startup. `env.sh` uses 5 |
+| `E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS` | seconds between those polls, and the initial wait before the first one. Same rule, at least 1. `env.sh` uses 10 |
 
 The key paths are absolute and resolve anywhere on disk; the fega distribution instead resolves
 bare key filenames under the certs directory. The `env.sh` EGA_DEV block is left commented for
-the same reason: per-operator values, like the endpoints and CEGA credentials in step 2.
+the same reason: per-operator values, like the endpoints and credentials in step 2.
 
 </details>
 
