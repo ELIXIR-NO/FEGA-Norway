@@ -9,8 +9,8 @@ repositories {
 }
 
 dependencies {
-    implementation("com.diffplug.spotless:spotless-plugin-gradle:8.10.2")
-    implementation("org.ow2.asm:asm:9.10.1")
+    implementation("com.diffplug.spotless:spotless-plugin-gradle:8.10.4")
+    implementation("org.ow2.asm:asm:9.11.1")
 }
 
 gradlePlugin {
