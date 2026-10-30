@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/adapters/c4gh"
@@ -109,6 +110,64 @@ func DownloadViaFegaExportRequest(ctx context.Context, s *state.State) error {
 		return err
 	}
 	return check.Equal(common.Md5HexBytes(decrypted), s.RawMD5, "decrypted MD5 matches original")
+}
+
+// DownloadViaLocalFegaExportRequest is the local-stack variant of
+// DownloadViaFegaExportRequest: it signs the visa with the local jwt.priv.pem,
+// uses that visa as the outbox bearer token, and stops after the outbox listing
+// because tsd-api-mock cannot serve the download.
+//
+// DOA connects to PostgreSQL as lega_out. A successful export therefore proves
+// that the temporary grant to the inherited download role allows lega_out to
+// read sda.dataset_references.
+func DownloadViaLocalFegaExportRequest(ctx context.Context, s *state.State) error {
+	s.Log.Info("start download via local FEGA export request", "dataset", s.DatasetID, "file", s.EncName())
+	visaToken, err := token.GenerateVisaToken(s.Config, s.DatasetID, "jwt.priv.pem")
+	if err != nil {
+		return fmt.Errorf("generating local visa token: %w", err)
+	}
+	if s.Recipient == (c4gh.KeyPair{}) {
+		if s.Recipient, err = c4gh.GenerateKeyPair(); err != nil {
+			return fmt.Errorf("generating export recipient key pair: %w", err)
+		}
+	}
+	client := httpx.New(s.Config)
+
+	// 1) FEGA export request
+	payload, err := buildFegaExportPayload(s, visaToken)
+	if err != nil {
+		return fmt.Errorf("building FEGA export payload: %w", err)
+	}
+	exportURL := fmt.Sprintf("https://%s:%s/export/fega", s.Config.ProxyHost, s.Config.ProxyPort)
+	exportRes, err := client.Do(ctx, "POST", exportURL,
+		httpx.WithBody([]byte(payload), "application/json"),
+		httpx.WithBasicAuth(s.Config.ProxyAdminUsername, s.Config.ProxyAdminPassword))
+	if err != nil {
+		return fmt.Errorf("submitting local FEGA export request: %w", err)
+	}
+	if exportRes.Status != 200 {
+		return check.Failf("FEGA export request returned %d: %s",
+			exportRes.Status, strings.TrimSpace(string(exportRes.Body)))
+	}
+
+	// 2) poll the outbox listing until the exported file appears
+	status, listing, err := checkFilesWithRetry(ctx, s, client, visaToken)
+	if err != nil {
+		return err
+	}
+	if listing == nil {
+		return check.Failf("exported file did not appear after %d attempts",
+			s.Config.ExportRequestMaxRetries)
+	}
+	if err := check.Equal(status, 200, "outbox listing status"); err != nil {
+		return err
+	}
+	if err := check.Equal(countMatching(listing, s.EncName()), 1, "exactly one exported file in the outbox"); err != nil {
+		return err
+	}
+
+	s.Log.Check("local FEGA export appears in outbox", true)
+	return nil
 }
 
 // checkFilesWithRetry polls GET /files?inbox=false until the exported file

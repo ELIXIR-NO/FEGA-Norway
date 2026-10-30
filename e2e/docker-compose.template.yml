@@ -187,6 +187,8 @@ services:
       - PGDATA=<<DB_PGDATA>>
       - POSTGRES_USER=<<DB_POSTGRES_USER>>
       - POSTGRES_PASSWORD=<<DB_POSTGRES_PASSWORD>>
+      - LEGA_IN_PASSWORD=<<DB_LEGA_IN_PASSWORD>>
+      - LEGA_OUT_PASSWORD=<<DB_LEGA_OUT_PASSWORD>>
       - POSTGRES_SERVER_CERT=<<DB_POSTGRES_SERVER_CERT>>
       - POSTGRES_SERVER_KEY=<<DB_POSTGRES_SERVER_KEY>>
       - POSTGRES_SERVER_CACERT=<<DB_POSTGRES_SERVER_CACERT>>
@@ -235,8 +237,8 @@ services:
       - BROKER_CLIENT_KEY=<<SDA_BROKER_CLIENTKEY>>
       - DATABASE_HOST=<<SDA_DB_HOST>>
       - DATABASE_PORT=<<SDA_DB_PORT>>
-      - DATABASE_USER=<<SDA_DB_USER>>
-      - DATABASE_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DATABASE_USER=<<SDA_DB_IN_USER>>
+      - DATABASE_PASSWORD=<<SDA_DB_IN_PASSWORD>>
       - DATABASE_NAME=<<SDA_DB_DATABASE>>
       - DATABASE_SSL_MODE=<<SDA_DB_SSLMODE>>
       - DATABASE_CLIENT_CERT=<<SDA_DB_CLIENTCERT>>
@@ -285,8 +287,8 @@ services:
       - BROKER_CLIENTKEY=<<SDA_BROKER_CLIENTKEY>>
       - DATABASE_HOST=<<SDA_DB_HOST>>
       - DATABASE_PORT=<<SDA_DB_PORT>>
-      - DATABASE_USER=<<SDA_DB_USER>>
-      - DATABASE_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DATABASE_USER=<<SDA_DB_IN_USER>>
+      - DATABASE_PASSWORD=<<SDA_DB_IN_PASSWORD>>
       - DATABASE_NAME=<<SDA_DB_DATABASE>>
       - DATABASE_SSL_MODE=<<SDA_DB_SSLMODE>>
       - DATABASE_CLIENT_CERT=<<SDA_DB_CLIENTCERT>>
@@ -332,8 +334,8 @@ services:
       - BROKER_CLIENTKEY=<<SDA_BROKER_CLIENTKEY>>
       - DATABASE_HOST=<<SDA_DB_HOST>>
       - DATABASE_PORT=<<SDA_DB_PORT>>
-      - DATABASE_USER=<<SDA_DB_USER>>
-      - DATABASE_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DATABASE_USER=<<SDA_DB_IN_USER>>
+      - DATABASE_PASSWORD=<<SDA_DB_IN_PASSWORD>>
       - DATABASE_NAME=<<SDA_DB_DATABASE>>
       - DATABASE_SSL_MODE=<<SDA_DB_SSLMODE>>
       - DATABASE_CLIENT_CERT=<<SDA_DB_CLIENTCERT>>
@@ -375,8 +377,8 @@ services:
       - BROKER_CLIENTKEY=<<SDA_BROKER_CLIENTKEY>>
       - DATABASE_HOST=<<SDA_DB_HOST>>
       - DATABASE_PORT=<<SDA_DB_PORT>>
-      - DATABASE_USER=<<SDA_DB_USER>>
-      - DATABASE_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DATABASE_USER=<<SDA_DB_OUT_USER>>
+      - DATABASE_PASSWORD=<<SDA_DB_OUT_PASSWORD>>
       - DATABASE_NAME=<<SDA_DB_DATABASE>>
       - DATABASE_SSL_MODE=<<SDA_DB_SSLMODE>>
       - DATABASE_CLIENT_CERT=<<SDA_DB_CLIENTCERT>>
@@ -417,8 +419,8 @@ services:
       - BROKER_CLIENTKEY=<<SDA_BROKER_CLIENTKEY>>
       - DATABASE_HOST=<<SDA_DB_HOST>>
       - DATABASE_PORT=<<SDA_DB_PORT>>
-      - DATABASE_USER=<<SDA_DB_USER>>
-      - DATABASE_PASSWORD=<<SDA_DB_PASSWORD>>
+      - DATABASE_USER=<<SDA_DB_IN_USER>>
+      - DATABASE_PASSWORD=<<SDA_DB_IN_PASSWORD>>
       - DATABASE_NAME=<<SDA_DB_DATABASE>>
       - DATABASE_SSL_MODE=<<SDA_DB_SSLMODE>>
       - DATABASE_CLIENT_CERT=<<SDA_DB_CLIENTCERT>>
@@ -656,6 +658,41 @@ services:
       start_period: 180s
 
 
+  # lega_out, through the download role, cannot read sda.dataset_references
+  # in the pinned SDA PostgreSQL image yet. Remove this temporary service once
+  # neicnordic/sensitive-data-archive#2717 is included in the -postgres image above.
+  db-permission-patch:
+    image: postgres:18
+    depends_on:
+      db:
+        condition: service_healthy
+    # The db requires a client certificate, which is only readable by uid 65534.
+    user: "65534:65534"
+    volumes:
+      - db-client-certs:/db-client-certs
+    environment:
+      - PGPASSWORD=<<DB_POSTGRES_PASSWORD>>
+      - PGSSLMODE=<<SDA_DB_SSLMODE>>
+      - PGSSLCERT=<<SDA_DB_CLIENTCERT>>
+      - PGSSLKEY=<<SDA_DB_CLIENTKEY>>
+    entrypoint:
+      - /bin/sh
+      - -ec
+    command:
+      - |
+        echo "Applying temporary dataset_references permission for the download role (lega_out)"
+
+        psql \
+          --host=db \
+          --port=5432 \
+          --username=<<DB_POSTGRES_USER>> \
+          --dbname=<<DB_POSTGRES_DB>> \
+          --set=ON_ERROR_STOP=1 \
+          --command="GRANT SELECT ON TABLE sda.dataset_references TO download;"
+
+        echo "Temporary database permission applied successfully"
+    restart: "no"
+
   # E2E Setup
 
   # The runner. E2E_ENV (see env.sh) picks which binary its entrypoint runs.
@@ -680,6 +717,8 @@ services:
         condition: service_healthy
       file-orchestrator:
         condition: service_healthy
+      db-permission-patch:
+        condition: service_completed_successfully
     environment:
       - E2E_ENV=<<E2E_ENV>>
       - E2E_TESTS_PROXY_HOST=<<E2E_TESTS_PROXY_HOST>>
@@ -691,8 +730,8 @@ services:
       - E2E_TESTS_CEGAAUTH_PASSWORD=<<E2E_TESTS_CEGAAUTH_PASSWORD>>
       - E2E_TESTS_SDA_DB_HOST=<<E2E_TESTS_SDA_DB_HOST>>
       - E2E_TESTS_SDA_DB_PORT=<<E2E_TESTS_SDA_DB_PORT>>
-      - E2E_TESTS_SDA_DB_USERNAME=<<E2E_TESTS_SDA_DB_USERNAME>>
-      - E2E_TESTS_SDA_DB_PASSWORD=<<E2E_TESTS_SDA_DB_PASSWORD>>
+      - E2E_TESTS_SDA_DB_IN_USERNAME=<<E2E_TESTS_SDA_DB_IN_USERNAME>>
+      - E2E_TESTS_SDA_DB_IN_PASSWORD=<<E2E_TESTS_SDA_DB_IN_PASSWORD>>
       - E2E_TESTS_SDA_DB_DATABASE_NAME=<<E2E_TESTS_SDA_DB_DATABASE_NAME>>
       - E2E_TESTS_PROXY_TOKEN_AUDIENCE=<<E2E_TESTS_PROXY_TOKEN_AUDIENCE>>
       - E2E_TESTS_PROXY_ADMIN_USERNAME=<<E2E_TESTS_PROXY_ADMIN_USERNAME>>
