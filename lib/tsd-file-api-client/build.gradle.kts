@@ -18,7 +18,7 @@ dependencies {
 
     implementation("org.apache.commons:commons-lang3:3.21.0")
     implementation("commons-io:commons-io:2.22.0")
-    implementation("com.google.code.gson:gson:2.14.0")
+    implementation("com.google.code.gson:gson:2.15.0")
 
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     implementation("io.jsonwebtoken:jjwt-impl:0.13.0")
