@@ -22,13 +22,13 @@ jobs:
         with:
           filters: |
             lega-commander:
-              - 'cli/lega-commander/**'
-            # The e2e image compiles `cli/lega-commander` into itself, so a
+              - 'cli/old-lega/**'
+            # The e2e image compiles `cli/old-lega` into itself, so a
             # CLI-only change yields a different image and has to cut a new
             # `e2e-<version>` for whatever pins that tag.
             e2e:
               - 'e2e/**'
-              - 'cli/lega-commander/**'
+              - 'cli/old-lega/**'
             clearinghouse:
               - 'lib/clearinghouse/**'
             crypt4gh:

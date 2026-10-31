@@ -1,6 +1,6 @@
 # Go e2e runner image. Build context is the FEGA-Norway root (compose
 # `context: ..`), so paths below are repo-relative: the build needs both the
-# e2e module and cli/lega-commander, which live outside this directory.
+# e2e module and cli/old-lega, which live outside this directory.
 
 FROM golang:1.27-alpine AS go-builder
 WORKDIR /app
@@ -18,7 +18,7 @@ RUN go build -o /out/ ./cmd/...
 # /usr/local/bin/lega-commander.
 FROM golang:1.27-alpine AS lega-cmd-builder
 WORKDIR /app
-COPY cli/lega-commander/ .
+COPY cli/old-lega/ .
 RUN go build -o /lega-commander .
 
 FROM alpine:3.24

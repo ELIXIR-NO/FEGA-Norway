@@ -3,7 +3,8 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-cli/lega-commander/dist/
+cli/old-lega/dist/
+cli/lega/dist/
 
 ### IntelliJ IDEA ###
 .idea/
