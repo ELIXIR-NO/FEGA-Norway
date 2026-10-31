@@ -1,6 +1,7 @@
 rootProject.name = "FEGA-Norway"
 
 include(":cli:old-lega")
+include(":cli:lega")
 
 include(":lib:crypt4gh")
 include(":lib:clearinghouse")
@@ -14,6 +15,7 @@ include(":services:localega-tsd-proxy")
 include(":e2e")
 
 findProject(":cli:old-lega")?.name = "old-lega"
+findProject(":cli:lega")?.name = "lega"
 findProject(":lib:crypt4gh")?.name = "crypt4gh"
 findProject(":lib:clearinghouse")?.name = "clearinghouse"
 findProject(":lib:tsd-file-api-client")?.name = "tsd-file-api-client"

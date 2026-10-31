@@ -67,6 +67,7 @@ updates:
       - /services/mq-interceptor
       - /services/cega-mock
       - /cli/old-lega
+      - /cli/lega
       - /e2e
     groups:
       all-modules:

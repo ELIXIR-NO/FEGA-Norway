@@ -4,6 +4,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 cli/old-lega/dist/
+cli/lega/dist/
 
 ### IntelliJ IDEA ###
 .idea/
