@@ -28,6 +28,18 @@ func TestStalledBodyCancels(t *testing.T) {
 			wantStalled: true,
 		},
 		{
+			name: "error answer whose body stops",
+			handler: func(w http.ResponseWriter, r *http.Request, done <-chan struct{}) {
+				_, _ = io.Copy(io.Discard, r.Body)
+				w.WriteHeader(http.StatusInternalServerError)
+				_, _ = io.WriteString(w, "half an error")
+				w.(http.Flusher).Flush()
+				<-done
+			},
+			size:        4,
+			wantStalled: true,
+		},
+		{
 			name: "long wait for the answer after the body is sent",
 			handler: func(w http.ResponseWriter, r *http.Request, _ <-chan struct{}) {
 				_, _ = io.Copy(io.Discard, r.Body)

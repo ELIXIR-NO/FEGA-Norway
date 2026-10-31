@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega/internal/plan"
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega/internal/proxy"
@@ -84,8 +85,9 @@ func TestDownloadLeavesNoPartialFile(t *testing.T) {
 
 func TestDownload(t *testing.T) {
 	dir := t.TempDir()
+	exported := time.Date(2026, 10, 28, 14, 2, 11, 0, time.UTC)
 	steps := []plan.DownloadStep{
-		{Name: "a.c4gh", Dir: dir, Action: plan.Fetch, Size: 10},
+		{Name: "a.c4gh", Dir: dir, Action: plan.Fetch, Size: 10, Modified: exported},
 		{Name: "b.c4gh", Dir: dir, Action: plan.Skip, Reason: "already downloaded", Size: 3},
 		{Name: "c.c4gh", Dir: dir, Action: plan.Reject, Reason: "not in the outbox"},
 	}
@@ -100,6 +102,9 @@ func TestDownload(t *testing.T) {
 	got, err := os.ReadFile(filepath.Join(dir, "a.c4gh"))
 	if err != nil || string(got) != "0123456789" {
 		t.Fatalf("a.c4gh = %q, %v", got, err)
+	}
+	if info, err := os.Stat(filepath.Join(dir, "a.c4gh")); err != nil || !info.ModTime().Equal(exported) {
+		t.Errorf("a.c4gh mtime = %v, want the export time %v", info.ModTime(), exported)
 	}
 	entries, _ := os.ReadDir(dir)
 	if len(entries) != 1 {

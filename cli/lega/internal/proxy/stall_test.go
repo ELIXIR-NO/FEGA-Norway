@@ -39,6 +39,7 @@ func TestStalledBodyCancels(t *testing.T) {
 		handler     func(w http.ResponseWriter, r *http.Request, done <-chan struct{})
 		call        func(c *Client) error
 		wantStalled bool
+		wantStatus  int // an error answer that stalls still comes back, as its status
 	}{
 		{
 			name: "download body that stops",
@@ -60,6 +61,27 @@ func TestStalledBodyCancels(t *testing.T) {
 				return err
 			},
 			wantStalled: true,
+		},
+		{
+			name: "error answer whose body stops",
+			handler: func(w http.ResponseWriter, _ *http.Request, done <-chan struct{}) {
+				w.WriteHeader(http.StatusInternalServerError)
+				_, _ = io.WriteString(w, "half an error")
+				w.(http.Flusher).Flush()
+				<-done
+			},
+			call:       download,
+			wantStatus: http.StatusInternalServerError,
+		},
+		{
+			name: "error answer with no body at all",
+			handler: func(w http.ResponseWriter, _ *http.Request, done <-chan struct{}) {
+				w.WriteHeader(http.StatusBadGateway)
+				w.(http.Flusher).Flush()
+				<-done
+			},
+			call:       download,
+			wantStatus: http.StatusBadGateway,
 		},
 		{
 			name: "slow download that keeps moving",
@@ -91,6 +113,10 @@ func TestStalledBodyCancels(t *testing.T) {
 			err := tt.call(c)
 			if stalled := errors.Is(err, httpx.ErrStalled); stalled != tt.wantStalled {
 				t.Fatalf("err = %v, want stalled %v", err, tt.wantStalled)
+			}
+			var apiErr *APIError
+			if tt.wantStatus != 0 && (!errors.As(err, &apiErr) || apiErr.Status != tt.wantStatus) {
+				t.Fatalf("err = %v, want status %d", err, tt.wantStatus)
 			}
 			if tt.wantStalled && errors.Is(err, context.Canceled) {
 				t.Errorf("a stall reads as a cancelled context: %v", err)

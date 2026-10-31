@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega/internal/plan"
 )
@@ -80,7 +81,7 @@ func (r Runner) fetch(ctx context.Context, d Downloader, s plan.DownloadStep) er
 		os.Remove(tmp.Name())
 		return err
 	}
-	return commit(tmp, filepath.Join(s.Dir, s.Name))
+	return commit(tmp, filepath.Join(s.Dir, s.Name), s.Modified)
 }
 
 // fill copies body into tmp and checks it got exactly the size the listing
@@ -99,16 +100,22 @@ func (r Runner) fill(tmp io.Writer, body io.Reader, s plan.DownloadStep) error {
 }
 
 // commit closes tmp and moves it to its final name, removing it if either
-// step fails.
-func commit(tmp *os.File, final string) error {
+// step fails. The file's mtime becomes the export time the outbox listed,
+// when known, so the next run's plan compares export time with export time
+// whatever zone TSD's clock and this machine's clock are in.
+func commit(tmp *os.File, final string, modified time.Time) error {
 	err := tmp.Close()
 	if err == nil {
 		err = os.Rename(tmp.Name(), final)
 	}
 	if err != nil {
 		os.Remove(tmp.Name())
+		return err
 	}
-	return err
+	if !modified.IsZero() {
+		os.Chtimes(final, modified, modified)
+	}
+	return nil
 }
 
 // progressWriter reports every write as a Bytes event.

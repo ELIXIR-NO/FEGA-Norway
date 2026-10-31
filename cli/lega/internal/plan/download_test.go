@@ -24,14 +24,21 @@ func TestPlanDownload(t *testing.T) {
 			names:  []string{"a.c4gh"},
 			outbox: outbox,
 			local:  map[string]LocalCopy{"a.c4gh": {Size: 10, Modified: later}},
-			want:   []DownloadStep{{Name: "a.c4gh", Dir: "out", Action: Skip, Size: 10}},
+			want:   []DownloadStep{{Name: "a.c4gh", Dir: "out", Action: Skip, Size: 10, Modified: exported}},
+		},
+		{
+			name:   "existing_same_time_as_export_skips",
+			names:  []string{"a.c4gh"},
+			outbox: outbox,
+			local:  map[string]LocalCopy{"a.c4gh": {Size: 10, Modified: exported}},
+			want:   []DownloadStep{{Name: "a.c4gh", Dir: "out", Action: Skip, Size: 10, Modified: exported}},
 		},
 		{
 			name:       "existing_older_than_export_rejects",
 			names:      []string{"a.c4gh"},
 			outbox:     outbox,
 			local:      map[string]LocalCopy{"a.c4gh": {Size: 10, Modified: exported.Add(-time.Hour)}},
-			want:       []DownloadStep{{Name: "a.c4gh", Dir: "out", Action: Reject, Size: 10}},
+			want:       []DownloadStep{{Name: "a.c4gh", Dir: "out", Action: Reject, Size: 10, Modified: exported}},
 			wantReason: []string{"exported 2026-10-28 14:02"},
 		},
 		{
@@ -39,14 +46,14 @@ func TestPlanDownload(t *testing.T) {
 			names:      []string{"a.c4gh"},
 			outbox:     outbox,
 			local:      map[string]LocalCopy{"a.c4gh": {Size: 4, Modified: later}},
-			want:       []DownloadStep{{Name: "a.c4gh", Dir: "out", Action: Reject, Size: 10}},
+			want:       []DownloadStep{{Name: "a.c4gh", Dir: "out", Action: Reject, Size: 10, Modified: exported}},
 			wantReason: []string{"4 bytes"},
 		},
 		{
 			name:       "not_in_outbox_rejects",
 			names:      []string{"missing.c4gh", "b.c4gh"},
 			outbox:     outbox,
-			want:       []DownloadStep{{Name: "missing.c4gh", Dir: "out", Action: Reject}, {Name: "b.c4gh", Dir: "out", Action: Fetch, Size: 20}},
+			want:       []DownloadStep{{Name: "missing.c4gh", Dir: "out", Action: Reject}, {Name: "b.c4gh", Dir: "out", Action: Fetch, Size: 20, Modified: exported}},
 			wantReason: []string{"not in the outbox", ""},
 		},
 		{
@@ -70,8 +77,8 @@ func TestPlanDownload(t *testing.T) {
 			outbox: outbox,
 			local:  map[string]LocalCopy{"b.c4gh": {Size: 20, Modified: later}},
 			want: []DownloadStep{
-				{Name: "a.c4gh", Dir: "out", Action: Fetch, Size: 10},
-				{Name: "b.c4gh", Dir: "out", Action: Skip, Size: 20},
+				{Name: "a.c4gh", Dir: "out", Action: Fetch, Size: 10, Modified: exported},
+				{Name: "b.c4gh", Dir: "out", Action: Skip, Size: 20, Modified: exported},
 			},
 		},
 		{
@@ -79,8 +86,8 @@ func TestPlanDownload(t *testing.T) {
 			names:  []string{"a.c4gh", "b.c4gh", "a.c4gh"},
 			outbox: outbox,
 			want: []DownloadStep{
-				{Name: "a.c4gh", Dir: "out", Action: Fetch, Size: 10},
-				{Name: "b.c4gh", Dir: "out", Action: Fetch, Size: 20},
+				{Name: "a.c4gh", Dir: "out", Action: Fetch, Size: 10, Modified: exported},
+				{Name: "b.c4gh", Dir: "out", Action: Fetch, Size: 20, Modified: exported},
 			},
 		},
 		{

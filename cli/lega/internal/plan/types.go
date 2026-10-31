@@ -74,4 +74,7 @@ type DownloadStep struct {
 	Action Action
 	Reason string // set for Skip and Reject
 	Size   int64
+	// Modified is the export time the listing gave, kept as the saved
+	// file's mtime so a later run compares export time with export time.
+	Modified time.Time
 }

@@ -87,7 +87,8 @@ func skipOrRejectExisting(x downloadIndex, name string) (DownloadStep, bool) {
 const timeLayout = "2006-01-02 15:04"
 
 func (x downloadIndex) result(name string, a Action, reason string) DownloadStep {
-	return DownloadStep{Name: name, Dir: x.dir, Action: a, Reason: reason, Size: x.outbox[name].Size}
+	f := x.outbox[name]
+	return DownloadStep{Name: name, Dir: x.dir, Action: a, Reason: reason, Size: f.Size, Modified: f.Modified}
 }
 
 // isCleanName reports whether name is a single path element that is safe to
