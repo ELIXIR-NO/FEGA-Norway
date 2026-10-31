@@ -50,7 +50,7 @@ jobs:
 
     - name: Build with Gradle Go
       if: ${{ matrix.language == 'go' }}
-      run: ./gradlew services:mq-interceptor:assemble cli:lega-commander:assemble
+      run: ./gradlew services:mq-interceptor:assemble cli:old-lega:assemble
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4

@@ -132,7 +132,7 @@ jobs:
         with:
           version: "~> v2"
           args: release --clean
-          workdir: cli/lega-commander
+          workdir: cli/old-lega
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CGO_ENABLED: "0"
@@ -140,7 +140,7 @@ jobs:
       - name: Set component path
         run: |
           declare -A component_paths=(
-            [lega-commander]="cli:lega-commander"
+            [lega-commander]="cli:old-lega"
             [e2e]="e2e"
             [clearinghouse]="lib:clearinghouse"
             [crypt4gh]="lib:crypt4gh"
@@ -155,7 +155,7 @@ jobs:
       - name: Set changelog path
         run: |
           declare -A component_paths=(
-            [lega-commander]="cli/lega-commander"
+            [lega-commander]="cli/old-lega"
             [e2e]="e2e"
             [clearinghouse]="lib/clearinghouse"
             [crypt4gh]="lib/crypt4gh"

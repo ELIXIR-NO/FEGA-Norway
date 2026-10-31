@@ -140,12 +140,12 @@ jobs:
         with:
           version: '~> v2'
           args: release --clean --snapshot
-          workdir: cli/lega-commander
+          workdir: cli/old-lega
 
       - name: Set component path
         run: |
           declare -A component_paths=(
-           [lega-commander]="cli:lega-commander"
+           [lega-commander]="cli:old-lega"
             [e2e]="e2e"
             [clearinghouse]="lib:clearinghouse"
             [crypt4gh]="lib:crypt4gh"
