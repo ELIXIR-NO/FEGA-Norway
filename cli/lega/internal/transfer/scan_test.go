@@ -39,10 +39,11 @@ func TestScan(t *testing.T) {
 	}
 	size := int64(len(c4gh))
 	tests := []struct {
-		name    string
-		paths   []string
-		want    []plan.LocalFile
-		wantErr bool
+		name     string
+		paths    []string
+		want     []plan.LocalFile
+		wantSkip []string
+		wantErr  bool
 	}{
 		{
 			name:  "one file",
@@ -57,6 +58,7 @@ func TestScan(t *testing.T) {
 				{Path: at("a/x.c4gh"), Name: "x.c4gh", Size: size, Crypt4GH: true},
 				{Path: at("b/x.c4gh"), Name: "x.c4gh", Size: size, Crypt4GH: true},
 			},
+			wantSkip: []string{at("b/loop")},
 		},
 		{
 			name:  "same file named twice",
@@ -64,26 +66,31 @@ func TestScan(t *testing.T) {
 			want:  []plan.LocalFile{{Path: at("top.c4gh"), Name: "top.c4gh", Size: size, Crypt4GH: true}},
 		},
 		{
-			name:  "file inside a folder named too",
-			paths: []string{at("b"), at("b/x.c4gh")},
-			want:  []plan.LocalFile{{Path: at("b/x.c4gh"), Name: "x.c4gh", Size: size, Crypt4GH: true}},
+			name:     "file inside a folder named too",
+			paths:    []string{at("b"), at("b/x.c4gh")},
+			want:     []plan.LocalFile{{Path: at("b/x.c4gh"), Name: "x.c4gh", Size: size, Crypt4GH: true}},
+			wantSkip: []string{at("b/loop")},
 		},
 		{
-			name:  "symlink to a folder named directly is walked",
-			paths: []string{at("linked")},
-			want:  []plan.LocalFile{{Path: at("linked/x.c4gh"), Name: "x.c4gh", Size: size, Crypt4GH: true}},
+			name:     "symlink to a folder named directly is walked",
+			paths:    []string{at("linked")},
+			want:     []plan.LocalFile{{Path: at("linked/x.c4gh"), Name: "x.c4gh", Size: size, Crypt4GH: true}},
+			wantSkip: []string{at("linked/loop")},
 		},
 		{name: "empty folder", paths: []string{at("empty")}, want: nil},
 		{name: "missing path", paths: []string{at("nope")}, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Scan(tt.paths)
+			got, skipped, err := Scan(tt.paths)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("err = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Scan =\n%+v\nwant\n%+v", got, tt.want)
+			}
+			if !reflect.DeepEqual(skipped, tt.wantSkip) {
+				t.Errorf("skipped = %v, want %v", skipped, tt.wantSkip)
 			}
 		})
 	}

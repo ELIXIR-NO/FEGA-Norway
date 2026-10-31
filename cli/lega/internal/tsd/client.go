@@ -50,7 +50,7 @@ func Exchange(ctx context.Context, hc *http.Client, tsdProxyURL *url.URL, proj, 
 	var answer struct {
 		Token string `json:"token"`
 	}
-	if err := send(hc, req, &answer, elixirToken); err != nil {
+	if err := send(hc, req, nil, &answer, elixirToken); err != nil {
 		return Token{}, err
 	}
 	user, err := userClaim(answer.Token)
@@ -115,7 +115,7 @@ func (c *Client) patch(ctx context.Context, fileName string, q url.Values, data 
 	}
 	req.ContentLength = int64(len(data))
 	req.Header.Set("Authorization", "Bearer "+c.Token.Bearer)
-	err = send(c.HTTP, req, out, c.Token.Bearer)
+	err = send(c.HTTP, req, guard, out, c.Token.Bearer)
 	if stalled := guard.Err(err); stalled != err {
 		return fmt.Errorf("PATCH %s: %w", req.URL.Path, stalled)
 	}
@@ -130,11 +130,16 @@ func (c *Client) stall() time.Duration {
 }
 
 // send runs req and decodes a 2xx body into out, or discards it when out
-// is nil. secrets are blanked out of an error body.
-func send(hc *http.Client, req *http.Request, out any, secrets ...string) error {
+// is nil. A guard, when given, watches the response body too, so a server
+// that stalls mid-answer cannot hang the call. secrets are blanked out of
+// an error body.
+func send(hc *http.Client, req *http.Request, guard *httpx.StallGuard, out any, secrets ...string) error {
 	resp, err := hc.Do(req)
 	if err != nil {
 		return err
+	}
+	if guard != nil {
+		resp.Body = guard.ResponseBody(resp.Body)
 	}
 	if resp.StatusCode/100 != 2 {
 		return &APIError{Method: req.Method, Path: req.URL.Path, Status: resp.StatusCode, Body: httpx.ErrorBody(resp, secrets...)}

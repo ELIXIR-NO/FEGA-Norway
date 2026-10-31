@@ -12,15 +12,16 @@ import (
 // and reads each file's header to tell whether it is Crypt4GH. A path named
 // twice, directly or through a folder, is returned once, since the plan
 // would otherwise reject it as colliding with itself. Name is the base
-// name, because the inbox is flat.
-func Scan(paths []string) ([]plan.LocalFile, error) {
-	var files []plan.LocalFile
+// name, because the inbox is flat. Symlinked folders met inside a walk are
+// returned as skipped, not followed, so the caller can say so.
+func Scan(paths []string) (files []plan.LocalFile, skipped []string, err error) {
 	seen := make(map[string]bool)
 	for _, root := range paths {
-		found, err := scanPath(root)
+		found, links, err := scanPath(root)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		skipped = append(skipped, links...)
 		for _, f := range found {
 			if key := pathKey(f.Path); !seen[key] {
 				seen[key] = true
@@ -28,17 +29,21 @@ func Scan(paths []string) ([]plan.LocalFile, error) {
 			}
 		}
 	}
-	return files, nil
+	return files, skipped, nil
 }
 
 // scanPath walks root. A root that is a symlink to a folder is walked
 // through the link, since the user named it; symlinked folders found inside
-// a walk are not, which keeps a link loop from walking forever.
-func scanPath(root string) ([]plan.LocalFile, error) {
-	var files []plan.LocalFile
-	err := filepath.WalkDir(followLinkedFolder(root), func(path string, d fs.DirEntry, err error) error {
+// a walk are not, which keeps a link loop from walking forever; they are
+// returned in links instead.
+func scanPath(root string) (files []plan.LocalFile, links []string, err error) {
+	err = filepath.WalkDir(followLinkedFolder(root), func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
+		}
+		if isLinkedFolder(d, path) {
+			links = append(links, path)
+			return nil
 		}
 		f, ok, err := scanFile(path)
 		if ok {
@@ -46,7 +51,15 @@ func scanPath(root string) ([]plan.LocalFile, error) {
 		}
 		return err
 	})
-	return files, err
+	return files, links, err
+}
+
+func isLinkedFolder(d fs.DirEntry, path string) bool {
+	if d.Type()&fs.ModeSymlink == 0 {
+		return false
+	}
+	target, err := os.Stat(path)
+	return err == nil && target.IsDir()
 }
 
 // followLinkedFolder adds a trailing separator to a symlink that points to a

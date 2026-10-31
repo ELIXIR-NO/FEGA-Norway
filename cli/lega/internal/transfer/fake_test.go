@@ -27,6 +27,7 @@ type failure struct {
 // in order, and a chunk number at or below the last merged one is refused.
 type fakeBackend struct {
 	data      []byte
+	last      []byte // the last merged chunk, as TSD reports its md5
 	maxChunk  int64
 	id        string
 	merged    []int64
@@ -63,6 +64,7 @@ func (b *fakeBackend) merge(uploadID string, c plan.Chunk, data []byte) error {
 		b.id = "upload-1"
 	}
 	b.data = append(b.data, data...)
+	b.last = data
 	b.maxChunk = c.Num
 	b.merged = append(b.merged, c.Num)
 	return nil
@@ -72,7 +74,12 @@ func (b *fakeBackend) Resumable(_ context.Context, name, _ string) (plan.Resumab
 	if b.id == "" {
 		return plan.Resumable{}, false, nil
 	}
-	return plan.Resumable{ID: b.id, Name: name, NextOffset: int64(len(b.data)), MaxChunk: b.maxChunk}, true, nil
+	r := plan.Resumable{ID: b.id, Name: name, NextOffset: int64(len(b.data)), MaxChunk: b.maxChunk}
+	if len(b.last) > 0 {
+		r.PreviousOffset = r.NextOffset - int64(len(b.last))
+		r.LastChunkMD5 = md5Hex(b.last)
+	}
+	return r, true, nil
 }
 
 func (b *fakeBackend) Finish(_ context.Context, _, uploadID string, size int64, sha string) error {

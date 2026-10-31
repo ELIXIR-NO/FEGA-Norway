@@ -294,6 +294,28 @@ func TestUploadRetry(t *testing.T) {
 	}
 }
 
+// TestUploadStaleOrphanNotAdopted covers a first chunk that fails before any
+// upload ID is known while the backend holds a same-name upload of another
+// file: the md5 differs, so it is not adopted and no chunk is spliced onto it.
+func TestUploadStaleOrphanNotAdopted(t *testing.T) {
+	for _, be := range backends {
+		t.Run(be.name, func(t *testing.T) {
+			local := writeFile(t, "a.c4gh", content)
+			stale := []byte("XXXX")
+			b := &fakeBackend{id: "stale", data: stale, last: stale, maxChunk: 1,
+				failOn: map[int]failure{1: {err: errors.New("connection reset by peer")}}}
+			var rec recorder
+			rep := rec.runner(4, 1).Upload(context.Background(), be.uploader(b), []plan.Step{{File: local, Action: plan.Upload}})
+			if res := rep.Results[0]; res.Outcome != Failed {
+				t.Fatalf("outcome = %v, want Failed", res.Outcome)
+			}
+			if !reflect.DeepEqual(b.data, stale) || len(b.merged) != 0 {
+				t.Errorf("stale upload was spliced onto: data %q, merged %v", b.data, b.merged)
+			}
+		})
+	}
+}
+
 func TestUploadChangedSize(t *testing.T) {
 	local := writeFile(t, "a.c4gh", content)
 	local.Size = 12

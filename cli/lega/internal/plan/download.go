@@ -9,13 +9,14 @@ import (
 // it or reject it. With no names it plans the whole outbox, in listing
 // order. A name given twice is planned once, since both would write the
 // same file. local maps the base names of files already in dir to their
-// sizes. The rules run per name and the first match wins.
-func PlanDownload(names []string, outbox []RemoteFile, local map[string]int64, dir string) []DownloadStep {
+// size and modification time. The rules run per name and the first match
+// wins.
+func PlanDownload(names []string, outbox []RemoteFile, local map[string]LocalCopy, dir string) []DownloadStep {
 	if len(names) == 0 {
 		names = fileNames(outbox)
 	}
 	names = unique(names)
-	x := downloadIndex{outbox: remoteSizes(outbox), local: local, dir: dir}
+	x := downloadIndex{outbox: remoteFiles(outbox), local: local, dir: dir}
 	steps := make([]DownloadStep, len(names))
 	for i, name := range names {
 		steps[i] = x.step(name)
@@ -25,8 +26,8 @@ func PlanDownload(names []string, outbox []RemoteFile, local map[string]int64, d
 
 // downloadIndex holds the lookups every rule needs, built once per plan.
 type downloadIndex struct {
-	outbox map[string]int64
-	local  map[string]int64
+	outbox map[string]RemoteFile
+	local  map[string]LocalCopy
 	dir    string
 }
 
@@ -63,22 +64,30 @@ func rejectUnsafeName(x downloadIndex, name string) (DownloadStep, bool) {
 	return x.result(name, Reject, "not a plain file name, so it cannot be saved safely"), true
 }
 
-// skipOrRejectExisting treats a same-size file as a finished download and
-// refuses to overwrite one of another size, which is likely a partial file.
+// skipOrRejectExisting treats a same-size file as a finished download,
+// unless the outbox copy was exported after it: sda-doa overwrites a
+// re-exported file in place, and a re-encryption keeps the size. A file of
+// another size is likely partial. Neither is overwritten.
 func skipOrRejectExisting(x downloadIndex, name string) (DownloadStep, bool) {
 	have, ok := x.local[name]
 	if !ok {
 		return DownloadStep{}, false
 	}
 	want := x.outbox[name]
-	if have == want {
+	switch {
+	case have.Size != want.Size:
+		return x.result(name, Reject, fmt.Sprintf("a local file of %d bytes has this name but the outbox file has %d; remove it to download again", have.Size, want.Size)), true
+	case want.Modified.After(have.Modified):
+		return x.result(name, Reject, fmt.Sprintf("the outbox copy was exported %s, after the local file (%s); remove the local file to download it again", want.Modified.Format(timeLayout), have.Modified.Format(timeLayout))), true
+	default:
 		return x.result(name, Skip, "already downloaded"), true
 	}
-	return x.result(name, Reject, fmt.Sprintf("a local file of %d bytes has this name but the outbox file has %d; remove it to download again", have, want)), true
 }
 
+const timeLayout = "2006-01-02 15:04"
+
 func (x downloadIndex) result(name string, a Action, reason string) DownloadStep {
-	return DownloadStep{Name: name, Dir: x.dir, Action: a, Reason: reason, Size: x.outbox[name]}
+	return DownloadStep{Name: name, Dir: x.dir, Action: a, Reason: reason, Size: x.outbox[name].Size}
 }
 
 // isCleanName reports whether name is a single path element that is safe to
@@ -96,10 +105,10 @@ func fileNames(files []RemoteFile) []string {
 	return names
 }
 
-func remoteSizes(files []RemoteFile) map[string]int64 {
-	m := make(map[string]int64, len(files))
+func remoteFiles(files []RemoteFile) map[string]RemoteFile {
+	m := make(map[string]RemoteFile, len(files))
 	for _, f := range files {
-		m[f.Name] = f.Size
+		m[f.Name] = f
 	}
 	return m
 }

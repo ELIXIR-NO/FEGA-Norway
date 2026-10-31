@@ -75,9 +75,12 @@ func (c *uploadCommand) validate(args []string) error {
 // scan refuses a batch with no files, which would otherwise end in a
 // summary of nothing and exit 0.
 func (c *uploadCommand) scan() ([]plan.LocalFile, error) {
-	local, err := transfer.Scan(c.Args.Paths)
+	local, skipped, err := transfer.Scan(c.Args.Paths)
 	if err != nil {
 		return nil, err
+	}
+	for _, link := range skipped {
+		ui.Warnf(c.env.stderr, "%s is a link to a folder and was not followed; name the folder itself to upload it", link)
 	}
 	if len(local) == 0 {
 		return nil, fmt.Errorf("nothing to upload: no files found in %s", strings.Join(c.Args.Paths, ", "))

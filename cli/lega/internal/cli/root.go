@@ -121,6 +121,11 @@ func Run(ctx context.Context, args []string, getenv func(string) string, stdout,
 	if opts.Version && isCommandRequired(err) {
 		return e.fail(e.writeVersion())
 	}
+	if isCommandRequired(err) && p.Active == nil {
+		p.WriteHelp(e.stdout)
+		fmt.Fprint(e.stdout, environmentHelp)
+		return ExitOK
+	}
 	if text, ok := helpText(err); ok {
 		fmt.Fprint(e.stdout, withEnvironmentHelp(text, p.Active == nil))
 		return ExitOK

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"strings"
 
 	"github.com/ELIXIR-NO/FEGA-Norway/cli/lega/internal/plan"
 )
@@ -31,7 +32,7 @@ func (u *fileUpload) sendChunk(ctx context.Context, c plan.Chunk, data []byte) e
 			u.uploadID = id
 			return nil
 		}
-		fate, err := u.recoverChunk(ctx, c, err, &failures)
+		fate, err := u.recoverChunk(ctx, c, data, err, &failures)
 		if err != nil {
 			return err
 		}
@@ -44,7 +45,7 @@ func (u *fileUpload) sendChunk(ctx context.Context, c plan.Chunk, data []byte) e
 // recoverChunk waits out a retryable failure of chunk c and asks the
 // backend what became of it. failures counts every failed request for this
 // chunk, the lookups included, against Runner.Retries.
-func (u *fileUpload) recoverChunk(ctx context.Context, c plan.Chunk, err error, failures *int) (chunkFate, error) {
+func (u *fileUpload) recoverChunk(ctx context.Context, c plan.Chunk, data []byte, err error, failures *int) (chunkFate, error) {
 	for {
 		*failures++
 		if !u.runner.mayRetry(ctx, err, *failures) {
@@ -53,7 +54,7 @@ func (u *fileUpload) recoverChunk(ctx context.Context, c plan.Chunk, err error, 
 		if serr := u.runner.sleep(ctx, backoff(*failures, rand.Int64N)); serr != nil {
 			return chunkLost, serr
 		}
-		fate, lookupErr := u.resync(ctx, c)
+		fate, lookupErr := u.resync(ctx, c, data)
 		if lookupErr != nil {
 			err = lookupErr
 			continue
@@ -66,9 +67,9 @@ func (u *fileUpload) recoverChunk(ctx context.Context, c plan.Chunk, err error, 
 }
 
 // resync asks the backend for the upload after chunk c failed.
-func (u *fileUpload) resync(ctx context.Context, c plan.Chunk) (chunkFate, error) {
+func (u *fileUpload) resync(ctx context.Context, c plan.Chunk, data []byte) (chunkFate, error) {
 	if u.uploadID == "" {
-		return u.adoptOrphan(ctx, c)
+		return u.adoptOrphan(ctx, c, data)
 	}
 	r, ok, err := u.up.Resumable(ctx, u.local.Name, u.uploadID)
 	if err != nil {
@@ -92,21 +93,24 @@ func fateOf(r plan.Resumable, ok bool, c plan.Chunk) chunkFate {
 }
 
 // adoptOrphan handles a first chunk whose answer, and so the upload ID, was
-// lost. An upload with this name holding exactly that chunk is taken over;
+// lost. An upload with this name holding exactly these bytes is taken over;
 // otherwise the chunk is sent again, and whatever orphan that leaves is
-// caught by the plan's several-resumables rule on the next run.
-func (u *fileUpload) adoptOrphan(ctx context.Context, c plan.Chunk) (chunkFate, error) {
+// caught by the plan's several-resumables rule on the next run. The md5
+// check keeps a stale upload of another file with this name from being
+// adopted, which --no-resume would otherwise make possible.
+func (u *fileUpload) adoptOrphan(ctx context.Context, c plan.Chunk, data []byte) (chunkFate, error) {
 	r, ok, err := u.up.Resumable(ctx, u.local.Name, "")
 	if err != nil {
 		return chunkLost, err
 	}
-	if !holdsOnly(r, ok, c) {
+	if !holdsOnly(r, ok, c, data) {
 		return chunkRolledBack, nil
 	}
 	u.uploadID = r.ID
 	return chunkMerged, nil
 }
 
-func holdsOnly(r plan.Resumable, ok bool, c plan.Chunk) bool {
-	return ok && r.MaxChunk == c.Num && r.NextOffset == c.Offset+c.Len
+func holdsOnly(r plan.Resumable, ok bool, c plan.Chunk, data []byte) bool {
+	return ok && r.MaxChunk == c.Num && r.NextOffset == c.Offset+c.Len &&
+		(r.LastChunkMD5 == "" || strings.EqualFold(r.LastChunkMD5, hexMD5(data)))
 }

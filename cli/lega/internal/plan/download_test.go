@@ -4,15 +4,18 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestPlanDownload(t *testing.T) {
-	outbox := []RemoteFile{{Name: "a.c4gh", Size: 10}, {Name: "b.c4gh", Size: 20}}
+	exported := time.Date(2026, 10, 28, 14, 2, 0, 0, time.UTC)
+	later := exported.Add(time.Hour)
+	outbox := []RemoteFile{{Name: "a.c4gh", Size: 10, Modified: exported}, {Name: "b.c4gh", Size: 20, Modified: exported}}
 	tests := []struct {
 		name       string
 		names      []string
 		outbox     []RemoteFile
-		local      map[string]int64
+		local      map[string]LocalCopy
 		want       []DownloadStep
 		wantReason []string // substring per step, "" to skip the check
 	}{
@@ -20,14 +23,22 @@ func TestPlanDownload(t *testing.T) {
 			name:   "existing_same_size_skips",
 			names:  []string{"a.c4gh"},
 			outbox: outbox,
-			local:  map[string]int64{"a.c4gh": 10},
+			local:  map[string]LocalCopy{"a.c4gh": {Size: 10, Modified: later}},
 			want:   []DownloadStep{{Name: "a.c4gh", Dir: "out", Action: Skip, Size: 10}},
+		},
+		{
+			name:       "existing_older_than_export_rejects",
+			names:      []string{"a.c4gh"},
+			outbox:     outbox,
+			local:      map[string]LocalCopy{"a.c4gh": {Size: 10, Modified: exported.Add(-time.Hour)}},
+			want:       []DownloadStep{{Name: "a.c4gh", Dir: "out", Action: Reject, Size: 10}},
+			wantReason: []string{"exported 2026-10-28 14:02"},
 		},
 		{
 			name:       "existing_other_size_rejects",
 			names:      []string{"a.c4gh"},
 			outbox:     outbox,
-			local:      map[string]int64{"a.c4gh": 4},
+			local:      map[string]LocalCopy{"a.c4gh": {Size: 4, Modified: later}},
 			want:       []DownloadStep{{Name: "a.c4gh", Dir: "out", Action: Reject, Size: 10}},
 			wantReason: []string{"4 bytes"},
 		},
@@ -57,7 +68,7 @@ func TestPlanDownload(t *testing.T) {
 		{
 			name:   "whole_outbox_when_no_names",
 			outbox: outbox,
-			local:  map[string]int64{"b.c4gh": 20},
+			local:  map[string]LocalCopy{"b.c4gh": {Size: 20, Modified: later}},
 			want: []DownloadStep{
 				{Name: "a.c4gh", Dir: "out", Action: Fetch, Size: 10},
 				{Name: "b.c4gh", Dir: "out", Action: Skip, Size: 20},

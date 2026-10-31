@@ -194,6 +194,13 @@ func (u *fileUpload) verifyResumable(from plan.Resumable) error {
 	return nil
 }
 
+// hexMD5 is the md5 TSD reports for a chunk it holds.
+func hexMD5(data []byte) string {
+	h := md5.New() // #nosec G401
+	h.Write(data)
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 func rangeMD5(f io.ReaderAt, from, to int64) (string, error) {
 	h := md5.New() // #nosec G401
 	if err := hashRange(h, f, from, to); err != nil {

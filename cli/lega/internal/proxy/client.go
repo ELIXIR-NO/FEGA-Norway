@@ -74,6 +74,7 @@ func (c *Client) do(ctx context.Context, r request) (*http.Response, error) {
 	}
 	if resp.StatusCode/100 != 2 {
 		defer guard.Release()
+		resp.Body = guard.ResponseBody(resp.Body)
 		return nil, &APIError{Method: r.method, Path: r.path(), Status: resp.StatusCode, Body: httpx.ErrorBody(resp, c.Token, c.CEGAPassword)}
 	}
 	resp.Body = guard.ResponseBody(resp.Body)

@@ -50,7 +50,7 @@ func (c *downloadCommand) Execute(args []string) error {
 	if len(outbox) == 0 && len(c.Args.Names) == 0 {
 		return ui.Infof(c.env.stdout, emptyMessage(false))
 	}
-	local, err := localSizes(c.Output)
+	local, err := localCopies(c.Output)
 	if err != nil {
 		return err
 	}
@@ -91,19 +91,20 @@ func listOutbox(ctx context.Context, r transfer.Runner, client *proxy.Client) ([
 	return files, nil
 }
 
-// localSizes maps the regular files already in dir to their sizes.
-func localSizes(dir string) (map[string]int64, error) {
+// localCopies maps the regular files already in dir to their size and
+// modification time.
+func localCopies(dir string) (map[string]plan.LocalCopy, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
-	sizes := make(map[string]int64, len(entries))
+	copies := make(map[string]plan.LocalCopy, len(entries))
 	for _, e := range entries {
 		if info, err := e.Info(); err == nil && info.Mode().IsRegular() {
-			sizes[e.Name()] = info.Size()
+			copies[e.Name()] = plan.LocalCopy{Size: info.Size(), Modified: info.ModTime()}
 		}
 	}
-	return sizes, nil
+	return copies, nil
 }
 
 func (c *downloadCommand) finish(rep transfer.Report) error {

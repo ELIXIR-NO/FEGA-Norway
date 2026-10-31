@@ -10,6 +10,12 @@ type LocalFile struct {
 	Crypt4GH   bool
 }
 
+// LocalCopy is a file already in the download folder.
+type LocalCopy struct {
+	Size     int64
+	Modified time.Time
+}
+
 // RemoteFile is one entry of an inbox or outbox listing.
 type RemoteFile struct {
 	Name     string

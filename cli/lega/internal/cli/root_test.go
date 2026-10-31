@@ -66,10 +66,10 @@ func TestRun(t *testing.T) {
 			wantStderr: []string{"lega: unknown flag `bogus'"},
 		},
 		{
-			name:       "no command",
+			name:       "no command prints help",
 			args:       nil,
-			wantCode:   ExitUsage,
-			wantStderr: []string{"lega: "},
+			wantCode:   ExitOK,
+			wantStdout: []string{"Usage:", "ELIXIR_AAI_TOKEN"},
 		},
 	}
 	for _, tt := range tests {

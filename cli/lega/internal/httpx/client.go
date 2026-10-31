@@ -13,8 +13,8 @@ import (
 
 const (
 	connectTimeout = 30 * time.Second
-	// headerTimeout is generous because the proxy assembles the whole file
-	// before it answers chunk=end.
+	// headerTimeout is generous because chunk=end waits for TSD to finalise
+	// the upload, and a listing of a large inbox is answered in one piece.
 	headerTimeout = 15 * time.Minute
 	// maxErrorBody caps the body kept from a failed call; a gateway's HTML
 	// error page can be long.
