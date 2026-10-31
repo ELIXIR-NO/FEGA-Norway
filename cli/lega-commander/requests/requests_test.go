@@ -2,11 +2,13 @@ package requests
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -72,4 +74,45 @@ func TestDoRequest(t *testing.T) {
 
 func teardown() {
 	server.Close()
+}
+
+func TestCheckResponse(t *testing.T) {
+	cegaUnknownUser := `400 Bad Request: "No info for that user"`
+	tests := []struct {
+		name       string
+		statusCode int
+		body       string
+		wantErr    error
+		wantMsg    string
+	}{
+		{name: "ok", statusCode: http.StatusOK},
+		{name: "wrong EGA password", statusCode: http.StatusForbidden, body: "EGA authentication failed", wantErr: ErrEGAAuthentication},
+		{name: "rejected without a reason", statusCode: http.StatusForbidden, wantErr: ErrRejectedWithoutReason},
+		{name: "unknown EGA username", statusCode: http.StatusForbidden, body: cegaUnknownUser, wantMsg: "request rejected by the proxy (403 Forbidden): " + cegaUnknownUser},
+		{name: "credentials not sent", statusCode: http.StatusUnauthorized, wantMsg: "request rejected by the proxy (401 Unauthorized)"},
+		{name: "server error", statusCode: http.StatusInternalServerError, body: "boom\n", wantMsg: "500 Internal Server Error: boom"},
+		{name: "long error page", statusCode: http.StatusBadGateway, body: strings.Repeat("x", 5000), wantMsg: "502 Bad Gateway: " + strings.Repeat("x", maxBodyBytes)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			response := &http.Response{
+				StatusCode: tt.statusCode,
+				Status:     strconv.Itoa(tt.statusCode) + " " + http.StatusText(tt.statusCode),
+				Body:       io.NopCloser(strings.NewReader(tt.body)),
+			}
+			err := CheckResponse(response)
+			switch {
+			case tt.wantErr != nil:
+				if !errors.Is(err, tt.wantErr) {
+					t.Errorf("CheckResponse() = %v, want %v", err, tt.wantErr)
+				}
+			case tt.wantMsg != "":
+				if err == nil || err.Error() != tt.wantMsg {
+					t.Errorf("CheckResponse() = %v, want %q", err, tt.wantMsg)
+				}
+			case err != nil:
+				t.Errorf("CheckResponse() = %v, want nil", err)
+			}
+		})
+	}
 }
