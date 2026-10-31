@@ -56,6 +56,11 @@ func (c *uploadCommand) Execute(args []string) error {
 		return err
 	}
 	if rejected := rejectedSteps(steps); len(rejected) > 0 {
+		if c.env.json {
+			if err := c.env.renderBatch(rejectedBatch(rejected)); err != nil {
+				return err
+			}
+		}
 		return rejectedError(rejected)
 	}
 	up, err := c.uploader(cfg, client, steps)
@@ -208,6 +213,16 @@ func rejectedError(rejected []plan.Step) error {
 		noun = "file needs"
 	}
 	return fmt.Errorf("nothing was uploaded; %d %s attention:%s", len(rejected), noun, ui.Indented(rows))
+}
+
+// rejectedBatch is what --json gets on stdout when nothing was uploaded,
+// so a consumer sees the reasons as data and not only as the stderr text.
+func rejectedBatch(rejected []plan.Step) ui.Batch {
+	lines := make([]ui.Line, len(rejected))
+	for i, s := range rejected {
+		lines[i] = ui.Line{Outcome: "rejected", Name: s.File.Path, Detail: s.Reason}
+	}
+	return ui.Batch{Lines: lines, Tallies: []ui.Tally{{Word: "rejected", N: len(rejected)}}}
 }
 
 func uploadBatch(rep transfer.Report) ui.Batch {

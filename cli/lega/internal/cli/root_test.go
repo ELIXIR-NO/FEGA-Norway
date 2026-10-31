@@ -36,6 +36,12 @@ func TestRun(t *testing.T) {
 			wantStdout: []string{"lega dev (commit none, built unknown)"},
 		},
 		{
+			name:       "version as json",
+			args:       []string{"--json", "version"},
+			wantCode:   ExitOK,
+			wantStdout: []string{`{"version":"dev","commit":"none","date":"unknown"}`},
+		},
+		{
 			name:       "version flag alone",
 			args:       []string{"-v"},
 			wantCode:   ExitOK,

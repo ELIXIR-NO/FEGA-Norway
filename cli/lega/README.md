@@ -94,6 +94,7 @@ then, like a file of another size, it is left alone and the step is rejected.
 | `download --direct` | gone; it never used the token it fetched |
 | `-p`, `--page`, `--all` | unchanged |
 
+`--json` also covers `version` and an upload refused before sending.
 Other differences a script may notice: a single file already in the inbox is
 skipped with exit 0 where it was an error; `--all` always lists from the
 first page; `--page 0` and `--per-page 0` are refused; listing tables have

@@ -6,7 +6,9 @@ import (
 
 // BuildInfo is the identity of this binary.
 type BuildInfo struct {
-	Version, Commit, Date string
+	Version string `json:"version"`
+	Commit  string `json:"commit"`
+	Date    string `json:"date"`
 }
 
 // Build is what lega version prints. main sets it from the variables
@@ -33,6 +35,9 @@ func (c *versionCommand) Execute(args []string) error {
 }
 
 func (e *env) writeVersion() error {
+	if e.json {
+		return e.renderJSON(Build)
+	}
 	_, err := fmt.Fprintln(e.stdout, versionLine(e.styles.Header.Render("lega"), Build))
 	return err
 }

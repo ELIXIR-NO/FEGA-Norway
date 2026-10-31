@@ -173,6 +173,9 @@ func TestRunUploadRejectsBeforeSending(t *testing.T) {
 	if n := fake.chunkRequests(); n != 0 {
 		t.Errorf("%d chunk requests reached the server, want none", n)
 	}
+	res = run(testEnv(srv), "--json", "upload", dir)
+	res.check(t, ExitError)
+	mustContain(t, "stdout", res.stdout, `"outcome":"rejected"`, `"name":"`+filepath.Join(dir, "notes.txt")+`"`, `"rejected":3`)
 }
 
 func TestRunUploadListingError(t *testing.T) {
