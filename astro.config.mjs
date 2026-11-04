@@ -228,6 +228,7 @@ export default defineConfig({
 						{ label: 'JAR signing keys', slug: 'operations/signing-keys' },
 						{ label: 'Retiring a broken release', slug: 'operations/broken-releases' },
 						{ label: 'The public web pages', slug: 'operations/web-pages' },
+						{ label: 'Standing up a new environment', slug: 'operations/new-environment' },
 					],
 				},
 				{
