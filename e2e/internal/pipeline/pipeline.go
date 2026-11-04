@@ -57,6 +57,7 @@ func RunLocal(ctx context.Context, s *state.State) error {
 		{"InboxCleanup", stages.InboxCleanup, 0},
 		{"Release", stages.Release, 1000},
 		{"Download", stages.Download, 0},
+		{"LocalExport", stages.DownloadViaLocalFegaExportRequest, 0},
 	})
 }
 
