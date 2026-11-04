@@ -14,9 +14,9 @@ description: Related repositories, historical documentation and planning materia
 
 ## Historical documentation
 
-The [old internal wiki](https://github.com/elixir-oslo/NFEGA/wiki) holds material that has not
-been carried across to this site. It is superseded but not yet fully mined, so it is worth
-checking if you are looking for something that predates this repository.
+The [old internal wiki](https://github.com/elixir-oslo/NFEGA/wiki) was mined page by page on
+2026-11-03. What still held moved into the project's private engineering record, and the rest was
+obsolete, so read the wiki as history rather than as a source of current practice.
 
 ## Planning
 

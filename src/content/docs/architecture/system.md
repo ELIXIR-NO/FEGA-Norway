@@ -10,7 +10,7 @@ Three parties cooperate, but they are not peers. **Central EGA** federates submi
 the authoritative identity and accession records. **FEGA Norway** owns the front door: the proxy
 and the MQ interceptor, both sitting outside the secure boundary. Everything else runs **inside a
 TSD project** (`p969` in production): the whole SDA deployment, its database, its download API and
-its own message broker.
+its own message broker. A staging deployment with the same shape runs in a second TSD project.
 
 That containment is the point. Sensitive data crosses the TSD boundary once, through the Files
 API on upload, and only leaves again as a deliberate export.

@@ -14,7 +14,9 @@ as empty sections:
 
 - **Branch naming.** How to name new branches.
 - **Secrets.** Where the keys live and how to rotate them, beyond the
-  [GPG signing key](../../operations/signing-keys/) which is documented.
+  [GPG signing key](../../operations/signing-keys/) which is documented. The team now keeps a
+  private record of key custody on the TSD side, but this site will not carry that inventory, so
+  the gap stays open here.
 - **Support.** The wiki's Support section was empty. There is no documented support contact
   other than `fega-norway-support@elixir.no`, which appears only in the signing-key context.
 
