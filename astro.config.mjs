@@ -235,6 +235,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Team and links', slug: 'reference/team' },
 						{ label: 'Known gaps', slug: 'reference/gaps' },
+						{ label: 'Proxy errors', slug: 'reference/proxy-errors' },
 					],
 				},
 			],
