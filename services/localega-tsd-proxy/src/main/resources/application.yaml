@@ -109,6 +109,9 @@ server.ssl:
   key-store-password: ${SERVER_CERT_PASSWORD}
 
 logging:
+  pattern:
+    # Every line carries the request id that problem responses return, see ELIXIR-NO/FEGA-Norway#913.
+    level: "%5p [%X{requestId:-}]"
   level:
     no.elixir.fega.ltp: ${APP_LOG_LEVEL:INFO}
     org.springframework.web: ${APP_LOG_LEVEL:INFO}
