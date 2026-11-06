@@ -179,7 +179,8 @@ services:
   db:
     container_name: db
     hostname: db
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73-postgres
+    image: ghcr.io/neicnordic/sensitive-data-archive:v4.1.0-postgres
+    platform: linux/amd64
     ports:
       - "5432:5432"
     environment:
@@ -207,7 +208,8 @@ services:
     container_name: ingest
     hostname: ingest
     # Stock image: the projectCode inbox-path resolver shipped in v3.1.73 (neicnordic#2466).
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73
+    image: ghcr.io/neicnordic/sensitive-data-archive:v4.1.0
+    platform: linux/amd64
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -224,15 +226,15 @@ services:
       - BROKER_USER=<<SDA_BROKER_USER>>
       - BROKER_PASSWORD=<<SDA_BROKER_PASSWORD>>
       - BROKER_VHOST=<<SDA_BROKER_VHOST>>
-      - BROKER_QUEUE=<<SDA_BROKER_QUEUE_INGEST>>
       - BROKER_EXCHANGE=<<SDA_BROKER_EXCHANGE>>
-      - BROKER_ROUTINGKEY=<<SDA_BROKER_ROUTINGKEY_INGEST>>
-      - BROKER_ROUTINGERROR=<<SDA_BROKER_ROUTINGERROR>>
       - BROKER_SSL=<<SDA_BROKER_SSL>>
-      - BROKER_VERIFYPEER=<<SDA_BROKER_VERIFYPEER>>
       - BROKER_CA_CERT=<<SDA_BROKER_CACERT>>
       - BROKER_CLIENT_CERT=<<SDA_BROKER_CLIENTCERT>>
       - BROKER_CLIENT_KEY=<<SDA_BROKER_CLIENTKEY>>
+      # v4.1.0 renamed the queue/routing flags (neicnordic#2466); SOURCEQUEUE/ARCHIVEDQUEUE
+      # replace the old BROKER_QUEUE/BROKER_ROUTINGKEY pair for sda-ingest specifically.
+      - SOURCEQUEUE=<<SDA_BROKER_QUEUE_INGEST>>
+      - ARCHIVEDQUEUE=<<SDA_BROKER_ROUTINGKEY_INGEST>>
       - DATABASE_HOST=<<SDA_DB_HOST>>
       - DATABASE_PORT=<<SDA_DB_PORT>>
       - DATABASE_USER=<<SDA_DB_USER>>
@@ -257,7 +259,8 @@ services:
   verify:
     container_name: verify
     hostname: verify
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73
+    image: ghcr.io/neicnordic/sensitive-data-archive:v4.1.0
+    platform: linux/amd64
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -274,15 +277,14 @@ services:
       - BROKER_USER=<<SDA_BROKER_USER>>
       - BROKER_PASSWORD=<<SDA_BROKER_PASSWORD>>
       - BROKER_VHOST=<<SDA_BROKER_VHOST>>
-      - BROKER_QUEUE=<<SDA_BROKER_QUEUE_VERIFY>>
       - BROKER_EXCHANGE=<<SDA_BROKER_EXCHANGE>>
-      - BROKER_ROUTINGKEY=<<SDA_BROKER_ROUTINGKEY_VERIFY>>
-      - BROKER_ROUTINGERROR=<<SDA_BROKER_ROUTINGERROR>>
       - BROKER_SSL=<<SDA_BROKER_SSL>>
-      - BROKER_VERIFYPEER=<<SDA_BROKER_VERIFYPEER>>
-      - BROKER_CACERT=<<SDA_BROKER_CACERT>>
-      - BROKER_CLIENTCERT=<<SDA_BROKER_CLIENTCERT>>
-      - BROKER_CLIENTKEY=<<SDA_BROKER_CLIENTKEY>>
+      - BROKER_CA_CERT=<<SDA_BROKER_CACERT>>
+      - BROKER_CLIENT_CERT=<<SDA_BROKER_CLIENTCERT>>
+      - BROKER_CLIENT_KEY=<<SDA_BROKER_CLIENTKEY>>
+      # v4.1.0 renamed BROKER_QUEUE/BROKER_ROUTINGKEY to SOURCE_QUEUE/ROUTING_KEY (neicnordic#2466).
+      - SOURCE_QUEUE=<<SDA_BROKER_QUEUE_VERIFY>>
+      - ROUTING_KEY=<<SDA_BROKER_ROUTINGKEY_VERIFY>>
       - DATABASE_HOST=<<SDA_DB_HOST>>
       - DATABASE_PORT=<<SDA_DB_PORT>>
       - DATABASE_USER=<<SDA_DB_USER>>
@@ -293,6 +295,9 @@ services:
       - DATABASE_CLIENT_KEY=<<SDA_DB_CLIENTKEY>>
       - LOG_LEVEL=<<SDA_LOG_LEVEL>>
       - CONFIGFILE=/sda-config/config.yaml
+      # v4.1.0 loads config through config/v2, which reads the config file from
+      # CONFIG_FILE / config-path rather than the legacy CONFIGFILE.
+      - CONFIG_FILE=/sda-config/config.yaml
     volumes:
       - tsd-inbox:/ega/inbox/
       - tsd-vault:/ega/archive/
@@ -304,7 +309,8 @@ services:
   finalize:
     container_name: finalize
     hostname: finalize
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73
+    image: ghcr.io/neicnordic/sensitive-data-archive:v4.1.0
+    platform: linux/amd64
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -321,15 +327,14 @@ services:
       - BROKER_USER=<<SDA_BROKER_USER>>
       - BROKER_PASSWORD=<<SDA_BROKER_PASSWORD>>
       - BROKER_VHOST=<<SDA_BROKER_VHOST>>
-      - BROKER_QUEUE=<<SDA_BROKER_QUEUE_FINALIZE>>
       - BROKER_EXCHANGE=<<SDA_BROKER_EXCHANGE>>
-      - BROKER_ROUTINGKEY=<<SDA_BROKER_ROUTINGKEY_FINALIZE>>
-      - BROKER_ROUTINGERROR=<<SDA_BROKER_ROUTINGERROR>>
       - BROKER_SSL=<<SDA_BROKER_SSL>>
-      - BROKER_VERIFYPEER=<<SDA_BROKER_VERIFYPEER>>
-      - BROKER_CACERT=<<SDA_BROKER_CACERT>>
-      - BROKER_CLIENTCERT=<<SDA_BROKER_CLIENTCERT>>
-      - BROKER_CLIENTKEY=<<SDA_BROKER_CLIENTKEY>>
+      - BROKER_CA_CERT=<<SDA_BROKER_CACERT>>
+      - BROKER_CLIENT_CERT=<<SDA_BROKER_CLIENTCERT>>
+      - BROKER_CLIENT_KEY=<<SDA_BROKER_CLIENTKEY>>
+      # v4.1.0 renamed BROKER_QUEUE/BROKER_ROUTINGKEY to SOURCE_QUEUE/ROUTING_KEY (neicnordic#2466).
+      - SOURCE_QUEUE=<<SDA_BROKER_QUEUE_FINALIZE>>
+      - ROUTING_KEY=<<SDA_BROKER_ROUTINGKEY_FINALIZE>>
       - DATABASE_HOST=<<SDA_DB_HOST>>
       - DATABASE_PORT=<<SDA_DB_PORT>>
       - DATABASE_USER=<<SDA_DB_USER>>
@@ -347,8 +352,9 @@ services:
   mapper:
     container_name: mapper
     hostname: mapper
-    # Stock image: the projectCode inbox-path resolver shipped in v3.1.73 (neicnordic#2466).
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73
+    # Stock image: the projectCode inbox-path resolver shipped in v3.1.73  (neicnordic#2466).
+    image: ghcr.io/neicnordic/sensitive-data-archive:v4.1.0
+    platform: linux/amd64
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -365,14 +371,14 @@ services:
       - BROKER_USER=<<SDA_BROKER_USER>>
       - BROKER_PASSWORD=<<SDA_BROKER_PASSWORD>>
       - BROKER_VHOST=<<SDA_BROKER_VHOST>>
-      - BROKER_QUEUE=<<SDA_BROKER_QUEUE_MAPPER>>
       - BROKER_EXCHANGE=<<SDA_BROKER_EXCHANGE>>
-      - BROKER_ROUTINGERROR=<<SDA_BROKER_ROUTINGERROR>>
       - BROKER_SSL=<<SDA_BROKER_SSL>>
-      - BROKER_VERIFYPEER=<<SDA_BROKER_VERIFYPEER>>
-      - BROKER_CACERT=<<SDA_BROKER_CACERT>>
-      - BROKER_CLIENTCERT=<<SDA_BROKER_CLIENTCERT>>
-      - BROKER_CLIENTKEY=<<SDA_BROKER_CLIENTKEY>>
+      - BROKER_CA_CERT=<<SDA_BROKER_CACERT>>
+      - BROKER_CLIENT_CERT=<<SDA_BROKER_CLIENTCERT>>
+      - BROKER_CLIENT_KEY=<<SDA_BROKER_CLIENTKEY>>
+      # v4.1.0 renamed BROKER_QUEUE to SOURCE_QUEUE (neicnordic#2466); sda-mapper has no
+      # publish-side routing key flag.
+      - SOURCE_QUEUE=<<SDA_BROKER_QUEUE_MAPPER>>
       - DATABASE_HOST=<<SDA_DB_HOST>>
       - DATABASE_PORT=<<SDA_DB_PORT>>
       - DATABASE_USER=<<SDA_DB_USER>>
@@ -383,6 +389,9 @@ services:
       - DATABASE_CLIENT_KEY=<<SDA_DB_CLIENTKEY>>
       - LOG_LEVEL=<<SDA_LOG_LEVEL>>
       - CONFIGFILE=/sda-config/config.yaml
+      # v4.1.0 loads config through config/v2, which reads the config file from
+      # CONFIG_FILE / config-path rather than the legacy CONFIGFILE.
+      - CONFIG_FILE=/sda-config/config.yaml
     volumes:
       - tsd-inbox:/ega/inbox
       - sda-certs:/etc/ega/
@@ -393,7 +402,8 @@ services:
   intercept:
     container_name: intercept
     hostname: intercept
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73
+    image: ghcr.io/neicnordic/sensitive-data-archive:v4.1.0
+    platform: linux/amd64
     depends_on:
       file-orchestrator:
         condition: service_healthy
@@ -406,15 +416,16 @@ services:
       - BROKER_PORT=<<SDA_BROKER_PORT>>
       - BROKER_USER=<<SDA_BROKER_USER>>
       - BROKER_PASSWORD=<<SDA_BROKER_PASSWORD>>
-      - BROKER_QUEUE=<<SDA_BROKER_QUEUE_INTERCEPT>>
       - BROKER_VHOST=<<SDA_BROKER_VHOST>>
       - BROKER_EXCHANGE=<<SDA_BROKER_EXCHANGE>>
-      - BROKER_ROUTINGERROR=<<SDA_BROKER_ROUTINGERROR>>
       - BROKER_SSL=<<SDA_BROKER_SSL>>
-      - BROKER_VERIFYPEER=<<SDA_BROKER_VERIFYPEER>>
-      - BROKER_CACERT=<<SDA_BROKER_CACERT>>
-      - BROKER_CLIENTCERT=<<SDA_BROKER_CLIENTCERT>>
-      - BROKER_CLIENTKEY=<<SDA_BROKER_CLIENTKEY>>
+      - BROKER_CA_CERT=<<SDA_BROKER_CACERT>>
+      - BROKER_CLIENT_CERT=<<SDA_BROKER_CLIENTCERT>>
+      - BROKER_CLIENT_KEY=<<SDA_BROKER_CLIENTKEY>>
+      # v4.1.0 renamed BROKER_QUEUE to SOURCE_QUEUE (neicnordic#2466); the per-message-type
+      # routing keys (ingest/mapping/accession/cancel/deprecate/release) keep their sda-intercept
+      # defaults, which already match the queues the other services consume.
+      - SOURCE_QUEUE=<<SDA_BROKER_QUEUE_INTERCEPT>>
       - DATABASE_HOST=<<SDA_DB_HOST>>
       - DATABASE_PORT=<<SDA_DB_PORT>>
       - DATABASE_USER=<<SDA_DB_USER>>
@@ -442,7 +453,8 @@ services:
   doa:
     container_name: doa
     hostname: doa
-    image: ghcr.io/neicnordic/sensitive-data-archive:v3.1.73-doa
+    image: ghcr.io/neicnordic/sensitive-data-archive:v4.1.0-doa
+    platform: linux/amd64
     depends_on:
       file-orchestrator:
         condition: service_healthy
