@@ -55,5 +55,16 @@ func run() (code int) {
 	if err := pipeline.RunLocalIngestCancelReingest(context.Background(), cancelState); err != nil {
 		return 1
 	}
+
+	redState := &state.State{
+		Config: cfg,
+		Log:    log,
+	}
+
+	if err := pipeline.RunLocalRed(context.Background(), redState); err != nil {
+		log.Error("red suite failed", "err", err)
+		return 1
+	}
+
 	return 0
 }
