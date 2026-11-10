@@ -15,47 +15,127 @@ import (
 	"github.com/ELIXIR-NO/FEGA-Norway/e2e/internal/state"
 )
 
+// The outbox is never emptied between runs, and it does not exist at all
+// before doa writes the first export. The poll has to look past both until the
+// exported file shows up. Each case scripts what the proxy answers, call by
+// call, and checks where the poll stopped and what it handed back.
+
 const (
 	wantedFile   = "payload.enc"
 	leftoverFile = "leftover-from-an-earlier-run.enc"
 )
 
-type canned struct {
+// reply is one scripted answer from the proxy's outbox listing.
+type reply struct {
 	status int
 	body   string
 }
 
-// cannedServer serves one canned response per call, then repeats the last one,
-// and counts the calls it received.
-func cannedServer(t *testing.T, responses ...canned) (*httptest.Server, *int) {
+var (
+	folderMissing  = reply{http.StatusForbidden, ""}
+	folderNotFound = reply{http.StatusNotFound, `{"code":"FOLDER_NOT_FOUND"}`}
+	leftoversOnly  = reply{http.StatusOK, `{"files":[{"fileName":"` + leftoverFile + `"}]}`}
+	fileExported   = reply{http.StatusOK, `{"files":[{"fileName":"` + leftoverFile + `"},{"fileName":"` + wantedFile + `"}]}`}
+	serverError    = reply{http.StatusInternalServerError, ""}
+)
+
+func TestCheckFilesWithRetry(t *testing.T) {
+	tests := []struct {
+		name       string
+		replies    []reply // one per call; the last one repeats for every call after it
+		maxRetries int
+		wantCalls  int
+		wantStatus int
+		wantListed int  // files in the listing the poll returns
+		wantFound  bool // the exported file is among them
+	}{
+		{
+			name:       "keeps polling past leftovers from earlier runs (FEGA-Norway#833)",
+			replies:    []reply{leftoversOnly, leftoversOnly, fileExported},
+			maxRetries: 5,
+			wantCalls:  3, wantStatus: http.StatusOK, wantListed: 2, wantFound: true,
+		},
+		{
+			name:       "waits for doa to create the outbox folder (FEGA-Norway#940)",
+			replies:    []reply{folderMissing, folderNotFound, fileExported},
+			maxRetries: 5,
+			wantCalls:  3, wantStatus: http.StatusOK, wantListed: 2, wantFound: true,
+		},
+		{
+			name:       "returns the last listing when the tries run out, so the failure names what the outbox held",
+			replies:    []reply{leftoversOnly},
+			maxRetries: 3,
+			wantCalls:  3, wantStatus: http.StatusOK, wantListed: 1, wantFound: false,
+		},
+		{
+			name:       "reports the missing folder when the tries run out, instead of claiming an empty outbox",
+			replies:    []reply{folderMissing},
+			maxRetries: 3,
+			wantCalls:  3, wantStatus: http.StatusForbidden, wantListed: 0, wantFound: false,
+		},
+		{
+			name:       "stops at once on any other status",
+			replies:    []reply{serverError, fileExported},
+			maxRetries: 5,
+			wantCalls:  1, wantStatus: http.StatusInternalServerError, wantListed: 0, wantFound: false,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			proxy := newScriptedProxy(t, tc.replies...)
+			s := stateFor(t, proxy, tc.maxRetries)
+
+			status, listing, err := checkFilesWithRetry(context.Background(), s, httpx.New(s.Config), "token")
+			if err != nil {
+				t.Fatalf("checkFilesWithRetry: %v", err)
+			}
+			if proxy.calls != tc.wantCalls {
+				t.Errorf("listing calls: want %d, got %d", tc.wantCalls, proxy.calls)
+			}
+			if status != tc.wantStatus {
+				t.Errorf("status: want %d, got %d", tc.wantStatus, status)
+			}
+			if listing == nil {
+				t.Fatal("listing: want the last one seen, got nil")
+			}
+			if len(listing.Files) != tc.wantListed {
+				t.Errorf("files listed: want %d, got %+v", tc.wantListed, listing.Files)
+			}
+			if found := countMatching(listing, wantedFile) == 1; found != tc.wantFound {
+				t.Errorf("%s in the listing: want %t, got %t", wantedFile, tc.wantFound, found)
+			}
+		})
+	}
+}
+
+// scriptedProxy stands in for the proxy's outbox listing. It answers each call
+// with the next scripted reply, repeats the last one once the script is used
+// up, and counts the calls so a test can see how far the poll went.
+type scriptedProxy struct {
+	srv   *httptest.Server
+	calls int
+}
+
+func newScriptedProxy(t *testing.T, replies ...reply) *scriptedProxy {
 	t.Helper()
-	calls := 0
-	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		r := responses[min(calls, len(responses)-1)]
-		calls++
+	p := &scriptedProxy{}
+	p.srv = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		r := replies[min(p.calls, len(replies)-1)]
+		p.calls++
 		w.WriteHeader(r.status)
 		if _, err := io.WriteString(w, r.body); err != nil {
-			t.Errorf("writing the canned listing: %v", err)
+			t.Errorf("writing the scripted listing: %v", err)
 		}
 	}))
-	t.Cleanup(srv.Close)
-	return srv, &calls
+	t.Cleanup(p.srv.Close)
+	return p
 }
 
-// listingServer serves one canned outbox listing per call with status 200.
-func listingServer(t *testing.T, bodies ...string) (*httptest.Server, *int) {
+// stateFor builds the run state the poll reads: the scripted proxy as the
+// proxy, the given number of tries, and no wait between them.
+func stateFor(t *testing.T, proxy *scriptedProxy, maxRetries int) *state.State {
 	t.Helper()
-	responses := make([]canned, len(bodies))
-	for i, body := range bodies {
-		responses[i] = canned{http.StatusOK, body}
-	}
-	return cannedServer(t, responses...)
-}
-
-// stateFor builds a State whose proxy is srv and whose polling has no delay.
-func stateFor(t *testing.T, srv *httptest.Server, maxRetries int) *state.State {
-	t.Helper()
-	u, err := url.Parse(srv.URL)
+	u, err := url.Parse(proxy.srv.URL)
 	if err != nil {
 		t.Fatalf("parsing test server URL: %v", err)
 	}
@@ -73,119 +153,5 @@ func stateFor(t *testing.T, srv *httptest.Server, maxRetries int) *state.State {
 		},
 		Log:     report.New(io.Discard),
 		EncFile: wantedFile,
-	}
-}
-
-// The outbox is never emptied between runs, so unrelated leftovers must not end
-// the poll: only the exported file does. Regression for a run that stopped on
-// attempt 1 and then asserted zero matches (ELIXIR-NO/FEGA-Norway#833).
-func TestCheckFilesWithRetryPollsPastUnrelatedFiles(t *testing.T) {
-	srv, calls := listingServer(t,
-		`{"files":[{"fileName":"`+leftoverFile+`"}]}`,
-		`{"files":[{"fileName":"`+leftoverFile+`"}]}`,
-		`{"files":[{"fileName":"`+leftoverFile+`"},{"fileName":"`+wantedFile+`"}]}`,
-	)
-	s := stateFor(t, srv, 5)
-
-	status, listing, err := checkFilesWithRetry(context.Background(), s, httpx.New(s.Config), "token")
-	if err != nil {
-		t.Fatalf("checkFilesWithRetry: %v", err)
-	}
-	if status != http.StatusOK {
-		t.Errorf("status: want 200, got %d", status)
-	}
-	if *calls != 3 {
-		t.Errorf("listing calls: want 3, got %d", *calls)
-	}
-	if got := countMatching(listing, wantedFile); got != 1 {
-		t.Errorf("matches for %s: want 1, got %d", wantedFile, got)
-	}
-}
-
-// An exhausted poll returns the last listing, not nil, so the failure names
-// what the outbox actually held.
-func TestCheckFilesWithRetryReturnsLastListingWhenExhausted(t *testing.T) {
-	srv, calls := listingServer(t, `{"files":[{"fileName":"`+leftoverFile+`"}]}`)
-	s := stateFor(t, srv, 3)
-
-	_, listing, err := checkFilesWithRetry(context.Background(), s, httpx.New(s.Config), "token")
-	if err != nil {
-		t.Fatalf("checkFilesWithRetry: %v", err)
-	}
-	if *calls != 3 {
-		t.Errorf("listing calls: want 3, got %d", *calls)
-	}
-	if listing == nil {
-		t.Fatal("listing: want the last one, got nil")
-	}
-	if len(listing.Files) != 1 || listing.Files[0].FileName != leftoverFile {
-		t.Errorf("listing should carry what the outbox held, got %+v", listing.Files)
-	}
-}
-
-// Until doa writes the first export, TSD has no outbox folder for the user and
-// the proxy answers 403 (404 FOLDER_NOT_FOUND once the proxy passes TSD's
-// status through), so the poll waits it out instead of failing on attempt 1.
-func TestCheckFilesWithRetryWaitsForTheOutboxFolder(t *testing.T) {
-	srv, calls := cannedServer(t,
-		canned{http.StatusForbidden, ""},
-		canned{http.StatusNotFound, `{"code":"FOLDER_NOT_FOUND"}`},
-		canned{http.StatusOK, `{"files":[{"fileName":"` + wantedFile + `"}]}`},
-	)
-	s := stateFor(t, srv, 5)
-
-	status, listing, err := checkFilesWithRetry(context.Background(), s, httpx.New(s.Config), "token")
-	if err != nil {
-		t.Fatalf("checkFilesWithRetry: %v", err)
-	}
-	if status != http.StatusOK {
-		t.Errorf("status: want 200, got %d", status)
-	}
-	if *calls != 3 {
-		t.Errorf("listing calls: want 3, got %d", *calls)
-	}
-	if got := countMatching(listing, wantedFile); got != 1 {
-		t.Errorf("matches for %s: want 1, got %d", wantedFile, got)
-	}
-}
-
-// A poll that only ever saw a missing folder reports that status, so the
-// failure says 403 or 404 rather than claiming an empty outbox.
-func TestCheckFilesWithRetryReportsMissingFolderWhenExhausted(t *testing.T) {
-	srv, calls := cannedServer(t, canned{http.StatusForbidden, ""})
-	s := stateFor(t, srv, 3)
-
-	status, listing, err := checkFilesWithRetry(context.Background(), s, httpx.New(s.Config), "token")
-	if err != nil {
-		t.Fatalf("checkFilesWithRetry: %v", err)
-	}
-	if status != http.StatusForbidden {
-		t.Errorf("status: want 403, got %d", status)
-	}
-	if *calls != 3 {
-		t.Errorf("listing calls: want 3, got %d", *calls)
-	}
-	if listing == nil {
-		t.Fatal("listing: want an empty one, got nil")
-	}
-}
-
-// Any other refusal still ends the poll at once, carrying its status.
-func TestCheckFilesWithRetryStopsOnOtherStatuses(t *testing.T) {
-	srv, calls := cannedServer(t,
-		canned{http.StatusInternalServerError, ""},
-		canned{http.StatusOK, `{"files":[{"fileName":"` + wantedFile + `"}]}`},
-	)
-	s := stateFor(t, srv, 5)
-
-	status, _, err := checkFilesWithRetry(context.Background(), s, httpx.New(s.Config), "token")
-	if err != nil {
-		t.Fatalf("checkFilesWithRetry: %v", err)
-	}
-	if status != http.StatusInternalServerError {
-		t.Errorf("status: want 500, got %d", status)
-	}
-	if *calls != 1 {
-		t.Errorf("listing calls: want 1, got %d", *calls)
 	}
 }
