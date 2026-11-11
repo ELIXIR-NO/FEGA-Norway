@@ -152,6 +152,11 @@ and skips the stages that depend on stack-internal access. `gdi` is a
 placeholder: it prints that the pipeline is not implemented and exits non-zero,
 so a scheduled run can never report a false pass.
 
+The `egadev` download stage requests an export, polls the outbox listing until
+doa has written the file, downloads it through the proxy and checks the
+checksums. [docs/export-poll-flow.png](docs/export-poll-flow.png) draws the
+stages and the poll's outcomes.
+
 ## Scope (Phase 1)
 
 Phase 1 preserves the proven suite behavior unchanged: stage order, the fixed

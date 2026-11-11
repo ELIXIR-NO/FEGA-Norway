@@ -171,9 +171,11 @@ func DownloadViaLocalFegaExportRequest(ctx context.Context, s *state.State) erro
 }
 
 // checkFilesWithRetry polls GET /files?inbox=false until the exported file
-// appears, the request fails, or the retries are exhausted. The outbox is never
-// emptied between runs, so a non-empty listing on its own says nothing: only a
-// listing carrying s.EncName() ends the poll. The last listing is returned even
+// appears, the request fails, or the retries are exhausted. A 403 or 404 means
+// TSD has no outbox folder for the user yet, doa creates it with the first
+// export, so it counts as "not yet"; any other non-200 ends the poll. The outbox
+// is never emptied between runs, so a non-empty listing on its own says
+// nothing: only a listing carrying s.EncName() ends the poll. The last listing is returned even
 // when exhausted, so the caller's assertions fail against what was really
 // there. listing is nil only if no attempt was made at all.
 func checkFilesWithRetry(ctx context.Context, s *state.State, client *httpx.Client, accessToken string) (int, *fileListing, error) {
@@ -196,6 +198,14 @@ func checkFilesWithRetry(ctx context.Context, s *state.State, client *httpx.Clie
 		cancel()
 		if err != nil {
 			return 0, nil, err
+		}
+		if res.Status == 403 || res.Status == 404 {
+			lastStatus, lastListing = res.Status, &fileListing{}
+			s.Log.Info("outbox folder not created yet", "status", res.Status, "attempt", i, "max", maxRetries)
+			if i < maxRetries {
+				common.WaitForProcessing(intervalSec * 1000)
+			}
+			continue
 		}
 		if res.Status != 200 {
 			return res.Status, &fileListing{}, nil
