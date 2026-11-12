@@ -1,6 +1,7 @@
 package streaming
 
 import (
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -218,4 +219,88 @@ func teardown() {
 	_ = os.Unsetenv("ELIXIR_AAI_TOKEN")
 	_ = os.Unsetenv("TSD_PROXY_URL")
 	_ = os.Unsetenv("TSD_PROJ_NAME")
+}
+
+// wrongEGACredentialsClient answers like the proxy does for a wrong EGA password and counts upload chunks.
+type wrongEGACredentialsClient struct {
+	patches *int
+}
+
+func (c wrongEGACredentialsClient) DoRequest(method, _ string, _ io.Reader, _, _ map[string]string, _, _ string) (*http.Response, error) {
+	if method == http.MethodPatch {
+		*c.patches++
+	}
+	return &http.Response{
+		StatusCode: http.StatusForbidden,
+		Status:     "403 Forbidden",
+		Body:       io.NopCloser(strings.NewReader("EGA authentication failed")),
+	}, nil
+}
+
+func TestUploadWrongEGACredentials(t *testing.T) {
+	var patches int
+	var client requests.Client = wrongEGACredentialsClient{patches: &patches}
+	filesManager, err := files.NewFileManager(&client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resumablesManager, err := resuming.NewResumablesManager(&client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	streamer, err := NewStreamer(&client, filesManager, resumablesManager, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = streamer.Upload(file.Name(), false, false, false)
+	if !errors.Is(err, requests.ErrEGAAuthentication) {
+		t.Errorf("Upload() = %v, want %v", err, requests.ErrEGAAuthentication)
+	}
+	if patches != 0 {
+		t.Errorf("Upload() sent %d chunks, want 0: the failed inbox listing must stop the upload", patches)
+	}
+}
+
+// bodylessListingRefusalClient refuses the inbox listing with a 403 and no body, as the proxy does when
+// listing a new user's inbox fails behind its ELIXIR AAI check, and accepts every upload chunk.
+type bodylessListingRefusalClient struct {
+	patches *int
+}
+
+func (c bodylessListingRefusalClient) DoRequest(method, _ string, _ io.Reader, _, _ map[string]string, _, _ string) (*http.Response, error) {
+	if method == http.MethodGet {
+		return &http.Response{
+			StatusCode: http.StatusForbidden,
+			Status:     "403 Forbidden",
+			Body:       io.NopCloser(strings.NewReader("")),
+		}, nil
+	}
+	*c.patches++
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`)),
+	}, nil
+}
+
+func TestUploadAfterBodylessListingRefusal(t *testing.T) {
+	var patches int
+	var client requests.Client = bodylessListingRefusalClient{patches: &patches}
+	filesManager, err := files.NewFileManager(&client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resumablesManager, err := resuming.NewResumablesManager(&client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	streamer, err := NewStreamer(&client, filesManager, resumablesManager, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := streamer.Upload(file.Name(), false, false, false); err != nil {
+		t.Errorf("Upload() = %v, want nil: a bodyless 403 on the listing is not proof the upload will be refused", err)
+	}
+	if patches == 0 {
+		t.Error("Upload() sent no chunks")
+	}
 }

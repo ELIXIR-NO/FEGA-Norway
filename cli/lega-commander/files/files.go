@@ -87,16 +87,12 @@ func (fm defaultFileManager) ListFiles(
 			return nil, err
 		}
 
-		if resp.StatusCode == http.StatusForbidden {
-			body, _ := io.ReadAll(resp.Body)
-			_ = resp.Body.Close()
-			if strings.Contains(string(body), `"tsdFiles" is null`) {
+		if err := requests.CheckResponse(resp); err != nil {
+			var rejected *requests.RejectedError
+			if errors.As(err, &rejected) && strings.Contains(rejected.Body, `"tsdFiles" is null`) {
 				return nil, &FolderNotFoundError{}
 			}
-			return nil, errors.New("authentication error")
-		}
-		if resp.StatusCode != http.StatusOK {
-			return nil, errors.New(resp.Status)
+			return nil, err
 		}
 
 		body, _ := io.ReadAll(resp.Body)
@@ -146,8 +142,5 @@ func (rm defaultFileManager) DeleteFile(fileName string) error {
 	if err != nil {
 		return err
 	}
-	if response.StatusCode != 200 {
-		return errors.New(response.Status)
-	}
-	return nil
+	return requests.CheckResponse(response)
 }

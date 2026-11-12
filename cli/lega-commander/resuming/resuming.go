@@ -2,7 +2,6 @@
 package resuming
 
 import (
-	"errors"
 	"io"
 	"net/http"
 
@@ -53,8 +52,8 @@ func (rm defaultResumablesManager) ListResumables() (*[]Resumable, error) {
 	if err != nil {
 		return nil, err
 	}
-	if response.StatusCode != 200 {
-		return nil, errors.New(response.Status)
+	if err := requests.CheckResponse(response); err != nil {
+		return nil, err
 	}
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -95,8 +94,5 @@ func (rm defaultResumablesManager) DeleteResumable(uploadID string) error {
 	if err != nil {
 		return err
 	}
-	if response.StatusCode != 200 {
-		return errors.New(response.Status)
-	}
-	return nil
+	return requests.CheckResponse(response)
 }
