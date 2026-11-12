@@ -1,8 +1,7 @@
 package no.uio.ifi.tc;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.JsonParseException;
 import io.jsonwebtoken.JwtException;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -13,8 +12,8 @@ import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import javax.net.ssl.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -56,14 +55,12 @@ public class TSDFileAPIClient {
    *
    * @param token Auth token to use.
    * @param appId TSD application ID.
-   * @return API response.
    * @param page Page number (1-based).
    * @param perPage Items per page.
-   * @return API response.
+   * @return API response; the files are set only when the status is 2xx.
+   * @throws IOException In case of I/O error, or a 2xx body that is not valid JSON.
    */
-  public TSDFiles listFiles(String token, String appId, int page, int perPage) {
-    OkHttpClient client = this.httpClient;
-    // Add page and per_page as query parameters
+  public TSDFiles listFiles(String token, String appId, int page, int perPage) throws IOException {
     String url =
         getURL(getEndpoint(token, appId, "/files")) + "?page=" + page + "&per_page=" + perPage;
     log.info("TSDFileAPIClient making request: {}", Masker.maskEmailInUri(url));
@@ -71,23 +68,7 @@ public class TSDFileAPIClient {
     Request request =
         new Request.Builder().url(url).addHeader("Authorization", BEARER + token).build();
 
-    TSDFiles tsdFiles = new TSDFiles();
-
-    try {
-      Response response = client.newCall(request).execute();
-
-      if (response.body() != null) {
-        String responseBody = response.body().string();
-        tsdFiles = gson.fromJson(responseBody, TSDFiles.class);
-      }
-
-      tsdFiles.setStatusCode(response.code());
-      tsdFiles.setStatusText(response.message());
-    } catch (IOException | JsonSyntaxException e) {
-      log.error(e.getMessage(), e);
-    }
-
-    return tsdFiles;
+    return execute(request, TSDFiles.class, TSDFiles::new);
   }
 
   /**
@@ -102,7 +83,6 @@ public class TSDFileAPIClient {
    */
   public Message uploadFile(String token, String appId, InputStream inputStream, String fileName)
       throws IOException {
-    OkHttpClient client = this.httpClient;
     String url = getURL(getEndpoint(token, appId, "/files/" + fileName));
 
     // Read all bytes from inputStream
@@ -116,22 +96,7 @@ public class TSDFileAPIClient {
             .put(requestBody)
             .build();
 
-    Message message = new Message();
-
-    try (Response response = client.newCall(request).execute()) {
-      // Ensure the response body is not null
-      if (response.body() != null) {
-        String responseBody = response.body().string();
-        message = gson.fromJson(responseBody, Message.class);
-      }
-
-      message.setStatusCode(response.code());
-      message.setStatusText(response.message());
-    } catch (JsonSyntaxException e) {
-      log.error(e.getMessage(), e);
-    }
-
-    return message;
+    return execute(request, Message.class, Message::new);
   }
 
   /**
@@ -145,24 +110,10 @@ public class TSDFileAPIClient {
   public Message deleteFile(String token, String appId, String fileName) throws IOException {
     String url = getURL(getEndpoint(token, appId, "/files/" + fileName));
 
-    OkHttpClient client = this.httpClient;
     Request request =
         new Request.Builder().url(url).addHeader("Authorization", BEARER + token).delete().build();
 
-    Message message = new Message();
-
-    try (Response response = client.newCall(request).execute()) {
-      if (response.isSuccessful() && response.body() != null) {
-        String responseBody = response.body().string();
-        message = gson.fromJson(responseBody, Message.class);
-      }
-      message.setStatusCode(response.code());
-      message.setStatusText(response.message());
-    } catch (JsonSyntaxException e) {
-      log.error(e.getMessage(), e);
-    }
-
-    return message;
+    return execute(request, Message.class, Message::new);
   }
 
   /**
@@ -175,24 +126,10 @@ public class TSDFileAPIClient {
   public ResumableUploads listResumableUploads(String token, String appId) throws IOException {
     String url = getURL(getEndpoint(token, appId, "/resumables"));
 
-    OkHttpClient client = this.httpClient;
     Request request =
         new Request.Builder().url(url).addHeader("Authorization", BEARER + token).get().build();
 
-    ResumableUploads resumableUploads = new ResumableUploads();
-
-    try (Response response = client.newCall(request).execute()) {
-      if (response.isSuccessful() && response.body() != null) {
-        String responseBody = response.body().string();
-        resumableUploads = gson.fromJson(responseBody, ResumableUploads.class);
-      }
-      resumableUploads.setStatusCode(response.code());
-      resumableUploads.setStatusText(response.message());
-    } catch (JsonSyntaxException e) {
-      log.error(e.getMessage(), e);
-    }
-
-    return resumableUploads;
+    return execute(request, ResumableUploads.class, ResumableUploads::new);
   }
 
   /**
@@ -201,11 +138,16 @@ public class TSDFileAPIClient {
    * @param token Auth token to use.
    * @param appId TSD application ID.
    * @param uploadId Resumable upload ID.
-   * @return API response.
+   * @return The upload, or empty when TSD lists no upload with that ID.
+   * @throws IOException In case of I/O error, or when TSD fails to list the resumable uploads.
    */
   public Optional<ResumableUpload> getResumableUpload(String token, String appId, String uploadId)
       throws IOException {
     ResumableUploads resumableUploads = listResumableUploads(token, appId);
+    if (!isSuccessful(resumableUploads) || resumableUploads.getResumables() == null) {
+      throw new IOException(
+          "TSD failed to list resumable uploads: HTTP " + resumableUploads.getStatusCode());
+    }
     Optional<ResumableUpload> resumableUpload =
         resumableUploads.getResumables().stream()
             .filter(u -> u.getId().equalsIgnoreCase(uploadId))
@@ -228,7 +170,6 @@ public class TSDFileAPIClient {
       String token, String appId, byte[] firstChunk, String fileName) throws IOException {
     String url = getURL(getEndpoint(token, appId, "/files/" + fileName + "?chunk=1"));
 
-    OkHttpClient client = this.httpClient;
     RequestBody requestBody =
         RequestBody.create(firstChunk, MediaType.parse("application/octet-stream"));
     Request request =
@@ -238,20 +179,7 @@ public class TSDFileAPIClient {
             .patch(requestBody)
             .build();
 
-    Chunk chunkResponse = new Chunk();
-
-    try (Response response = client.newCall(request).execute()) {
-      String _body = Objects.requireNonNull(response.body()).string();
-      if (response.isSuccessful() && _body != null) {
-        chunkResponse = gson.fromJson(_body, Chunk.class);
-      }
-      chunkResponse.setStatusCode(response.code());
-      chunkResponse.setStatusText(response.message());
-    } catch (JsonSyntaxException e) {
-      log.error(e.getMessage(), e);
-    }
-
-    return chunkResponse;
+    return execute(request, Chunk.class, Chunk::new);
   }
 
   /**
@@ -280,7 +208,6 @@ public class TSDFileAPIClient {
                     + "&id="
                     + uploadId));
 
-    OkHttpClient client = this.httpClient;
     RequestBody requestBody =
         RequestBody.create(chunk, MediaType.parse("application/octet-stream"));
     Request request =
@@ -290,20 +217,7 @@ public class TSDFileAPIClient {
             .patch(requestBody)
             .build();
 
-    Chunk chunkResponse = new Chunk();
-
-    try (Response response = client.newCall(request).execute()) {
-      if (response.isSuccessful() && response.body() != null) {
-        String responseBody = response.body().string();
-        chunkResponse = gson.fromJson(responseBody, Chunk.class);
-      }
-      chunkResponse.setStatusCode(response.code());
-      chunkResponse.setStatusText(response.message());
-    } catch (JsonSyntaxException e) {
-      log.error(e.getMessage(), e);
-    }
-
-    return chunkResponse;
+    return execute(request, Chunk.class, Chunk::new);
   }
 
   /**
@@ -324,7 +238,6 @@ public class TSDFileAPIClient {
                 appId,
                 "/files/" + resumableUpload.getFileName() + "?chunk=end&id=" + uploadId));
 
-    OkHttpClient client = this.httpClient;
     Request request =
         new Request.Builder()
             .url(url)
@@ -332,20 +245,7 @@ public class TSDFileAPIClient {
             .patch(RequestBody.create(new byte[0], null)) // Empty body for PATCH request
             .build();
 
-    Chunk chunkResponse = new Chunk();
-
-    try (Response response = client.newCall(request).execute()) {
-      if (response.isSuccessful() && response.body() != null) {
-        String responseBody = response.body().string();
-        chunkResponse = gson.fromJson(responseBody, Chunk.class);
-      }
-      chunkResponse.setStatusCode(response.code());
-      chunkResponse.setStatusText(response.message());
-    } catch (JsonSyntaxException e) {
-      log.error(e.getMessage(), e);
-    }
-
-    return chunkResponse;
+    return execute(request, Chunk.class, Chunk::new);
   }
 
   /**
@@ -364,24 +264,10 @@ public class TSDFileAPIClient {
             getEndpoint(
                 token, appId, "/resumables/" + resumableUpload.getFileName() + "?id=" + uploadId));
 
-    OkHttpClient client = this.httpClient;
     Request request =
         new Request.Builder().url(url).addHeader("Authorization", BEARER + token).delete().build();
 
-    Message message = new Message();
-
-    try (Response response = client.newCall(request).execute()) {
-      if (response.isSuccessful() && response.body() != null) {
-        String responseBody = response.body().string();
-        message = gson.fromJson(responseBody, Message.class);
-      }
-      message.setStatusCode(response.code());
-      message.setStatusText(response.message());
-    } catch (JsonSyntaxException e) {
-      log.error(e.getMessage(), e);
-    }
-
-    return message;
+    return execute(request, Message.class, Message::new);
   }
 
   /**
@@ -423,7 +309,8 @@ public class TSDFileAPIClient {
    * @param tokenType Type of the token to request.
    * @param oidcProvider OIDC provider name.
    * @param idToken ID token obtained from the OIDC provider.
-   * @return API response.
+   * @return API response; the token is set only when the status is 2xx.
+   * @throws IOException In case of I/O error, or a 2xx body that is not valid JSON.
    */
   public Token getToken(String tokenType, String oidcProvider, String idToken) throws IOException {
     String url =
@@ -431,7 +318,6 @@ public class TSDFileAPIClient {
             String.format("/auth/%s/token?type=", oidcProvider.toLowerCase())
                 + tokenType.toLowerCase());
     log.info(url);
-    OkHttpClient client = this.httpClient;
     MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     RequestBody body =
         RequestBody.create(String.format("{\"%s\":\"%s\"}", ID_TOKEN, idToken), JSON);
@@ -443,25 +329,36 @@ public class TSDFileAPIClient {
             .post(body)
             .build();
 
-    Token token = new Token();
-    Response response;
+    return execute(request, Token.class, Token::new);
+  }
 
-    try {
-      response = client.newCall(request).execute();
-      ResponseBody responseBody = response.body();
-      if (response.isSuccessful() && responseBody != null) {
-        String bodyString = responseBody.string();
-        token.setToken(
-            JsonParser.parseString(bodyString).getAsJsonObject().get("token").getAsString());
+  /**
+   * Sends the request and reads TSD's status before the body, which is parsed only on 2xx, so a
+   * failed call comes back as its status with no payload rather than as a half-filled object.
+   */
+  private <T extends TSDFileAPIResponse> T execute(
+      Request request, Class<T> type, Supplier<T> empty) throws IOException {
+    try (Response response = httpClient.newCall(request).execute()) {
+      T result = null;
+      if (response.isSuccessful()) {
+        try {
+          result = gson.fromJson(response.body().string(), type);
+        } catch (JsonParseException e) {
+          throw new IOException(
+              "TSD answered HTTP " + response.code() + " with a body that is not valid JSON", e);
+        }
       }
-      token.setStatusCode(response.code());
-      token.setStatusText(response.message());
-      response.close();
-    } catch (Exception e) {
-      log.error(e.getMessage(), e);
+      if (result == null) {
+        result = empty.get();
+      }
+      result.setStatusCode(response.code());
+      result.setStatusText(response.message());
+      return result;
     }
+  }
 
-    return token;
+  private static boolean isSuccessful(TSDFileAPIResponse response) {
+    return response.getStatusCode() >= 200 && response.getStatusCode() < 300;
   }
 
   private String getEndpoint(String token, String appId, String path) {
