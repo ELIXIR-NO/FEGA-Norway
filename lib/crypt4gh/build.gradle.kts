@@ -13,12 +13,16 @@ plugins {
 
 group = "no.elixir"
 
-// The target Java version can be overriden on the command-line with the argument "-PjavaVersion=<version>"
+// The JDK used for compilation can be overridden on the command-line with the argument "-PjavaVersion=<version>"
 // A JDK of this version must be available on your system
-private val defaultJavaVersion = JavaVersion.VERSION_21.majorVersion.toInt()
+private val defaultJavaVersion = JavaVersion.VERSION_25.majorVersion.toInt()
 val javaVersion =
     (project.findProperty("javaVersion") as String?)?.toInt()
         ?: defaultJavaVersion
+
+if (javaVersion < 25) {
+    throw GradleException("The minimum supported Java version is 25 (javaVersion=$javaVersion)")
+}
 
 repositories {
     mavenCentral()
@@ -44,9 +48,15 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(javaVersion))
     }
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
     // Make javadoc and sources JARs
     withJavadocJar()
     withSourcesJar()
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(25)
 }
 
 // Note: the project version should be set with the argument "-Pversion=<version>" when building
@@ -85,9 +95,9 @@ tasks.build {
 fun MavenPom.setupPomDetails() {
     name.set("Crypt4GH")
     description.set("Crypt4GH standard implementation")
-    properties.put("maven.compiler.source", javaVersion.toString())
-    properties.put("maven.compiler.target", javaVersion.toString())
-    properties.put("maven.compiler.release", javaVersion.toString())
+    properties.put("maven.compiler.source", "25")
+    properties.put("maven.compiler.target", "25")
+    properties.put("maven.compiler.release", "25")
     url.set("https://github.com/ELIXIR-NO/FEGA-Norway/tree/main/lib/crypt4gh")
     organization {
         name.set("Elixir Norway")
