@@ -5,6 +5,8 @@
 Federated EGA Norway: the node that bridges ELIXIR AAI and Central EGA to UiO TSD, so
 sensitive data can be submitted, archived and released under Norwegian control.
 
+Java 25 is required to build and run the Java libraries and services.
+
 ## Documentation
 
 **https://elixir-no.github.io/FEGA-Norway/**
