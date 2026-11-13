@@ -4,7 +4,7 @@ go 1.27.1
 
 require (
 	github.com/buger/jsonparser v1.6.1
-	github.com/cheggaaa/pb/v3 v3.2.1
+	github.com/cheggaaa/pb/v3 v3.3.0
 	github.com/chzyer/test v1.0.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/jessevdk/go-flags v1.6.1
@@ -19,9 +19,9 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
 	github.com/dchest/bcrypt_pbkdf v1.0.0 // indirect
 	github.com/fatih/color v1.19.0 // indirect
-	github.com/mattn/go-colorable v0.1.15 // indirect
+	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
-	github.com/mattn/go-runewidth v0.0.27 // indirect
+	github.com/mattn/go-runewidth v0.0.31 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 )
