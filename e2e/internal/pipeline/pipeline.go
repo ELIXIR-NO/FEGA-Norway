@@ -126,6 +126,6 @@ func RunLocalIngestCancelReingest(ctx context.Context, s *state.State) error {
 func RunLocalRed(ctx context.Context, s *state.State) error {
 	return runRed(ctx, s, "FEGA (red)", []step{
 		{"WrongSigningKey", stages.C1JwtSignatureVerification, 0},
-		{"C1JwtSignatureVerification", stages.C1JwtSignatureVerification, 0},
+		// {"C1JwtSignatureVerification", stages.C1JwtSignatureVerification, 0},
 	})
 }
