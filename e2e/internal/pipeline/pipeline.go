@@ -52,7 +52,10 @@ func runRed(ctx context.Context, s *state.State, name string, steps []step) erro
 	for i, stage := range steps {
 		s.Log.Stage(i+1, len(steps), stage.name)
 		t0 := time.Now()
-		if err := stage.fn(ctx, s); err != nil {
+		checkCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		err := stage.fn(checkCtx, s)
+		cancel()
+		if err != nil {
 			s.Log.Fail(time.Since(t0), err)
 			failures = append(failures, fmt.Errorf("check %q failed: %w", stage.name, err))
 			continue
