@@ -18,14 +18,13 @@ public class TsdApiMockApplication {
       System.out.println("\n=== Registered Endpoints ===");
       mapping
           .getHandlerMethods()
-          .forEach(
-              (key, value) -> {
-                System.out.printf(
-                    "%s -> %s#%s%n",
-                    key,
-                    value.getMethod().getDeclaringClass().getSimpleName(),
-                    value.getMethod().getName());
-              });
+          .forEach((key, value) -> {
+            System.out.printf(
+                "%s -> %s#%s%n",
+                key,
+                value.getMethod().getDeclaringClass().getSimpleName(),
+                value.getMethod().getName());
+          });
       System.out.println("============================\n");
     };
   }
