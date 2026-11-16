@@ -1,0 +1,55 @@
+images:
+  PROXY:       ghcr.io/elixir-no/fega-norway:localega-tsd-proxy-3.0.0
+  INTERCEPTOR: ghcr.io/elixir-no/fega-norway:mq-interceptor-1.1.31
+  POSTGRES:    registry-1.docker.io/library/postgres:14.1
+
+compose: |
+  services:
+
+    proxy:
+      image: ${PROXY}
+      env_file:
+        - ${STACK_PATH}/proxy/.env
+      ports:
+        - 3200:8080
+      volumes:
+        - ${SHARED_PATH}/webpages:/app/static:ro,z
+        - ${STACK_PATH}/proxy/ssl/egadev.uio.no.p12:/etc/ega/ssl/server.p12:ro,z
+      networks:
+        default:
+          aliases:
+            - egadev.uio.no
+      restart: always
+      healthcheck:
+        test: ["CMD-SHELL", "nc -z localhost 8080"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 10s
+
+    interceptor:
+      image: ${INTERCEPTOR}
+      env_file:
+        - ${STACK_PATH}/interceptor/.env
+      volumes:
+        - ${STACK_PATH}/interceptor/schemas:/schemas:ro,z
+      restart: always
+
+    postgres:
+      image: ${POSTGRES}
+      env_file:
+        - ${STACK_PATH}/postgres/.env
+      ports:
+        - 5433:5432
+      volumes:
+        - ${STACK_PATH}/postgres/init:/docker-entrypoint-initdb.d:ro,z
+        # A named volume, so the mappings survive a deploy and a preview (#18).
+        # The fixed name keeps podman-compose from prefixing it with the
+        # deployment id. The -e2e file must never mount it: a preview starts
+        # empty. Do not run "podman volume prune" while staging is down.
+        - pgdata:/var/lib/postgresql/data
+      restart: always
+
+  volumes:
+    pgdata:
+      name: fega-egadev-pgdata
