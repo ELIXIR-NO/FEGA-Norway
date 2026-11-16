@@ -72,20 +72,18 @@ public class LocalEGATSDProxyApplication {
         .csrf(AbstractHttpConfigurer::disable)
         .securityMatcher(
             "/token.html", "/token", "/user", "/oauth2/authorization/elixir-aai", "/oidc-protected")
-        .authorizeHttpRequests(
-            request ->
-                request
-                    .requestMatchers("/token.html")
-                    .authenticated()
-                    .requestMatchers("/token")
-                    .authenticated()
-                    .requestMatchers("/user")
-                    .authenticated())
+        .authorizeHttpRequests(request ->
+            request
+                .requestMatchers("/token.html")
+                .authenticated()
+                .requestMatchers("/token")
+                .authenticated()
+                .requestMatchers("/user")
+                .authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
-        .oauth2Login(
-            auth ->
-                auth.redirectionEndpoint(endpoint -> endpoint.baseUri("/oidc-protected"))
-                    .defaultSuccessUrl("/"));
+        .oauth2Login(auth ->
+            auth.redirectionEndpoint(endpoint -> endpoint.baseUri("/oidc-protected"))
+                .defaultSuccessUrl("/"));
 
     return http.build();
   }

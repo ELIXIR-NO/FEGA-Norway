@@ -29,12 +29,12 @@ class JsonSchemaValidationServiceTest {
   void validate_doesNotThrow_whenOnlyDatasetIdProvided() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "datasetId": "EGAD00010000919",
-                  "publicKey": "%s"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "datasetId": "EGAD00010000919",
+          "publicKey": "%s"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     assertDoesNotThrow(() -> service.validate(message));
@@ -44,12 +44,12 @@ class JsonSchemaValidationServiceTest {
   void validate_doesNotThrow_whenOnlyFileIdProvided() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "fileId": "EGAF00000000014",
-                  "publicKey": "%s"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "fileId": "EGAF00000000014",
+          "publicKey": "%s"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     assertDoesNotThrow(() -> service.validate(message));
@@ -59,13 +59,13 @@ class JsonSchemaValidationServiceTest {
   void validate_doesNotThrow_whenBothDatasetIdAndFileIdProvided() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "datasetId": "EGAD00010000919",
-                  "fileId": "EGAF00000000014",
-                  "publicKey": "%s"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "datasetId": "EGAD00010000919",
+          "fileId": "EGAF00000000014",
+          "publicKey": "%s"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     assertDoesNotThrow(() -> service.validate(message));
@@ -75,14 +75,14 @@ class JsonSchemaValidationServiceTest {
   void validate_doesNotThrow_withOptionalCoordinates() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "datasetId": "EGAD00010000919",
-                  "publicKey": "%s",
-                  "startCoordinate": "100",
-                  "endCoordinate": "200"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "datasetId": "EGAD00010000919",
+          "publicKey": "%s",
+          "startCoordinate": "100",
+          "endCoordinate": "200"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     assertDoesNotThrow(() -> service.validate(message));
@@ -92,13 +92,13 @@ class JsonSchemaValidationServiceTest {
   void validate_doesNotThrow_whenCoordinateIsZero() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "fileId": "EGAF00000000014",
-                  "publicKey": "%s",
-                  "startCoordinate": "0"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "fileId": "EGAF00000000014",
+          "publicKey": "%s",
+          "startCoordinate": "0"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     assertDoesNotThrow(() -> service.validate(message));
@@ -108,11 +108,11 @@ class JsonSchemaValidationServiceTest {
   void validate_throws_whenJwtTokenIsMissing() {
     String message =
         """
-                {
-                  "datasetId": "EGAD00010000919",
-                  "publicKey": "%s"
-                }
-                """
+        {
+          "datasetId": "EGAD00010000919",
+          "publicKey": "%s"
+        }
+        """
             .formatted(VALID_PUBLIC_KEY);
 
     assertThrows(JsonSchemaValidationException.class, () -> service.validate(message));
@@ -122,11 +122,11 @@ class JsonSchemaValidationServiceTest {
   void validate_throws_whenPublicKeyIsMissing() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "datasetId": "EGAD00010000919"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "datasetId": "EGAD00010000919"
+        }
+        """
             .formatted(VALID_JWT);
 
     assertThrows(JsonSchemaValidationException.class, () -> service.validate(message));
@@ -136,11 +136,11 @@ class JsonSchemaValidationServiceTest {
   void validate_throws_whenNeitherDatasetIdNorFileIdIsPresent() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "publicKey": "%s"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "publicKey": "%s"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     assertThrows(JsonSchemaValidationException.class, () -> service.validate(message));
@@ -155,12 +155,12 @@ class JsonSchemaValidationServiceTest {
   void validate_throws_whenJwtTokenDoesNotMatchPattern() {
     String message =
         """
-                {
-                  "jwtToken": "not-a-valid-jwt",
-                  "datasetId": "EGAD00010000919",
-                  "publicKey": "%s"
-                }
-                """
+        {
+          "jwtToken": "not-a-valid-jwt",
+          "datasetId": "EGAD00010000919",
+          "publicKey": "%s"
+        }
+        """
             .formatted(VALID_PUBLIC_KEY);
 
     assertThrows(JsonSchemaValidationException.class, () -> service.validate(message));
@@ -170,12 +170,12 @@ class JsonSchemaValidationServiceTest {
   void validate_throws_whenDatasetIdIsEmpty() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "datasetId": "",
-                  "publicKey": "%s"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "datasetId": "",
+          "publicKey": "%s"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     assertThrows(JsonSchemaValidationException.class, () -> service.validate(message));
@@ -185,12 +185,12 @@ class JsonSchemaValidationServiceTest {
   void validate_throws_whenFileIdIsEmpty() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "fileId": "",
-                  "publicKey": "%s"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "fileId": "",
+          "publicKey": "%s"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     assertThrows(JsonSchemaValidationException.class, () -> service.validate(message));
@@ -200,12 +200,12 @@ class JsonSchemaValidationServiceTest {
   void validate_throws_whenPublicKeyIsTooShort() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "datasetId": "EGAD00010000919",
-                  "publicKey": "tooshort"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "datasetId": "EGAD00010000919",
+          "publicKey": "tooshort"
+        }
+        """
             .formatted(VALID_JWT);
 
     // "tooshort" is 8 chars, below minLength: 20
@@ -216,13 +216,13 @@ class JsonSchemaValidationServiceTest {
   void validate_throws_whenStartCoordinateIsNotNumeric() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "datasetId": "EGAD00010000919",
-                  "publicKey": "%s",
-                  "startCoordinate": "not-a-number"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "datasetId": "EGAD00010000919",
+          "publicKey": "%s",
+          "startCoordinate": "not-a-number"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     assertThrows(JsonSchemaValidationException.class, () -> service.validate(message));
@@ -232,13 +232,13 @@ class JsonSchemaValidationServiceTest {
   void validate_throws_whenEndCoordinateIsNegative() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "datasetId": "EGAD00010000919",
-                  "publicKey": "%s",
-                  "endCoordinate": "-100"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "datasetId": "EGAD00010000919",
+          "publicKey": "%s",
+          "endCoordinate": "-100"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     // Negative numbers have a leading "-", which does not match pattern ^[0-9]+$
@@ -249,13 +249,13 @@ class JsonSchemaValidationServiceTest {
   void validate_throws_whenAdditionalPropertyIsPresent() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "datasetId": "EGAD00010000919",
-                  "publicKey": "%s",
-                  "unknownField": "value"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "datasetId": "EGAD00010000919",
+          "publicKey": "%s",
+          "unknownField": "value"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     assertThrows(JsonSchemaValidationException.class, () -> service.validate(message));
@@ -265,11 +265,11 @@ class JsonSchemaValidationServiceTest {
   void validate_exceptionMessage_includesValidationFailedPrefix() {
     String message =
         """
-                {
-                  "jwtToken": "%s",
-                  "publicKey": "%s"
-                }
-                """
+        {
+          "jwtToken": "%s",
+          "publicKey": "%s"
+        }
+        """
             .formatted(VALID_JWT, VALID_PUBLIC_KEY);
 
     JsonSchemaValidationException ex =
