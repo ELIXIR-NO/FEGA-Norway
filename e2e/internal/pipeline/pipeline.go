@@ -65,11 +65,11 @@ func runRed(ctx context.Context, s *state.State, name string, steps []step) erro
 	return errors.Join(failures...)
 }
 
-// RunLocal runs the FEGA pipeline against the mocked stack:
+// RunGreenLocal runs the FEGA pipeline against the mocked stack:
 // ProxyWebpage -> C1 -> upload -> ingest -> accession -> finalize -> mapping -> inbox-cleanup ->
 // release -> download.
-func RunLocal(ctx context.Context, s *state.State) error {
-	return run(ctx, s, "FEGA (local)", []step{
+func RunGreenLocal(ctx context.Context, s *state.State) error {
+	return run(ctx, s, "FEGA (local) green pipeline", []step{
 		{"ProxyWebpageVerification", stages.ProxyWebpage, 0},
 		{"UploadViaLegaCmd", stages.UploadViaLegaCmd, 5000},
 		{"Ingest", stages.Ingest, 5000},
@@ -124,8 +124,9 @@ func RunLocalIngestCancelReingest(ctx context.Context, s *state.State) error {
 // remaining checks. The suite passes only when every invalid request is
 // correctly refused.
 func RunLocalRed(ctx context.Context, s *state.State) error {
-	return runRed(ctx, s, "FEGA (red)", []step{
-		{"WrongSigningKey", stages.C1JwtSignatureVerification, 0},
-		// {"C1JwtSignatureVerification", stages.C1JwtSignatureVerification, 0},
+	return runRed(ctx, s, "FEGA (Local) red pipeline", []step{
+		{"MissingBasicAuth", stages.MissingBasicAuth, 0},
+		{"MissingBearerToken", stages.MissingBearerToken, 0},
+		{"WrongSigningKey", stages.WrongSigningKey, 0},
 	})
 }

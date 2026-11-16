@@ -36,7 +36,7 @@ func run() (code int) {
 		}
 	}()
 
-	if err := pipeline.RunLocal(context.Background(), st); err != nil {
+	if err := pipeline.RunGreenLocal(context.Background(), st); err != nil {
 		return 1
 	}
 
