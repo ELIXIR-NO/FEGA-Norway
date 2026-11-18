@@ -138,12 +138,12 @@ stages run and what they run against.
 
 | | `fega` | `egadev` | `gdi` |
 |---|---|---|---|
-| Stages | 9 | 6 | none |
+| Stages | 11 | 6 | none |
 | Upload | `lega-commander` | proxy API directly | |
 | Negative check | C1 forged visa | not run | |
 | Finalize (Postgres mTLS) | yes | not run | |
 | Inbox cleanup | yes | not run | |
-| Download | DOA, direct | export request | |
+| Download | DOA, direct, then export request | export request | |
 | Runs against | mocked stack | live egadev.uio.no | |
 
 `fega` is the one CI runs on every push, and the only one that is self
@@ -155,7 +155,8 @@ so a scheduled run can never report a false pass.
 The `egadev` download stage requests an export, polls the outbox listing until
 doa has written the file, downloads it through the proxy and checks the
 checksums. [docs/export-poll-flow.png](docs/export-poll-flow.png) draws the
-stages and the poll's outcomes.
+stages and the poll's outcomes. The `fega` pipeline runs the same export flow
+against `tsd-api-mock` after its direct DOA download.
 
 ## Scope (Phase 1)
 
