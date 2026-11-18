@@ -30,4 +30,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/services/localega-tsd-proxy/build/libs/localega-tsd-proxy.jar /app/app.jar
 EXPOSE 8080
-CMD ["java", "-XX:+UseG1GC", "-jar", "app.jar"]
+# CVE-2026-114938: the JDK's AVX-512 Base64 decoder corrupts memory on crafted input, and the
+# proxy decodes Authorization headers before login. Drop the flag once the base image ships
+# Temurin 21.0.13.1 or later.
+CMD ["java", "-XX:+UseG1GC", "-XX:-UseBASE64Intrinsics", "-jar", "app.jar"]
