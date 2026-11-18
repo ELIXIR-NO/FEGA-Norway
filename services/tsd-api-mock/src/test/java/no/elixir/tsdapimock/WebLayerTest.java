@@ -3,6 +3,8 @@ package no.elixir.tsdapimock;
 import static javax.management.timer.Timer.ONE_HOUR;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import no.elixir.tsdapimock.core.utils.JwtService;
 import no.elixir.tsdapimock.endpoints.auth.basic.Client;
 import org.junit.jupiter.api.BeforeAll;
@@ -279,6 +281,46 @@ class WebLayerTest {
       var resumables = responseJson.get("resumables");
       assertThat(resumables).isNotNull();
       assertThat(resumables.isArray()).isTrue();
+    }
+  }
+
+  @Nested
+  class Egaout {
+
+    private final Path outbox = Path.of("./src/test/resources/tmp/egaout/p-test/outUser/files/");
+
+    private ResponseEntity<byte[]> get(String url) {
+      var headers = new HttpHeaders();
+      headers.set("Authorization", "Bearer validToken");
+      return restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), byte[].class);
+    }
+
+    @Test
+    public void testListingWithoutOutboxFolder() {
+      var response = get("/v1/p-test/egaout/nobody/files");
+
+      assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    public void testDownloadMissingFile() throws Exception {
+      Files.createDirectories(outbox);
+
+      var response = get("/v1/p-test/egaout/outUser/files/missing.c4gh");
+
+      assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    public void testDownloadExportedFile() throws Exception {
+      byte[] content = "exported file".getBytes();
+      Files.createDirectories(outbox);
+      Files.write(outbox.resolve("export.c4gh"), content);
+
+      var response = get("/v1/p-test/egaout/outUser/files/export.c4gh");
+
+      assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+      assertThat(response.getBody()).isEqualTo(content);
     }
   }
 }
