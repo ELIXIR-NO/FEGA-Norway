@@ -1,0 +1,127 @@
+# The preview shape of fega-egadev: the staging services, a mock Central EGA
+# broker, and the e2e runner run once against them on the preview's own
+# network. bifrost runs it for a pull request that changes this file, and puts
+# staging back whatever the outcome. See .deploy/README.md.
+
+ephemeral: true
+
+e2e:
+  # The Go runner from e2e/. E2E_ENV picks the egadev binary, which logs in
+  # with a real LS-AAI token. The tag follows this repository's e2e releases
+  # (e2e-<version> on GHCR).
+  image: ghcr.io/elixir-no/fega-norway:e2e-0.0.16
+  timeout: 15m
+  # Non-secrets. The runner reaches the proxy the way an outside client does,
+  # through the host's nginx on 443: the nginx-pass service below holds the
+  # alias egadev.uio.no and forwards there.
+  env:
+    E2E_ENV: egadev
+    E2E_TESTS_PROXY_HOST: egadev.uio.no
+    E2E_TESTS_PROXY_PORT: "443"
+    E2E_TESTS_EXPORT_REQUEST_MAX_RETRIES: "30"
+    E2E_TESTS_EXPORT_REQUEST_INTERVAL_IN_SECONDS: "10"
+    E2E_TESTS_EGA_DEV_BASE_DIRECTORY: /fega-norway                           # the runner's writable scratch dir: the image's WORKDIR
+    E2E_TESTS_EGA_DEV_ARCHIVE_PUB_KEYPATH: /run/e2e/archive.pub.pem
+    E2E_TESTS_EGA_DEV_JWT_PRIV_KEYPATH: /run/e2e/jwt.priv.pem
+  # Secrets stay on the host: the LS-AAI token, the Central EGA test login,
+  # the mock broker's connection string and the proxy admin login are read
+  # from this env file there and never appear here. The token is short-lived
+  # and renewed by hand.
+  env_file:
+    - ${STACK_PATH}/e2e/.env
+  # The archive's public key and the key that signs test visas, kept on the
+  # host and mounted read-only.
+  volumes:
+    - ${STACK_PATH}/e2e/archive.pub.pem:/run/e2e/archive.pub.pem
+    - ${STACK_PATH}/e2e/jwt.priv.pem:/run/e2e/jwt.priv.pem
+  # bifrost checks this token before staging comes down and refuses the run if
+  # it is missing, expired or about to expire.
+  token:
+    var: E2E_TESTS_LSAAI_TOKEN
+
+# The three staging images, plus the mock broker and the passthrough to nginx.
+# A pull request bumps the first three here the same way it bumps
+# fega-egadev.yml: this file records what was tested, that one what runs.
+images:
+  PROXY:       ghcr.io/elixir-no/fega-norway:localega-tsd-proxy-3.0.12
+  INTERCEPTOR: ghcr.io/elixir-no/fega-norway:mq-interceptor-1.1.31
+  POSTGRES:    registry-1.docker.io/library/postgres:14.1
+  CEGAMQ:      registry-1.docker.io/library/rabbitmq:3.12.13-management-alpine
+  NGINX_PASS:  registry-1.docker.io/library/haproxy:3.0-alpine
+
+compose: |
+  services:
+
+    proxy:
+      image: ${PROXY}
+      env_file:
+        - ${STACK_PATH}/proxy/.env
+      ports:
+        - 3200:8080
+      volumes:
+        - ${SHARED_PATH}/webpages:/app/static:ro,z
+        - ${STACK_PATH}/proxy/ssl/egadev.uio.no.p12:/etc/ega/ssl/server.p12:ro,z
+      restart: always
+      healthcheck:
+        test: ["CMD-SHELL", "nc -z localhost 8080"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 10s
+
+    # The same interceptor as staging, with its Central EGA side pointed at
+    # the mock broker below. Whatever reaches the mock during a preview is
+    # gone with it.
+    interceptor:
+      image: ${INTERCEPTOR}
+      env_file:
+        - ${STACK_PATH}/interceptor/.env
+      volumes:
+        - ${STACK_PATH}/interceptor/schemas:/schemas:ro,z
+      restart: always
+
+    # No data volume: a preview starts with an empty database.
+    postgres:
+      image: ${POSTGRES}
+      env_file:
+        - ${STACK_PATH}/postgres/.env
+      ports:
+        - 5433:5432
+      volumes:
+        - ${STACK_PATH}/postgres/init:/docker-entrypoint-initdb.d:ro,z
+      restart: always
+
+    # A plain TCP passthrough holding the alias egadev.uio.no: the runner's
+    # TLS goes to the host's nginx untouched, and nginx sends the request to
+    # port 3200, this preview's proxy. Temporary: once the proxy can present a
+    # current certificate itself, drop this service and give the alias to the
+    # proxy.
+    nginx-pass:
+      image: ${NGINX_PASS}
+      user: "0"
+      entrypoint: ["sh", "-c", "printf 'defaults\n  mode tcp\n  timeout connect 10s\n  timeout client 1h\n  timeout server 1h\nfrontend in\n  bind :443\n  default_backend nginx\nbackend nginx\n  server host host.containers.internal:443\n' > /tmp/pass.cfg && exec haproxy -f /tmp/pass.cfg"]
+      networks:
+        default:
+          aliases:
+            - egadev.uio.no
+      restart: always
+
+    # The mock Central EGA broker. No host ports: the interceptor and the
+    # runner reach it on the preview's network as cegamq:5672, without TLS.
+    cegamq:
+      image: ${CEGAMQ}
+      user: "978:978"
+      environment:
+        - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/conf/cega
+        - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/conf/cega.plugins
+        - RABBITMQ_NODE_PORT=5672
+      volumes:
+        - ${STACK_PATH}/cegamq/conf:/etc/rabbitmq/conf:z
+        - ${STACK_PATH}/cegamq/ssl:/etc/rabbitmq/ssl:z
+      restart: always
+      healthcheck:
+        test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms"]
+        interval: 10s
+        timeout: 20s
+        retries: 6
+        start_period: 20s
