@@ -6,6 +6,18 @@ plugins {
 
 group = "no.elixir"
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(25)
+}
+
 repositories { mavenCentral() }
 
 dependencies {
@@ -20,5 +32,5 @@ subprojects {
 }
 
 tasks.wrapper {
-    gradleVersion = "8.10"
+    gradleVersion = "9.6.1"
 }
