@@ -176,7 +176,7 @@
         const encodedCredentials = btoa(`${credentials.username}:${credentials.password}`);
 
         try {
-            const response = await fetch('/export', {
+            const response = await fetch('/export/gdi', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -185,8 +185,8 @@
                 body: JSON.stringify(payload)
             });
 
-            const result = await response?.json();
             if (response.ok) {
+                const result = await response.json();
                 Swal.fire({
                     title: 'Request submitted successfully',
                     text: result.message,
@@ -194,9 +194,12 @@
                     confirmButtonText: 'Close'
                 })
             } else {
+                // Failures are RFC 9457 problems; the request id lets support find the log entry.
+                const problem = await response.json().catch(() => ({}));
+                const detail = problem.detail || `The proxy answered ${response.status}.`;
                 Swal.fire({
                     title: 'Failed to submit request',
-                    text: result.message,
+                    text: problem.requestId ? `${detail} (request id ${problem.requestId})` : detail,
                     icon: 'error',
                     confirmButtonText: 'Close'
                 })

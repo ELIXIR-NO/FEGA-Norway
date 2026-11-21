@@ -28,11 +28,13 @@ dependencies {
     implementation("org.slf4j:slf4j-jdk14:2.0.20")
 
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.5.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.test {
     useJUnitPlatform()
+    environment("TSD_SECURE", "false")
 }
 
 publishing {

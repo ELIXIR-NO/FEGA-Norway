@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import no.elixir.fega.ltp.common.Masker;
+import no.elixir.fega.ltp.errors.ErrorCode;
+import no.elixir.fega.ltp.errors.ProxyException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
@@ -74,7 +76,8 @@ public class CredentialsMappingAspect {
           "EGA account [{}] has a different Elixir account [{}]",
           Masker.maskUsername(egaUsername),
           Masker.maskEmail(elixirId));
-      throw new IllegalStateException(
+      throw new ProxyException(
+          ErrorCode.ACCOUNT_MAPPING_CONFLICT,
           "EGA account is already mapped to a different Elixir account");
     }
   }

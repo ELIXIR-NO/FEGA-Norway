@@ -6,13 +6,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SignatureException;
+import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
+import no.elixir.fega.ltp.errors.ErrorCode;
+import no.elixir.fega.ltp.errors.ProxyException;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -45,15 +55,66 @@ class TokenServiceTest {
   /**
    * Audit control C1: a structurally valid, unexpired token signed by a key outside the trusted key
    * set must be refused. Every claim is valid, so the only thing that can fail is the signature
-   * check itself; asserting {@link SignatureException} (not a broader exception) pins the rejection
-   * to that check.
+   * check itself; asserting a {@link SignatureException} cause (not a broader exception) pins the
+   * rejection to that check.
    */
   @Test
   void parseVerified_rejectsTokenSignedByUntrustedKey() throws Exception {
     KeyPair untrusted = generateRsaKeyPair();
 
     assertThatThrownBy(() -> tokenService.parseVerified(visaShapedToken(untrusted)))
-        .isInstanceOf(SignatureException.class);
+        .isInstanceOfSatisfying(
+            ProxyException.class,
+            e -> assertThat(e.getCode()).isEqualTo(ErrorCode.ELIXIR_AAI_TOKEN_INVALID))
+        .hasCauseInstanceOf(SignatureException.class);
+  }
+
+  /**
+   * JWKS mode, which runs wherever the passport PEM is unreadable: a token whose kid the key set
+   * does not hold is the caller's forgery, not a server fault. See ELIXIR-NO/FEGA-Norway#913.
+   */
+  @Test
+  void parseVerified_viaJwks_rejectsTokenWithAnUnknownKid() throws Exception {
+    try (MockWebServer issuer = jwksIssuer("known-kid")) {
+      useJwks(issuer);
+
+      assertThatThrownBy(() -> tokenService.parseVerified(tokenWithKid(trusted, "unknown-kid")))
+          .isInstanceOfSatisfying(
+              ProxyException.class,
+              e -> assertThat(e.getCode()).isEqualTo(ErrorCode.ELIXIR_AAI_TOKEN_INVALID));
+    }
+  }
+
+  @Test
+  void parseVerified_viaJwks_acceptsTokenWithAKnownKid() throws Exception {
+    try (MockWebServer issuer = jwksIssuer("known-kid")) {
+      useJwks(issuer);
+
+      Claims claims = tokenService.parseVerified(tokenWithKid(trusted, "known-kid"));
+
+      assertThat(claims.getSubject()).isEqualTo("dummy@elixir-europe.org");
+    }
+  }
+
+  @Test
+  void parseVerified_viaJwks_reportsAnUnreachableIssuerAsUpstream() throws Exception {
+    MockWebServer gone = new MockWebServer();
+    gone.start();
+    useJwks(gone);
+    gone.shutdown();
+
+    assertThatThrownBy(() -> tokenService.parseVerified(tokenWithKid(trusted, "known-kid")))
+        .isInstanceOfSatisfying(
+            ProxyException.class,
+            e -> assertThat(e.getCode()).isEqualTo(ErrorCode.UPSTREAM_FAILED));
+  }
+
+  @Test
+  void getControlledAccessGrantsVisas_rejectsAMalformedToken() {
+    assertThatThrownBy(() -> tokenService.getControlledAccessGrantsVisas("not-a-jwt"))
+        .isInstanceOfSatisfying(
+            ProxyException.class,
+            e -> assertThat(e.getCode()).isEqualTo(ErrorCode.ELIXIR_AAI_TOKEN_INVALID));
   }
 
   /**
@@ -80,6 +141,61 @@ class TokenServiceTest {
                 "value", "https://ega-archive.org/datasets/EGAD00010000919",
                 "source", "https://ega-archive.org/dacs/EGAC00000000001",
                 "by", "dac"))
+        .signWith(signer.getPrivate())
+        .compact();
+  }
+
+  private void useJwks(MockWebServer issuer) {
+    ReflectionTestUtils.setField(
+        tokenService, "passportPublicKeyPath", tempDir.resolve("absent.pem").toString());
+    ReflectionTestUtils.setField(
+        tokenService,
+        "openIDConfigurationURL",
+        issuer.url("/.well-known/openid-configuration").toString());
+  }
+
+  /** An issuer serving its OpenID configuration and a key set holding the trusted key as kid. */
+  private MockWebServer jwksIssuer(String kid) throws IOException {
+    MockWebServer issuer = new MockWebServer();
+    RSAPublicKey key = (RSAPublicKey) trusted.getPublic();
+    String jwks =
+        "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\""
+            + kid
+            + "\",\"n\":\""
+            + base64Url(key.getModulus())
+            + "\",\"e\":\""
+            + base64Url(key.getPublicExponent())
+            + "\"}]}";
+    issuer.setDispatcher(
+        new Dispatcher() {
+          @Override
+          public MockResponse dispatch(RecordedRequest request) {
+            String body =
+                request.getPath().endsWith("/jwks")
+                    ? jwks
+                    : "{\"jwks_uri\":\"" + issuer.url("/jwks") + "\"}";
+            return new MockResponse().setHeader("Content-Type", "application/json").setBody(body);
+          }
+        });
+    issuer.start();
+    return issuer;
+  }
+
+  private static String base64Url(BigInteger value) {
+    byte[] bytes = value.toByteArray();
+    if (bytes[0] == 0) {
+      bytes = Arrays.copyOfRange(bytes, 1, bytes.length);
+    }
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+  }
+
+  private static String tokenWithKid(KeyPair signer, String kid) {
+    return Jwts.builder()
+        .header()
+        .keyId(kid)
+        .and()
+        .subject("dummy@elixir-europe.org")
+        .expiration(new Date(32503680000000L))
         .signWith(signer.getPrivate())
         .compact();
   }
