@@ -70,7 +70,7 @@ var uploadingOptionsParser = flags.NewParser(&uploadingOptions, flags.None)
 
 var downloadingOptions struct {
 	FileName string `short:"f"  long:"file" description:"File to download\t[optional]"`
-	Straight bool   `long:"direct" description:"download the files without the proxy service;i.e. directly from tsd file api"`
+	Straight bool   `long:"direct" description:"Download file contents directly from TSD. Outbox listing uses the FEGA proxy."`
 }
 
 var downloadingOptionsParser = flags.NewParser(&downloadingOptions, flags.None)
@@ -265,24 +265,18 @@ func main() {
 		}
 		if downloadingOptions.FileName == "" {
 			fmt.Println(aurora.Blue("File to export is not specified. Downloading the whole outbox folder."))
-			fileList, err := fileManager.ListFiles(
-				false,
-				// Convert user-facing 1-based page to backend 0-based index
-				outboxOptions.Page-1,
-				outboxOptions.PerPage,
-				outboxOptions.All,
-			)
+			fileList, err := fileManager.ListFiles(false, 0, 50000, true)
 			if err != nil {
 				log.Fatal(aurora.Red(err))
 			}
 			for _, file := range *fileList {
-				err = streamer.Download(file.FileName)
+				err = streamer.Download(file.FileName, downloadingOptions.Straight)
 				if err != nil {
 					log.Fatal(aurora.Red(err))
 				}
 			}
 		} else {
-			err = streamer.Download(downloadingOptions.FileName)
+			err = streamer.Download(downloadingOptions.FileName, downloadingOptions.Straight)
 			if err != nil {
 				log.Fatal(aurora.Red(err))
 			}

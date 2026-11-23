@@ -28,6 +28,7 @@ type Configuration interface {
 	GetTSDAPIVersion() string
 	GetTSDProjectName() string
 	GetTSDservice() string
+	GetTSDOutboxURL() string
 	GetTSDURL() string
 	GetCentralEGAUsername() string
 	GetCentralEGAPassword() string
@@ -82,10 +83,21 @@ func (defaultConfiguration) GetElixirAAIToken() string {
 }
 
 func (dc defaultConfiguration) GetTSDURL() string {
-	return dc.ConcatenateURLPartsToString(
-		[]string{
-			dc.GetTSDproxyURL(), dc.GetTSDAPIVersion(), dc.GetTSDProjectName(), dc.GetTSDservice()},
-	)
+	return dc.tsdAppURL(dc.GetTSDservice())
+}
+
+func (dc defaultConfiguration) GetTSDOutboxURL() string {
+	appID := os.Getenv("TSD_APP_OUT_ID")
+	if appID == "" {
+		appID = "egaout"
+	}
+	return dc.tsdAppURL(appID)
+}
+
+func (dc defaultConfiguration) tsdAppURL(appID string) string {
+	return dc.ConcatenateURLPartsToString([]string{
+		dc.GetTSDproxyURL(), dc.GetTSDAPIVersion(), dc.GetTSDProjectName(), appID,
+	})
 }
 
 func (defaultConfiguration) GetTSDproxyURL() string {
