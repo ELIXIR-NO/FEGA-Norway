@@ -62,7 +62,7 @@ func run() (code int) {
 	}
 
 	if err := pipeline.RunLocalRed(context.Background(), redState); err != nil {
-		log.Error("red suite failed", "err", err)
+		log.Error("local red pipeline failed", "err", err)
 		return 1
 	}
 

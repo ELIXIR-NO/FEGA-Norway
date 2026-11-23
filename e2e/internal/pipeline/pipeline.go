@@ -127,9 +127,9 @@ func RunLocalIngestCancelReingest(ctx context.Context, s *state.State) error {
 // remaining checks. The suite passes only when every invalid request is
 // correctly refused.
 func RunLocalRed(ctx context.Context, s *state.State) error {
-	return runRed(ctx, s, "FEGA (Local) red pipeline", []step{
-		{"MissingBasicAuth", stages.MissingBasicAuth, 0},
-		{"MissingBearerToken", stages.MissingBearerToken, 0},
-		{"WrongSigningKey", stages.WrongSigningKey, 0},
+	return runRed(ctx, s, "FEGA (local) red pipeline", []step{
+		{"MissingCegaCredentials", stages.MissingCegaCredentials, 0},
+		{"MissingVisa", stages.MissingVisa, 0},
+		{"UntrustedVisaIssuer", stages.UntrustedVisaIssuer, 0},
 	})
 }
