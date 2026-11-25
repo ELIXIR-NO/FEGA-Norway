@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	github.com/lib/pq v1.12.3
 	github.com/proullon/ramsql v0.1.5
-	github.com/rabbitmq/amqp091-go v1.16.0
+	github.com/rabbitmq/amqp091-go v1.17.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1

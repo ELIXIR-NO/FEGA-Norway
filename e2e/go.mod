@@ -3,9 +3,9 @@ module github.com/ELIXIR-NO/FEGA-Norway/e2e
 go 1.27.1
 
 require (
-	github.com/jackc/pgx/v5 v5.12.0
+	github.com/jackc/pgx/v5 v5.13.0
 	github.com/neicnordic/crypt4gh v1.16.0
-	github.com/rabbitmq/amqp091-go v1.16.0
+	github.com/rabbitmq/amqp091-go v1.17.0
 )
 
 require (
