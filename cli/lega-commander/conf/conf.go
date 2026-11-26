@@ -87,11 +87,7 @@ func (dc defaultConfiguration) GetTSDURL() string {
 }
 
 func (dc defaultConfiguration) GetTSDOutboxURL() string {
-	appID := os.Getenv("TSD_APP_OUT_ID")
-	if appID == "" {
-		appID = "egaout"
-	}
-	return dc.tsdAppURL(appID)
+	return dc.tsdAppURL("egaout")
 }
 
 func (dc defaultConfiguration) tsdAppURL(appID string) string {

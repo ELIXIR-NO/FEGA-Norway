@@ -90,7 +90,7 @@ func (mockClient) DoRequest(
 		switch url {
 		case "http://localhost/v1/p2184/egaout/testuser/files/direct%20file.enc":
 			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader("from TSD"))}, nil
-		case "http://localhost/v1/p2184/restricted/testuser/files/direct%20file.enc":
+		case "http://localhost/v1/p2184/egaout/testuser/files/test2.enc":
 			return &http.Response{StatusCode: http.StatusForbidden, Status: "403 Forbidden", Body: http.NoBody}, nil
 		}
 	}
@@ -216,12 +216,10 @@ func TestDownloadFileLocalExists(t *testing.T) {
 func TestDirectDownloadFile(t *testing.T) {
 	t.Chdir(t.TempDir())
 	const name = "direct file.enc"
-	t.Setenv("TSD_APP_OUT_ID", "restricted")
-	if err := directUploader.Download(name, true); err == nil || err.Error() != "403 Forbidden" {
+	if err := directUploader.Download("test2.enc", true); err == nil || err.Error() != "403 Forbidden" {
 		t.Fatalf("expected 403 Forbidden, got %v", err)
 	}
 
-	t.Setenv("TSD_APP_OUT_ID", "")
 	if err := directUploader.Download(name, true); err != nil {
 		t.Fatal(err)
 	}
