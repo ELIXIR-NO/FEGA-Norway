@@ -120,11 +120,12 @@ lega-commander [inbox | outbox | resumables | upload | download] <args>
  upload:
   -f, --file=FILE or =FOLDER    File or folder to upload
   -r, --resume                  Resumes interrupted upload
-  --direct                      Upload directly to the TSD File API through the configured TSD proxy URL, bypassing the normal Local EGA proxy streaming endpoint.
+  --direct                      Upload directly to the TSD File API, bypassing the normal Local EGA proxy streaming endpoint.
   --no-duplicate-check          Skip checking whether the file already exists in the inbox before upload.
 
  download:
-  -f, --file= FILE or =FOLDER   File or folder to download
+  -f, --file=FILE               Select a single file. By default, download selects the whole outbox.
+  --direct                      Download file contents directly to the TSD File API, bypassing the normal Local EGA proxy streaming endpoint.
 
 ```
 ### Example Usage
@@ -155,6 +156,21 @@ For large inboxes, this check can be slow because it requires listing existing i
 lega-commander upload -f /path/to/a/c4gh/file/sample-c4gh-file.c4gh --no-duplicate-check
 ```
 Be aware that existing files with the same name may be overwritten if the duplicate check is skipped.
+
+### Downloading the outbox
+
+Run `lega-commander download` in the directory where you want to save the files. It downloads the whole outbox through the FEGA proxy. Add `--direct` to fetch the file contents directly from TSD. In either mode, use `--file=NAME` to select a single file.
+
+```sh
+# Download the whole outbox through the FEGA proxy
+lega-commander download
+
+# Download the whole outbox directly from TSD
+lega-commander download --direct
+
+# Download one file directly from TSD
+lega-commander download --direct --file=sample-c4gh-file.c4gh
+```
 
 <!--
 ### How it works
