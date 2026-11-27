@@ -73,9 +73,9 @@ func (mockClient) DoRequest(
 	headers, params map[string]string,
 	_, _ string,
 ) (*http.Response, error) {
+	const mockJWT = "eyJhbGciOiJub25lIn0.eyJ1c2VyIjoidGVzdHVzZXIifQ."
 	// TSD token exchange (used by -b mode, no Proxy-Authorization header)
 	if strings.Contains(url, "/auth/lifesc/token") && method == http.MethodPost {
-		mockJWT := "eyJhbGciOiJub25lIn0.eyJ1c2VyIjoidGVzdHVzZXIifQ."
 		body := io.NopCloser(strings.NewReader(`{"token":"` + mockJWT + `"}`))
 		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
 	}
@@ -84,6 +84,15 @@ func (mockClient) DoRequest(
 	if strings.Contains(url, "/files/") && method == http.MethodPatch {
 		body := io.NopCloser(strings.NewReader(`{"id":"mock-upload-id"}`))
 		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
+	}
+
+	if method == http.MethodGet && headers["Authorization"] == "Bearer "+mockJWT {
+		switch url {
+		case "http://localhost/v1/p2184/egaout/testuser/files/direct%20file.enc":
+			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader("from TSD"))}, nil
+		case "http://localhost/v1/p2184/egaout/testuser/files/test2.enc":
+			return &http.Response{StatusCode: http.StatusForbidden, Status: "403 Forbidden", Body: http.NoBody}, nil
+		}
 	}
 
 	//auth check
@@ -116,7 +125,7 @@ func (mockClient) DoRequest(
 			)
 		} else {
 			body = io.NopCloser(
-				strings.NewReader(`{"files":[{"fileName":"test2.enc","size":100,"modifiedDate":"2010"}]}`),
+				strings.NewReader(`{"files":[{"fileName":"test2.enc","size":100,"modifiedDate":"2010"},{"fileName":"direct file.enc","size":8}]}`),
 			)
 		}
 		return &http.Response{StatusCode: http.StatusOK, Body: body}, nil
@@ -162,7 +171,7 @@ func TestUploadFolder(t *testing.T) {
 }
 
 func TestDownloadFileRemoteDoesntExist(t *testing.T) {
-	err := uploader.Download("notfoundfile.enc")
+	err := uploader.Download("notfoundfile.enc", false)
 	if err == nil || !strings.HasSuffix(err.Error(), "not found in the outbox.") {
 		t.Error(err)
 	}
@@ -170,7 +179,7 @@ func TestDownloadFileRemoteDoesntExist(t *testing.T) {
 
 func TestDownloadFileRemoteExists(t *testing.T) {
 	os.Remove("test2.enc")
-	err := uploader.Download("test2.enc")
+	err := uploader.Download("test2.enc", false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -194,13 +203,32 @@ func TestDownloadFileLocalExists(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = uploader.Download("test2.enc")
+	err = uploader.Download("test2.enc", false)
 	if err == nil || !strings.HasSuffix(err.Error(), "exists locally, aborting.") {
 		t.Error(err)
 	}
 	err = os.Remove("test2.enc")
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestDirectDownloadFile(t *testing.T) {
+	t.Chdir(t.TempDir())
+	const name = "direct file.enc"
+	if err := directUploader.Download("test2.enc", true); err == nil || err.Error() != "403 Forbidden" {
+		t.Fatalf("expected 403 Forbidden, got %v", err)
+	}
+
+	if err := directUploader.Download(name, true); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "from TSD" {
+		t.Errorf("unexpected download contents %q", got)
 	}
 }
 

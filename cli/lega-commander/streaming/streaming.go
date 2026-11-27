@@ -44,7 +44,7 @@ type Streamer interface {
 	Upload(path string, resume, straight, noDuplicateCheck bool) error
 	uploadFolder(folder *os.File, resume, straight, noDuplicateCheck bool) error
 	uploadFile(file *os.File, stat os.FileInfo, uploadID *string, offset int64, startChunk int64, noDuplicateCheck bool) error
-	Download(fileName string) error
+	Download(fileName string, straight bool) error
 }
 
 type defaultStreamer struct {
@@ -329,7 +329,7 @@ func isCrypt4GHFile(file *os.File) error {
 }
 
 // Download method downloads file from LocalEGA.
-func (s defaultStreamer) Download(fileName string) error {
+func (s defaultStreamer) Download(fileName string, straight bool) error {
 	if fileExists(fileName) {
 		return errors.New("File " + fileName + " exists locally, aborting.")
 	}
@@ -355,31 +355,44 @@ func (s defaultStreamer) Download(fileName string) error {
 	if !found {
 		return errors.New("File " + fileName + " not found in the outbox.")
 	}
-	file, err := os.Create(fileName)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	fmt.Println(aurora.Blue("Downloading file: " + file.Name() + " (" + strconv.FormatInt(fileSize, 10) + " bytes)"))
-	bar := pb.Start64(fileSize)
 	configuration := conf.NewConfiguration()
-	response, err := s.client.DoRequest(http.MethodGet,
-		configuration.GetLocalEGAInstanceURL()+"/stream/"+url.QueryEscape(fileName),
-		nil,
-		map[string]string{"Proxy-Authorization": "Bearer " + configuration.GetElixirAAIToken()},
-		map[string]string{"fileName": fileName},
-		"",
-		"")
+	var endpoint string
+	var headers, params map[string]string
+	if straight {
+		user, ok := s.claims["user"].(string)
+		if !ok || user == "" {
+			return errors.New("TSD token is missing the user claim")
+		}
+		endpoint = configuration.GetTSDOutboxURL() + "/" + url.PathEscape(user) + "/files/" + url.PathEscape(fileName)
+		headers = map[string]string{"Authorization": "Bearer " + s.tsd_token}
+	} else {
+		endpoint = configuration.GetLocalEGAInstanceURL() + "/stream/" + url.QueryEscape(fileName)
+		headers = map[string]string{"Proxy-Authorization": "Bearer " + configuration.GetElixirAAIToken()}
+		params = map[string]string{"fileName": fileName}
+	}
+	response, err := s.client.DoRequest(http.MethodGet, endpoint, nil, headers, params, "", "")
 	if err != nil {
 		return err
 	}
-	if response.StatusCode != 200 {
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
 		return errors.New(response.Status)
 	}
-	barReader := bar.NewProxyReader(response.Body)
-	defer barReader.Close()
-	_, err = io.Copy(file, barReader)
-	return err
+
+	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0666)
+	if err != nil {
+		return err
+	}
+	fmt.Println(aurora.Blue("Downloading file: " + file.Name() + " (" + strconv.FormatInt(fileSize, 10) + " bytes)"))
+	bar := pb.Start64(fileSize)
+	defer bar.Finish()
+	_, copyErr := io.Copy(file, bar.NewProxyReader(response.Body))
+	closeErr := file.Close()
+	if err := errors.Join(copyErr, closeErr); err != nil {
+		os.Remove(fileName)
+		return err
+	}
+	return nil
 }
 
 func fileExists(fileName string) bool {
