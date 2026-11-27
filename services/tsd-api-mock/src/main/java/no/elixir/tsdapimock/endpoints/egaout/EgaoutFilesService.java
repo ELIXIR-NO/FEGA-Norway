@@ -70,13 +70,14 @@ public class EgaoutFilesService {
     }
   }
 
+  /** Lists the files in the user's outbox, or returns null if the outbox does not exist. */
   public OutboxFileListingDto listOutboxFiles(
       String authorizationHeader, String project, String userName) {
-    if (!authorizationHeader.startsWith("Bearer ")) {
-      throw new IllegalArgumentException("Header must contain a bearer auth token");
-    }
-    if (!jwtService.verify(authorizationHeader)) {
-      throw new CredentialsMismatchException("Stream processing failed");
+    checkToken(authorizationHeader);
+    // The real TSD API answers 404 here, so the caller has to see the difference
+    // between "no outbox yet" and "outbox is empty".
+    if (!resumables.outboxExists(project, userName)) {
+      return null;
     }
     boolean createUserDirectoryIfNotExists = false;
     List<File> files = resumables.listFiles(project, userName, createUserDirectoryIfNotExists);
@@ -95,5 +96,26 @@ public class EgaoutFilesService {
     // See: https://github.com/ELIXIR-NO/FEGA-Norway/issues/561
     final String PAGE_NUMBER = "1";
     return new OutboxFileListingDto(tsdFiles, PAGE_NUMBER);
+  }
+
+  /** Returns the file with the given name from the user's outbox, or null if it is not there. */
+  public File getOutboxFile(
+      String authorizationHeader, String project, String userName, String fileName) {
+    checkToken(authorizationHeader);
+    for (File file : resumables.listFiles(project, userName, false)) {
+      if (file.isFile() && file.getName().equals(fileName)) {
+        return file;
+      }
+    }
+    return null;
+  }
+
+  private void checkToken(String authorizationHeader) {
+    if (!authorizationHeader.startsWith("Bearer ")) {
+      throw new IllegalArgumentException("Header must contain a bearer auth token");
+    }
+    if (!jwtService.verify(authorizationHeader)) {
+      throw new CredentialsMismatchException("Stream processing failed");
+    }
   }
 }

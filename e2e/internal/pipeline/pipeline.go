@@ -44,7 +44,7 @@ func run(ctx context.Context, s *state.State, name string, steps []step) error {
 
 // RunLocal runs the FEGA pipeline against the mocked stack:
 // ProxyWebpage -> C1 -> upload -> ingest -> accession -> finalize -> mapping -> inbox-cleanup ->
-// release -> download.
+// release -> download -> export.
 func RunLocal(ctx context.Context, s *state.State) error {
 	return run(ctx, s, "FEGA (local)", []step{
 		{"ProxyWebpageVerification", stages.ProxyWebpage, 0},

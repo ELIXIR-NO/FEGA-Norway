@@ -239,6 +239,11 @@ public class Resumables {
     return listFilesInDirectory(tsdElixirExport.formatted(project, userName), createIfNotExists);
   }
 
+  /** Tells whether the user's outbox (export) directory exists. */
+  public boolean outboxExists(String project, String userName) {
+    return new File(tsdElixirExport.formatted(project, userName)).isDirectory();
+  }
+
   /** Lists the files in the user's inbox (import) directory. */
   public List<File> listInboxFiles(String project, String userName, boolean createIfNotExists) {
     return listFilesInDirectory(tsdElixirImport.formatted(project, userName), createIfNotExists);

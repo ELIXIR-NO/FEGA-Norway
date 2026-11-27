@@ -114,8 +114,8 @@ func DownloadViaFegaExportRequest(ctx context.Context, s *state.State) error {
 
 // DownloadViaLocalFegaExportRequest is the local-stack variant of
 // DownloadViaFegaExportRequest: it signs the visa with the local jwt.priv.pem,
-// uses that visa as the outbox bearer token, and stops after the outbox listing
-// because tsd-api-mock cannot serve the download.
+// uses that visa as the outbox bearer token, and checks the downloaded file in
+// memory instead of writing it to disk.
 //
 // DOA connects to PostgreSQL as lega_out. A successful export therefore proves
 // that the temporary grant to the inherited download role allows lega_out to
@@ -167,6 +167,32 @@ func DownloadViaLocalFegaExportRequest(ctx context.Context, s *state.State) erro
 	}
 
 	s.Log.Check("local FEGA export appears in outbox", true)
+
+	// 3) download the exported file through the proxy
+	downloadURL := fmt.Sprintf("https://%s:%s/stream/%s", s.Config.ProxyHost, s.Config.ProxyPort, s.EncName())
+	dlRes, err := client.Do(ctx, "GET", downloadURL, httpx.WithProxyBearer(visaToken))
+	if err != nil {
+		return fmt.Errorf("downloading the exported file: %w", err)
+	}
+	if err := check.Equal(dlRes.Status, 200, "proxy download"); err != nil {
+		return err
+	}
+	if err := check.True(len(dlRes.Body) > 0, "downloaded file should not be empty"); err != nil {
+		return err
+	}
+
+	// 4) decrypt it with the recipient key and compare with the original file
+	decrypted, err := c4gh.Decrypt(bytes.NewReader(dlRes.Body), s.Recipient.Private)
+	if err != nil {
+		return fmt.Errorf("decrypting the exported file: %w", err)
+	}
+	if err := check.Equal(common.Sha256HexBytes(decrypted), s.RawSHA256, "decrypted SHA256 matches original"); err != nil {
+		return err
+	}
+	if err := check.Equal(common.Md5HexBytes(decrypted), s.RawMD5, "decrypted MD5 matches original"); err != nil {
+		return err
+	}
+	s.Log.Check("exported file matches the original", true)
 	return nil
 }
 
