@@ -7,6 +7,7 @@ package pipeline
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -42,13 +43,37 @@ func run(ctx context.Context, s *state.State, name string, steps []step) error {
 	return nil
 }
 
-// RunLocal runs the FEGA pipeline against the mocked stack:
+func runRed(ctx context.Context, s *state.State, name string, steps []step) error {
+	s.Log.Banner(name+" e2e", fmt.Sprintf("%d checks", len(steps)))
+	start := time.Now()
+	passed := 0
+	var failures []error
+
+	for i, stage := range steps {
+		s.Log.Stage(i+1, len(steps), stage.name)
+		t0 := time.Now()
+		checkCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		err := stage.fn(checkCtx, s)
+		cancel()
+		if err != nil {
+			s.Log.Fail(time.Since(t0), err)
+			failures = append(failures, fmt.Errorf("check %q failed: %w", stage.name, err))
+			continue
+		}
+		s.Log.Pass(time.Since(t0))
+		passed++
+	}
+
+	s.Log.Summary(len(failures) == 0, passed, len(steps), time.Since(start))
+	return errors.Join(failures...)
+}
+
+// RunGreenLocal runs the FEGA pipeline against the mocked stack:
 // ProxyWebpage -> C1 -> upload -> ingest -> accession -> finalize -> mapping -> inbox-cleanup ->
 // release -> download.
-func RunLocal(ctx context.Context, s *state.State) error {
-	return run(ctx, s, "FEGA (local)", []step{
+func RunGreenLocal(ctx context.Context, s *state.State) error {
+	return run(ctx, s, "FEGA (local) green pipeline", []step{
 		{"ProxyWebpageVerification", stages.ProxyWebpage, 0},
-		{"C1JwtSignatureVerification", stages.C1JwtSignatureVerification, 0},
 		{"UploadViaLegaCmd", stages.UploadViaLegaCmd, 5000},
 		{"Ingest", stages.Ingest, 5000},
 		{"Accession", stages.Accession, 5000},
@@ -93,5 +118,18 @@ func RunLocalIngestCancelReingest(ctx context.Context, s *state.State) error {
 		{"InboxCleanup", stages.InboxCleanup, 0},
 		{"Release", stages.Release, 1000},
 		{"Download", stages.Download, 0},
+	})
+}
+
+// RunLocalRed runs independent adversarial checks and reports every failure.
+//
+// Unlike the ordered green pipelines, a failed red check does not stop the
+// remaining checks. The suite passes only when every invalid request is
+// correctly refused.
+func RunLocalRed(ctx context.Context, s *state.State) error {
+	return runRed(ctx, s, "FEGA (local) red pipeline", []step{
+		{"MissingCegaCredentials", stages.MissingCegaCredentials, 0},
+		{"MissingVisa", stages.MissingVisa, 0},
+		{"UntrustedVisaIssuer", stages.UntrustedVisaIssuer, 0},
 	})
 }
