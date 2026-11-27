@@ -44,4 +44,3 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.hibernate.validator:hibernate-validator:9.1.6.Final")
 }
-
