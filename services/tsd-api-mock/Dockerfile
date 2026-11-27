@@ -6,7 +6,7 @@ COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY gradle/ gradle/
 COPY buildSrc/ buildSrc/
 
-# Layer 2: all module build files so Gradle can configure the project graph
+# Layer 2: all module build files so Gradle can configure the project graph.
 COPY lib/clearinghouse/build.gradle.kts lib/clearinghouse/
 COPY lib/tsd-file-api-client/build.gradle.kts lib/tsd-file-api-client/
 COPY lib/crypt4gh/build.gradle.kts lib/crypt4gh/
