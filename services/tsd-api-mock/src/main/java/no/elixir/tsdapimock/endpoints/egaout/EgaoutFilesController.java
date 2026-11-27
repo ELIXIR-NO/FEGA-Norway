@@ -1,5 +1,6 @@
 package no.elixir.tsdapimock.endpoints.egaout;
 
+import jakarta.servlet.http.HttpServletRequest;
 import no.elixir.tsdapimock.core.exceptions.CredentialsMismatchException;
 import no.elixir.tsdapimock.endpoints.egaout.dto.OutboxFileListingDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +24,14 @@ public class EgaoutFilesController {
   public ResponseEntity<?> get(
       @PathVariable String project,
       @PathVariable String userName,
-      @RequestHeader("Authorization") String authorizationHeader) {
+      @RequestHeader("Authorization") String authorizationHeader,
+      @RequestParam(value = "page", required = false) String page,
+      @RequestParam(value = "per_page", required = false) String perPage,
+      HttpServletRequest request) {
     try {
       OutboxFileListingDto outboxFileListingDto =
-          egaoutFilesService.listOutboxFiles(authorizationHeader, project, userName);
+          egaoutFilesService.listOutboxFiles(
+              authorizationHeader, project, userName, page, perPage, request.getRequestURI());
       return ResponseEntity.status(HttpStatus.OK)
           .contentType(MediaType.APPLICATION_JSON)
           .body(outboxFileListingDto);
