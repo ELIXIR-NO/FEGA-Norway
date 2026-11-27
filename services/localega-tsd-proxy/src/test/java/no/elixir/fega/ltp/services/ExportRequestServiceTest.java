@@ -17,14 +17,14 @@ import java.util.List;
 import no.elixir.clearinghouse.model.Visa;
 import no.elixir.fega.ltp.dto.ExportRequestType;
 import no.elixir.fega.ltp.dto.GdiExportRequestDto;
-import no.elixir.fega.ltp.exceptions.GenericException;
+import no.elixir.fega.ltp.errors.ErrorCode;
+import no.elixir.fega.ltp.errors.ProxyException;
 import no.elixir.fega.ltp.models.DOAExportRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.http.HttpStatus;
 import tools.jackson.databind.ObjectMapper;
 
 class ExportRequestServiceTest {
@@ -46,44 +46,46 @@ class ExportRequestServiceTest {
   }
 
   /**
-   * Regression for #863, access-token half: {@code parseVerified} already throws {@link
-   * SignatureException}. Guards the mapping of that throw to {@link GenericException} FORBIDDEN;
-   * without it the controller catch-all answers 500.
+   * Regression for #863, access-token half: a token that fails verification ends as
+   * ELIXIR_AAI_TOKEN_INVALID (#913), never the advice's 500 fallback, and nothing reaches DOA.
+   * TokenServiceTest covers how a {@link SignatureException} becomes that code.
    */
   @Test
-  void exportRequestGDI_throwsForbidden_whenAccessTokenSignatureFails() {
+  void exportRequestGDI_throwsTokenInvalid_whenAccessTokenSignatureFails() {
     when(tokenService.parseVerified(anyString()))
-        .thenThrow(new SignatureException("JWT signature does not match"));
+        .thenThrow(
+            new ProxyException(
+                ErrorCode.ELIXIR_AAI_TOKEN_INVALID,
+                "verification failed",
+                new SignatureException("JWT signature does not match")));
 
     assertThatThrownBy(() -> service.exportRequestGDI(gdiBody()))
         .isInstanceOfSatisfying(
-            GenericException.class,
-            e -> {
-              assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.FORBIDDEN);
-              assertThat(e.getMessage()).isEqualTo("Token verification failed");
-            });
+            ProxyException.class,
+            e -> assertThat(e.getCode()).isEqualTo(ErrorCode.ELIXIR_AAI_TOKEN_INVALID));
     verifyNoInteractions(tsdRabbitTemplate);
   }
 
   @Test
-  void exportRequestGDI_throwsForbidden_whenVisaSignatureFails() {
+  void exportRequestGDI_throwsTokenInvalid_whenVisaSignatureFails() {
     Claims claims = claimsWithSubject();
     when(tokenService.parseVerified(anyString())).thenReturn(claims);
     when(tokenService.getControlledAccessGrantsVisas(anyString()))
-        .thenThrow(new SignatureException("JWT signature does not match"));
+        .thenThrow(
+            new ProxyException(
+                ErrorCode.ELIXIR_AAI_TOKEN_INVALID,
+                "verification failed",
+                new SignatureException("JWT signature does not match")));
 
     assertThatThrownBy(() -> service.exportRequestGDI(gdiBody()))
         .isInstanceOfSatisfying(
-            GenericException.class,
-            e -> {
-              assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.FORBIDDEN);
-              assertThat(e.getMessage()).isEqualTo("Token verification failed");
-            });
+            ProxyException.class,
+            e -> assertThat(e.getCode()).isEqualTo(ErrorCode.ELIXIR_AAI_TOKEN_INVALID));
     verifyNoInteractions(tsdRabbitTemplate);
   }
 
   @Test
-  void exportRequestGDI_throwsForbidden_whenVisaListIsEmpty() {
+  void exportRequestGDI_throwsVisaDenied_whenVisaListIsEmpty() {
     Claims claims = claimsWithSubject();
     when(tokenService.parseVerified(anyString())).thenReturn(claims);
     when(tokenService.getControlledAccessGrantsVisas(anyString()))
@@ -91,16 +93,12 @@ class ExportRequestServiceTest {
 
     assertThatThrownBy(() -> service.exportRequestGDI(gdiBody()))
         .isInstanceOfSatisfying(
-            GenericException.class,
-            e -> {
-              assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.FORBIDDEN);
-              assertThat(e.getMessage()).isEqualTo("No valid visas found for this resource");
-            });
+            ProxyException.class, e -> assertThat(e.getCode()).isEqualTo(ErrorCode.VISA_DENIED));
     verifyNoInteractions(tsdRabbitTemplate);
   }
 
   @Test
-  void exportRequestGDI_throwsForbidden_whenNoVisaMatchesResource() {
+  void exportRequestGDI_throwsVisaDenied_whenNoVisaMatchesResource() {
     Claims claims = claimsWithSubject();
     when(tokenService.parseVerified(anyString())).thenReturn(claims);
     Visa otherDataset = visaFor("EGAD00000000002", "other-visa-token");
@@ -109,12 +107,7 @@ class ExportRequestServiceTest {
 
     assertThatThrownBy(() -> service.exportRequestGDI(gdiBody()))
         .isInstanceOfSatisfying(
-            GenericException.class,
-            e -> {
-              assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.FORBIDDEN);
-              assertThat(e.getMessage())
-                  .isEqualTo("No valid visa found for the requested resource");
-            });
+            ProxyException.class, e -> assertThat(e.getCode()).isEqualTo(ErrorCode.VISA_DENIED));
     verifyNoInteractions(tsdRabbitTemplate);
   }
 
@@ -135,13 +128,14 @@ class ExportRequestServiceTest {
   }
 
   @Test
-  void exportRequestGDI_throwsIllegalArgument_whenSubjectIsBlank() {
+  void exportRequestGDI_throwsTokenInvalid_whenSubjectIsBlank() {
     Claims claims = claimsWithSubject("");
     when(tokenService.parseVerified(anyString())).thenReturn(claims);
 
     assertThatThrownBy(() -> service.exportRequestGDI(gdiBody()))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Access token missing subject");
+        .isInstanceOfSatisfying(
+            ProxyException.class,
+            e -> assertThat(e.getCode()).isEqualTo(ErrorCode.ELIXIR_AAI_TOKEN_INVALID));
     verify(tokenService, never()).getControlledAccessGrantsVisas(anyString());
     verifyNoInteractions(tsdRabbitTemplate);
   }

@@ -1,7 +1,6 @@
 package no.elixir.fega.ltp.services;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -12,14 +11,14 @@ import no.elixir.clearinghouse.model.Visa;
 import no.elixir.fega.ltp.common.Masker;
 import no.elixir.fega.ltp.dto.FegaExportRequestDto;
 import no.elixir.fega.ltp.dto.GdiExportRequestDto;
-import no.elixir.fega.ltp.exceptions.GenericException;
+import no.elixir.fega.ltp.errors.ErrorCode;
+import no.elixir.fega.ltp.errors.ProxyException;
 import no.elixir.fega.ltp.models.DOAExportRequest;
 import org.apache.http.entity.ContentType;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import tools.jackson.core.JacksonException;
@@ -52,37 +51,31 @@ public class ExportRequestService {
     this.objectMapper = objectMapper;
   }
 
-  public void exportRequestGDI(GdiExportRequestDto gdiExportRequestDto)
-      throws GenericException, IllegalArgumentException {
-
-    // Validate input
+  /**
+   * Sends a GDI export request for the dataset or file the access token's visas grant.
+   *
+   * @throws ProxyException {@code INVALID_REQUEST} for a missing token, {@code
+   *     ELIXIR_AAI_TOKEN_INVALID} for one that fails verification or has no subject, {@code
+   *     VISA_DENIED} when no valid visa grants the resource.
+   */
+  public void exportRequestGDI(GdiExportRequestDto gdiExportRequestDto) {
     if (gdiExportRequestDto == null) {
-      throw new IllegalArgumentException("Export request cannot be null");
+      throw new ProxyException(ErrorCode.INVALID_REQUEST, "Export request cannot be null");
     }
     if (!StringUtils.hasText(gdiExportRequestDto.getAccessToken())) {
-      throw new IllegalArgumentException("Access token cannot be null or empty");
+      throw new ProxyException(ErrorCode.INVALID_REQUEST, "Access token cannot be null or empty");
     }
 
-    final Claims claims;
-    try {
-      claims = tokenService.parseVerified(gdiExportRequestDto.getAccessToken());
-    } catch (JwtException e) {
-      throw forbidden(e);
-    }
+    final Claims claims = tokenService.parseVerified(gdiExportRequestDto.getAccessToken());
 
     String subject = claims.getSubject();
     if (!StringUtils.hasText(subject)) {
-      throw new IllegalArgumentException("Access token missing subject");
+      throw new ProxyException(ErrorCode.ELIXIR_AAI_TOKEN_INVALID, "Access token missing subject");
     }
     String sanitizedSubject = subject.replaceAll("[\r\n]", "_");
 
-    final List<Visa> controlledAccessGrantsVisas;
-    try {
-      controlledAccessGrantsVisas =
-          tokenService.getControlledAccessGrantsVisas(gdiExportRequestDto.getAccessToken());
-    } catch (JwtException e) {
-      throw forbidden(e);
-    }
+    final List<Visa> controlledAccessGrantsVisas =
+        tokenService.getControlledAccessGrantsVisas(gdiExportRequestDto.getAccessToken());
 
     log.info(
         "Elixir user {} authenticated and provided {} valid GA4GH Visa(s)",
@@ -95,7 +88,7 @@ public class ExportRequestService {
           Masker.maskEmail(sanitizedSubject),
           gdiExportRequestDto.getId(),
           gdiExportRequestDto.getType());
-      throw new GenericException(HttpStatus.FORBIDDEN, "No valid visas found for this resource");
+      throw new ProxyException(ErrorCode.VISA_DENIED, "No valid visas found for this resource");
     }
 
     String escapedId = Pattern.quote(gdiExportRequestDto.getId());
@@ -110,8 +103,8 @@ public class ExportRequestService {
           Masker.maskEmail(sanitizedSubject),
           gdiExportRequestDto.getId(),
           controlledAccessGrantsVisas.size());
-      throw new GenericException(
-          HttpStatus.FORBIDDEN, "No valid visa found for the requested resource");
+      throw new ProxyException(
+          ErrorCode.VISA_DENIED, "No valid visa found for the requested resource");
     }
 
     // Use the first matching visa (consider documenting why first is chosen)
@@ -136,16 +129,9 @@ public class ExportRequestService {
         gdiExportRequestDto.getType());
   }
 
-  // A token we cannot verify is the caller's problem rather than a server fault. Without this
-  // the controller's catch (Exception) fallback answers 500. See #863.
-  private GenericException forbidden(JwtException e) {
-    log.warn("Token verification failed for export request", e);
-    return new GenericException(HttpStatus.FORBIDDEN, "Token verification failed");
-  }
-
   public void exportRequestFEGA(FegaExportRequestDto fegaExportRequestDto) throws AmqpException {
     if (fegaExportRequestDto == null) {
-      throw new IllegalArgumentException("Export request cannot be null");
+      throw new ProxyException(ErrorCode.INVALID_REQUEST, "Export request cannot be null");
     }
 
     DOAExportRequest message = DOAExportRequest.fromExportRequestDto(fegaExportRequestDto);

@@ -1,6 +1,7 @@
 package no.elixir.fega.ltp.services;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Jwk;
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
+import java.util.concurrent.CompletionException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +20,11 @@ import no.elixir.clearinghouse.Clearinghouse;
 import no.elixir.clearinghouse.JWKProvider;
 import no.elixir.clearinghouse.model.Visa;
 import no.elixir.clearinghouse.model.VisaType;
+import no.elixir.fega.ltp.errors.ErrorCode;
+import no.elixir.fega.ltp.errors.ProxyException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.ResponseBody;
+import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
@@ -87,9 +91,24 @@ public class TokenService {
    * @param jwtToken the JWT token, which can be either a direct Visa token or a Passport-Scoped
    *     Access Token
    * @return a list of Visa objects of type ControlledAccessGrants
-   * @throws IllegalArgumentException if the JWT token is invalid or cannot be verified
+   * @throws ProxyException {@code ELIXIR_AAI_TOKEN_INVALID} if the token or a visa fails
+   *     verification, {@code UPSTREAM_FAILED} if the passport or visa issuer cannot be reached
    */
   public List<Visa> getControlledAccessGrantsVisas(String jwtToken) {
+    try {
+      return collectControlledAccessGrantsVisas(jwtToken);
+    } catch (JwtException | IllegalArgumentException e) {
+      throw invalidToken("Passport or visa verification failed", e);
+    } catch (RuntimeException e) {
+      // Clearinghouse wraps a failed call to the issuer as RuntimeException(IOException).
+      if (e.getCause() instanceof IOException) {
+        throw unreachable("Could not reach the passport or visa issuer", e);
+      }
+      throw e;
+    }
+  }
+
+  private List<Visa> collectControlledAccessGrantsVisas(String jwtToken) {
     JsonNode claims = extractFragmentFromJWT(jwtToken, TokenService.TokenFragment.BODY);
     boolean isVisa = claims.has("ga4gh_visa_v1");
     Collection<Visa> visas = new ArrayList<>();
@@ -109,41 +128,66 @@ public class TokenService {
   /**
    * Parses a passport-scoped access token and verifies its signature before returning any claims.
    * Uses the configured PEM public key if available, otherwise falls back to JWKS discovered via
-   * the OpenID configuration URL. Throws {@link io.jsonwebtoken.JwtException} (unchecked) on
-   * signature failure, expiry, or any other validation error — callers must translate that into a
-   * rejection response.
+   * the OpenID configuration URL.
    *
    * @param jwtToken passport-scoped access token.
    * @return verified {@link Claims}.
+   * @throws ProxyException {@code ELIXIR_AAI_TOKEN_INVALID} on a bad signature, expiry, a malformed
+   *     token or a key id the key set does not have; {@code UPSTREAM_FAILED} if the key set cannot
+   *     be fetched.
    */
   public Claims parseVerified(String jwtToken) {
+    RSAPublicKey key;
     try {
-      String passportPublicKey = Files.readString(Path.of(passportPublicKeyPath));
-      RSAPublicKey key = readPEMKey(passportPublicKey);
-      return Jwts.parser().verifyWith(key).build().parseSignedClaims(jwtToken).getPayload();
+      key = readPEMKey(Files.readString(Path.of(passportPublicKeyPath)));
     } catch (IOException e) {
       log.info(
           "Passport PEM not readable ({}), falling back to OpenID JWKS for verification.",
           e.getMessage());
-      return parseVerifiedViaJwks(jwtToken);
+      key = jwksKey(jwtToken);
+    }
+    try {
+      return Jwts.parser().verifyWith(key).build().parseSignedClaims(jwtToken).getPayload();
+    } catch (JwtException | IllegalArgumentException e) {
+      throw invalidToken("LS AAI token verification failed", e);
     }
   }
 
-  private Claims parseVerifiedViaJwks(String jwtToken) {
+  private RSAPublicKey jwksKey(String jwtToken) {
+    String kid;
     try {
-      Request request = new Request.Builder().url(openIDConfigurationURL).get().build();
-      ResponseBody body = new OkHttpClient().newCall(request).execute().body();
-      if (body == null) {
-        throw new IllegalStateException("Empty response from OpenID configuration URL");
-      }
-      String jwksUrl = new ObjectMapper().readTree(body.string()).get("jwks_uri").asText();
-      String kid = extractKid(jwtToken);
-      Jwk<?> jwk = JWKProvider.INSTANCE.get(jwksUrl, kid);
-      RSAPublicKey key = (RSAPublicKey) jwk.toKey();
-      return Jwts.parser().verifyWith(key).build().parseSignedClaims(jwtToken).getPayload();
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to reach OpenID JWKS endpoint", e);
+      kid = extractKid(jwtToken);
+    } catch (IllegalArgumentException e) {
+      throw invalidToken("LS AAI token has no readable kid", e);
     }
+
+    String jwksUrl;
+    Request request = new Request.Builder().url(openIDConfigurationURL).get().build();
+    try (Response response = new OkHttpClient().newCall(request).execute()) {
+      jwksUrl = new ObjectMapper().readTree(response.body().string()).get("jwks_uri").asText();
+    } catch (IOException | RuntimeException e) {
+      throw unreachable("Could not read the OpenID configuration", e);
+    }
+
+    Jwk<?> jwk;
+    try {
+      jwk = JWKProvider.INSTANCE.get(jwksUrl, kid);
+    } catch (CompletionException e) {
+      // JWKProvider's loader throws its one checked exception, which the cache wraps, only when the
+      // key set holds no key with this id: a token we did not issue a key for.
+      throw invalidToken("No JWKS key matches the LS AAI token's kid", e);
+    } catch (RuntimeException e) {
+      throw unreachable("Could not fetch the JWKS key set", e);
+    }
+    return (RSAPublicKey) jwk.toKey();
+  }
+
+  private static ProxyException invalidToken(String logMessage, Throwable cause) {
+    return new ProxyException(ErrorCode.ELIXIR_AAI_TOKEN_INVALID, logMessage, cause);
+  }
+
+  private static ProxyException unreachable(String logMessage, Throwable cause) {
+    return new ProxyException(ErrorCode.UPSTREAM_FAILED, logMessage, cause);
   }
 
   private String extractKid(String jwtToken) {
